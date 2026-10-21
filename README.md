@@ -68,8 +68,9 @@ Plotly. It runs fully in the browser:
 - descriptive statistics, Pearson and Spearman correlations, PCA (scree plot, biplot,
   loadings, scores), Mann-Whitney and Kruskal-Wallis tests with Holm correction
 
-The pages *Come funziona* (step-by-step explanation) and *Backlog* are currently in
-Italian, and so is the text of the cleaning ledger.
+The site also has a step-by-step explanation of the pipeline
+([How it works](https://smelegar8.github.io/inhaled-drug-rule-of-5/how-it-works.html)) and the
+[backlog](https://smelegar8.github.io/inhaled-drug-rule-of-5/backlog.html) of planned work.
 
 ## How to run
 
@@ -94,7 +95,7 @@ The test and the app also work without the download: they use the database shipp
 ```text
 src/        download, database build, cleaning, exploration scripts
 sql/        table definitions with column comments
-notebooks/  cleaning notebook, executed with outputs
+notebooks/  cleaning notebook (02_data_cleaning.ipynb), executed with outputs
 reports/    result tables, cleaning ledger and figures
 app/        static SQL workbench (index.html, stats.js) and explanation pages
 tests/      validation of the app statistics against scipy

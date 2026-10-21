@@ -210,7 +210,7 @@
    * (eigenvectors, p x p), loadings (correlation of each variable with each
    * component when standardised, p x p) and scores (n x p). */
   function pca(rows, { standardize = true } = {}) {
-    if (rows.length < 3 || rows[0].length < 2) throw new Error("La PCA richiede almeno 3 righe complete e 2 variabili.");
+    if (rows.length < 3 || rows[0].length < 2) throw new Error("PCA needs at least 3 complete rows and 2 variables.");
     const n = rows.length, p = rows[0].length;
     const means = [], sds = [];
     for (let j = 0; j < p; j++) {

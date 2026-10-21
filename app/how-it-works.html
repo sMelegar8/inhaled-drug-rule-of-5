@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inhalation Workbench Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a single reading column with a pipeline strip at the top; each step is a numbered section because the order is the real execution order. */
+:root {
+  --bg: #f3f5f4; --surface: #fcfcfb; --surface-2: #e9edeb; --fg: #111614; --fg-2: #4a524e; --muted: #7b837f;
+  --line: #d9dfdc; --accent: #0b6a72; --accent-soft: #d6ebec; --warn: #8a5a00; --warn-soft: #fbefd2;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+    --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+  --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 16px/1.65 var(--font-body); }
+.wrap {
+  max-width: 900px; margin: 0 auto; padding-block: 36px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 2.1rem; font-weight: 600; margin: 0 0 8px; }
+h2 { font-size: 1.45rem; font-weight: 600; margin: 0; }
+h3 { font-size: 1.05rem; font-weight: 600; margin: 22px 0 6px; }
+p { margin: 0 0 12px; max-width: 68ch; }
+.lede { color: var(--fg-2); font-size: 1.08rem; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre { font: 13px/1.55 var(--font-mono); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 68ch; }
+li { margin-bottom: 4px; }
+.eyebrow { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 8px; }
+a { color: var(--accent); }
+
+/* pipeline strip */
+.pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 26px 0 8px; counter-reset: stage; }
+.stage { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; text-decoration: none; color: inherit; display: block; }
+.stage:hover { border-color: var(--accent); }
+.stage .n { font: 500 12px var(--font-mono); color: var(--accent); }
+.stage .t { display: block; font: 600 14px/1.3 var(--font-display); margin: 2px 0; }
+.stage .f { display: block; font: 11.5px var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+
+section.step { border-top: 1px solid var(--line); padding-top: 30px; margin-top: 34px; }
+.step-head { display: flex; gap: 14px; align-items: baseline; margin-bottom: 12px; }
+.step-num { font: 600 1.45rem var(--font-mono); color: var(--accent); min-width: 2ch; }
+.files { font: 13px var(--font-mono); color: var(--muted); margin: -6px 0 14px; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 6px 0 16px; }
+.fact { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.fact b { display: block; font: 600 1.25rem var(--font-display); font-variant-numeric: tabular-nums; }
+.fact span { font-size: 13px; color: var(--fg-2); }
+
+.say { background: var(--accent-soft); border-radius: 6px; padding: 12px 16px; margin: 16px 0 6px; }
+.say .label { font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); display: block; margin-bottom: 2px; }
+.say p { margin: 0; }
+.caveat { background: var(--warn-soft); border-radius: 6px; padding: 12px 16px; margin: 14px 0; }
+.caveat .label { font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.09em; color: var(--warn); display: block; margin-bottom: 2px; }
+.caveat p { margin: 0; }
+
+.table-wrap { overflow-x: auto; margin: 4px 0 16px; }
+table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-2); }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+
+.qa details { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.qa summary { cursor: pointer; font-weight: 600; }
+.qa details p { margin: 8px 0 0; }
+pre.mermaid { background: var(--surface); text-align: center; }
+
+/* Shared navigation between the project pages */
+.sitenav { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line); background: var(--surface); font-size: 13.5px; }
+.sitenav-brand { font: 600 12.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-right: 6px; }
+.sitenav a { color: var(--fg-2); text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; }
+.sitenav a:hover { color: var(--fg); }
+.sitenav a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Project pages">
+  <span class="sitenav-brand">Inhalation Workbench</span>
+  <a href="index.html">SQL workbench</a>
+  <a href="how-it-works.html" aria-current="page">How it works</a>
+  <a href="backlog.html">Backlog</a>
+</nav>
+<div class="wrap">
+  <div class="eyebrow">Data analyst portfolio · pharma</div>
+  <h1>How the Inhalation SQL Workbench works</h1>
+  <p class="lede">This page explains every process in the program, from data acquisition to the chart in the browser: what it does, why it is built this way, and what it shows. The numbers come from the build of 21 October 2026.</p>
+
+  <nav class="pipeline" aria-label="Program stages">
+    <a class="stage" href="#s0"><span class="n">00</span><span class="t">Question</span><span class="f">README</span></a>
+    <a class="stage" href="#s1"><span class="n">01</span><span class="t">Acquisition</span><span class="f">01_download_data.py</span></a>
+    <a class="stage" href="#s2"><span class="n">02</span><span class="t">Data model</span><span class="f">schema.sql</span></a>
+    <a class="stage" href="#s3"><span class="n">03</span><span class="t">Loading and integration</span><span class="f">02_build_database.py</span></a>
+    <a class="stage" href="#s4"><span class="n">04</span><span class="t">Distribution</span><span class="f">.sqlite.gz.b64.txt</span></a>
+    <a class="stage" href="#s5"><span class="n">05</span><span class="t">SQL exploration and statistics</span><span class="f">app/index.html · stats.js</span></a>
+    <a class="stage" href="#s6"><span class="n">06</span><span class="t">Cleaning and exclusion ledger</span><span class="f">cleaning.py · notebook 02</span></a>
+    <a class="stage" href="#s7"><span class="n">07</span><span class="t">Next steps</span><span class="f">statistics, presentation</span></a>
+  </nav>
+
+  <section class="step" id="s0">
+    <div class="step-head"><span class="step-num">00</span><h2>The business question</h2></div>
+    <p>Lipinski's Rule of 5 describes <em>oral</em> drugs, which must be absorbed in the gut. An inhaled drug has a different goal: act in the lung and pass as little as possible into the rest of the body. There is no shared public rule for inhaled drugs.</p>
+    <p>The project question: <strong>are the chemical properties of approved inhaled drugs different from those of oral drugs, and how?</strong> The second step applies the findings to compounds active on PDE4, a respiratory target (for example in COPD).</p>
+    <div class="caveat"><span class="label">Limitation</span><p>This is an exploratory analysis of public data. The database links 65 approved inhaled molecules against 1,249 oral ones: a small sample, to be presented as a hypothesis and not as a discovery.</p></div>
+    <div class="say"><span class="label">In short</span><p>I took a rule that everyone uses and checked whether it also holds for inhaled drugs, which are at the core of many respiratory companies.</p></div>
+  </section>
+
+  <section class="step" id="s1">
+    <div class="step-head"><span class="step-num">01</span><h2>Data acquisition</h2></div>
+    <p class="files">src/01_download_data.py · output: data/raw/ + manifest.json</p>
+    <p>The program downloads two public sources and saves them <strong>without changing them</strong>:</p>
+    <ul>
+      <li><strong>ChEMBL</strong> (EMBL-EBI), release 37 of 1 May 2026: approved drugs with calculated properties, synonyms and ATC codes; IC50 and Ki measurements on human PDE4 and the compounds tested.</li>
+      <li><strong>openFDA Drugs@FDA</strong>, export of 20 October 2026: FDA products with dosage form and <em>route of administration</em>. ChEMBL only has oral/parenteral/topical flags, so the inhaled route comes from here.</li>
+    </ul>
+    <div class="facts">
+      <div class="fact"><b>4,225</b><span>ChEMBL approved drugs</span></div>
+      <div class="fact"><b>11,954</b><span>IC50/Ki measurements on PDE4</span></div>
+      <div class="fact"><b>7,326</b><span>compounds tested on PDE4</span></div>
+      <div class="fact"><b>51,886</b><span>FDA products</span></div>
+    </div>
+    <h3>Why the API and not the full database</h3>
+    <p>The full ChEMBL SQLite dump is 5.37 GB compressed and about 25 GB extracted, while the machine had 3.9 GB free. The program therefore queries the official API and downloads only the parts the question needs. It is a scoping choice: take the data you need, not all the data available.</p>
+    <h3>How the code works</h3>
+    <ul>
+      <li><strong>Pagination</strong>: the API returns at most 1,000 rows per page; the <code>paginate()</code> function follows the <code>next</code> link until there are no more.</li>
+      <li><strong>Selected fields</strong>: the <code>only=</code> parameter requests only the useful columns and reduces the volume.</li>
+      <li><strong>Retry with backoff</strong>: on network errors the program retries after 5, 10 and 20 seconds instead of failing.</li>
+      <li><strong>Batches</strong>: the properties of the 7,326 PDE4 compounds are requested 100 at a time.</li>
+      <li><strong>Manifest</strong>: for each file it records the URL, date and time, number of records and SHA-256 hash. If a file changes, the hash shows it.</li>
+    </ul>
+    <div class="say"><span class="label">In short</span><p>Every piece of data has a verifiable provenance: source, release, download date and file fingerprint. Anyone can rerun the analysis and check that they have the same inputs.</p></div>
+  </section>
+
+  <section class="step" id="s2">
+    <div class="step-head"><span class="step-num">02</span><h2>The data model</h2></div>
+    <p class="files">sql/schema.sql</p>
+    <p>The data is organised in a relational SQLite database: each table describes a single entity, linked to the others by keys. Questions are answered with <code>JOIN</code>s instead of hand-copied spreadsheets.</p>
+    <pre class="mermaid">
+erDiagram
+  molecules ||--o{ molecule_synonyms : "has names"
+  molecules ||--o{ molecule_atc : "classified"
+  atc_classes ||--o{ molecule_atc : "code"
+  molecules ||--o{ activities : "measured"
+  targets ||--o{ activities : "target"
+  fda_applications ||--o{ fda_products : "contains"
+  fda_products ||--o{ fda_product_ingredients : "active ingredients"
+  fda_product_ingredients }o--|| fda_ingredient_map : "FDA name"
+  fda_ingredient_map }o--o| molecules : "linked to"
+  molecules ||--o{ molecule_routes : "routes of administration"
+</pre>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Table</th><th>Content</th><th>Rows</th></tr></thead>
+      <tbody>
+        <tr><td><code>molecules</code></td><td>One row per molecule, with weight, logP, PSA, H-bond donors/acceptors, QED</td><td class="num">11,551</td></tr>
+        <tr><td><code>molecule_synonyms</code></td><td>INN, USAN, BAN and brand names</td><td class="num">57,694</td></tr>
+        <tr><td><code>atc_classes</code> · <code>molecule_atc</code></td><td>WHO ATC classification and codes per molecule</td><td class="num">5,579 · 3,168</td></tr>
+        <tr><td><code>fda_applications</code> · <code>fda_products</code></td><td>FDA applications and products with route of administration</td><td class="num">29,404 · 51,886</td></tr>
+        <tr><td><code>fda_product_ingredients</code></td><td>Active ingredients as written by FDA</td><td class="num">60,448</td></tr>
+        <tr><td><code>fda_ingredient_map</code></td><td>Bridge from FDA name to ChEMBL molecule</td><td class="num">2,910</td></tr>
+        <tr><td><code>molecule_routes</code></td><td>Molecule × route of administration</td><td class="num">3,433</td></tr>
+        <tr><td><code>targets</code> · <code>activities</code></td><td>PDE4 targets and activity measurements</td><td class="num">5 · 11,954</td></tr>
+        <tr><td><code>dataset_info</code></td><td>Provenance: releases, dates, hashes</td><td class="num">16</td></tr>
+      </tbody>
+    </table></div>
+    <div class="caveat"><span class="label">Empty columns</span><p>The ChEMBL 37 API does not return the descriptors calculated with ChemAxon (<code>cx_logp</code>, <code>cx_logd</code>, pKa, <code>molecular_species</code>): the schema declares them as always empty and they are left out of the analysis set. The charge of the molecule, important for inhaled drugs (for example the quaternary ammonium of tiotropium), will have to be calculated with RDKit.</p></div>
+    <h3>Three design choices</h3>
+    <ul>
+      <li><strong>Raw values kept.</strong> Measurements stay as published (<code>published_value</code>, <code>published_units</code>) next to the version standardised by ChEMBL. Cleaning happens later, in a visible way.</li>
+      <li><strong>Documentation inside the schema.</strong> Every column has a comment in the SQL code; the app reads it and shows it in the "Database structure" panel.</li>
+      <li><strong>Parents and salts.</strong> Many drugs exist as a salt (e.g. albuterol sulfate). Each molecule points to its <code>parent_chembl_id</code>, and properties are compared on the parent.</li>
+    </ul>
+    <div class="say"><span class="label">In short</span><p>I separated the entities, kept the original values and documented every column inside the schema itself, so the data dictionary never goes out of date.</p></div>
+  </section>
+
+  <section class="step" id="s3">
+    <div class="step-head"><span class="step-num">03</span><h2>Loading and integrating the sources</h2></div>
+    <p class="files">src/02_build_database.py · output: data/processed/pharma_inhalation.sqlite (25.3 MB)</p>
+    <p>The script rebuilds the database from scratch on every run: it deletes the file, runs <code>schema.sql</code>, and loads the JSON files and the FDA file. Rebuilding from scratch guarantees that the result depends only on the raw files and the code.</p>
+    <h3>The integration problem: linking FDA and ChEMBL</h3>
+    <p>FDA and ChEMBL do not share an identifier. The only link is the <strong>name</strong> of the active ingredient, written in different ways. The script solves it in two passes:</p>
+    <ol>
+      <li><strong>Exact match</strong> of the FDA name with the ChEMBL preferred name or a synonym (after normalising case and spaces). Example: <code>ALBUTEROL SULFATE</code> finds the salt molecule, which points to the parent <code>CHEMBL714</code>.</li>
+      <li>If that fails, <strong>counter-ions and hydrates are removed</strong> from the end of the name (SULFATE, HYDROCHLORIDE, MONOHYDRATE…) and the search is repeated.</li>
+    </ol>
+    <p>Each row records the method used (<code>match_method</code>), so the link can be checked:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Method</th><th>FDA names</th><th>Share</th></tr></thead>
+      <tbody>
+        <tr><td><code>exact</code></td><td class="num">2,687</td><td class="num">92.3%</td></tr>
+        <tr><td><code>salt_stripped</code></td><td class="num">8</td><td class="num">0.3%</td></tr>
+        <tr><td><code>unmatched</code></td><td class="num">215</td><td class="num">7.4%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="caveat"><span class="label">What is left out</span><p>The 215 unlinked names are mostly combinations written in a single field ("ABACAVIR, DOLUTEGRAVIR, LAMIVUDINE"), biologics with a suffix ("AFLIBERCEPT-BOAV") and very recent drugs. For the question about small-molecule inhaled drugs the impact is limited, but it should be measured before the final analysis.</p></div>
+    <h3>A materialised view for speed</h3>
+    <p>The view <code>v_molecule_routes</code> holds the join rule: products → active ingredients → map → parent molecule, grouped by route. Recomputing it in the browser on every query took about 5.4 seconds. The script computes it once and saves it in the indexed table <code>molecule_routes</code>: the same query drops to about 0.2 seconds.</p>
+    <div class="say"><span class="label">In short</span><p>92% of the names link exactly. For the others I know exactly which ones they are and why they do not link, and every link is traced.</p></div>
+  </section>
+
+  <section class="step" id="s4">
+    <div class="step-head"><span class="step-num">04</span><h2>Distributing the database</h2></div>
+    <p class="files">app/pharma_inhalation.sqlite.gz.b64.txt (9.3 MB)</p>
+    <p>The app runs entirely in the browser, with no server. To ship the database with it, the script compresses it with gzip (25.3 MB → 7.0 MB) and encodes it in base64, a text format that any static host serves. The browser does the reverse: it decodes the base64, decompresses with the native <code>DecompressionStream</code> API and opens the file.</p>
+    <div class="say"><span class="label">In short</span><p>Whoever opens the link installs nothing: the database and the SQL engine arrive with the page.</p></div>
+  </section>
+
+  <section class="step" id="s5">
+    <div class="step-head"><span class="step-num">05</span><h2>Exploration: SQL, charts and schema</h2></div>
+    <p class="files">app/index.html · app/stats.js · libraries: sql.js 1.10.3, Plotly 2.35.2 (strict build)</p>
+    <h3>The SQL engine</h3>
+    <p><strong>sql.js</strong> is SQLite compiled to JavaScript. The database is loaded in memory, so queries are real SQLite queries, with <code>JOIN</code>, <code>GROUP BY</code>, subqueries and functions. Changes (<code>CREATE</code>, <code>UPDATE</code>) last only for the session and do not touch the original file.</p>
+    <h3>From query to chart, automatically</h3>
+    <ol>
+      <li>The query returns columns and rows; the table shows the first 1,000 rows, sortable.</li>
+      <li><strong>Type inference</strong>: a column is numeric if all non-null values are numbers; for the others the distinct values are counted.</li>
+      <li><strong>Axis choice</strong>: a scatter plot uses the first two numeric columns, a histogram the first one, and a box plot groups by a text column with 2-12 values. If the previously chosen column still exists, the selection is kept.</li>
+      <li><strong>Groups and colours</strong>: the 7 largest groups get a colour and the rest go into "Other". The same value (for example <code>INHALATION</code>) keeps the same colour from one query to the next. The palette is checked for colour blindness.</li>
+      <li><strong>Missing values</strong>: rows without a numeric value are not drawn, and the chart states how many were excluded.</li>
+    </ol>
+    <h3>The database structure</h3>
+    <p>The left-hand panel reads the tables from <code>sqlite_master</code>, the columns from <code>PRAGMA table_info</code> and the descriptions from the comments in the schema. The search filters tables and columns by name or description; clicking a column inserts it into the query.</p>
+    <h3>Statistical analysis on the filtered result</h3>
+    <p>The "Statistical analysis" panel works on the rows returned by the query, so the filter is the <code>WHERE</code> clause. You choose the numeric variables and, if needed, a group column. Four analyses:</p>
+    <ul>
+      <li><strong>Descriptive</strong>: n, missing values, mean, standard deviation and quartiles, per variable and per group.</li>
+      <li><strong>Correlations</strong>: Pearson or Spearman matrix (on ranks, more robust to skew and extreme values) as a heatmap, plus the list of pairs sorted by strength. Each pair uses the rows where both values exist.</li>
+      <li><strong>PCA</strong>: reduces many correlated properties to a few components. Variables are standardised (z-score), so molecular weight and the number of H-bond donors count equally. The app shows the explained variance (scree plot), the scores coloured by group with the variable vectors (biplot) and the loading table. The scores can be saved to the <code>pca_scores</code> table and queried with SQL.</li>
+      <li><strong>Group comparison</strong>: Mann-Whitney for two groups, Kruskal-Wallis for three or more. These are non-parametric tests: they do not assume normal distributions, which these properties do not follow. P-values are corrected for multiple testing with the Holm method, and each test reports an effect size (rank-biserial r or ε²) with its threshold.</li>
+    </ul>
+    <p>Example on the clean data, 46 inhaled against 1,108 oral drugs: inhaled drugs have more H-bond donors (median 3.5 against 2, medium effect) and a lower QED. In the PCA on 8 descriptors, excluding the molecules that also exist as oral products, the first component explains 46.8% of the variance, and the first two together 72.5%.</p>
+    <h3>How I know the calculations are right</h3>
+    <p>The calculations live in a separate file, <code>app/stats.js</code>. The script <code>tests/validate_stats.py</code> runs it with Node on the same data and compares every result with numpy, pandas and scipy: 40 checks, from descriptive statistics to PCA loadings. The largest differences are of the order of 10⁻¹⁴ for exact calculations and 10⁻⁷ relative for p-values. The check runs automatically on GitHub at every change.</p>
+    <div class="say"><span class="label">In short</span><p>I built the tool I use to explore the data: every hypothesis becomes a query, and every query immediately becomes a chart and a test. And I checked the tool's calculations against the standard scientific libraries.</p></div>
+  </section>
+
+  <section class="step" id="s6">
+    <div class="step-head"><span class="step-num">06</span><h2>Data cleaning and the exclusion ledger</h2></div>
+    <p class="files">src/cleaning.py · notebooks/02_data_cleaning.ipynb · output: 6 new tables + reports/cleaning_log.csv</p>
+    <p>Cleaning is a series of decisions. The program makes them <strong>explicit, ordered and countable</strong>:</p>
+    <ul>
+      <li>Raw tables do not change: the result goes into new tables (<code>activities_clean</code>, <code>activity_potency</code>, <code>molecule_routes_clean</code>, <code>inhalation_dataset</code>).</li>
+      <li>Rules are applied in sequence and each one only sees what is left by the previous ones: <strong>every excluded record has exactly one reason</strong>.</li>
+      <li>A Python object, the <code>Ledger</code>, records for each rule the rows before, removed, after and flagged, plus the identifier of every excluded record. It ends up in the <code>cleaning_log</code> and <code>cleaning_exclusions</code> tables, which the app can query with SQL.</li>
+      <li>The logic lives in a reusable Python module; the notebook runs it step by step with the evidence (tables, charts, checks).</li>
+    </ul>
+
+    <h3>Part A · PDE4 activity measurements: from 11,954 to 8,793</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Rule</th><th>Reason</th><th>Excluded</th></tr></thead>
+      <tbody>
+        <tr><td>A1 · Flagged by curators</td><td>ChEMBL marks the value as suspect</td><td class="num">259</td></tr>
+        <tr><td>A2 · Relation other than "="</td><td>Censored values (&lt;, &gt;) only give a threshold, not a potency</td><td class="num">2,892</td></tr>
+        <tr><td>A3 · Unit other than nM</td><td>Percentages and missing units cannot become concentrations</td><td class="num">10</td></tr>
+        <tr><td>A4 · Missing value or ≤ 0</td><td>The logarithm needs a positive number</td><td class="num">0</td></tr>
+        <tr><td>A5 · pX outside 3-12</td><td>Weaker than 1 mM or stronger than 1 pM is almost always a unit error</td><td class="num">0</td></tr>
+      </tbody>
+    </table></div>
+    <p>Each measurement becomes a logarithm: <strong>pX = 9 − log10(value in nM)</strong>. On a log scale, values from picomolar to millimolar become comparable, and one unit means a factor of 10.</p>
+    <ul>
+      <li><strong>Check A6</strong>: the calculated pX matches the pChEMBL value calculated by ChEMBL in all 8,793 measurements (0 differences above 0.05). Two independent routes, same number.</li>
+      <li><strong>Aggregation A7</strong>: repeated measurements become one median per molecule × target × measurement type: 6,887 pairs. The median is more robust to outliers than the mean.</li>
+      <li><strong>Check A8</strong>: 208 pairs have replicates that differ more than 10-fold. They stay in the data, flagged with <code>inconsistent = 1</code>.</li>
+    </ul>
+
+    <h3>Part B · Analysis set: from 1,305 molecules to 46 inhaled + 1,108 oral</h3>
+    <p>First, three transformations that exclude nothing but fix the way the data is written:</p>
+    <ul>
+      <li><strong>Normalised routes of administration</strong>: "INHALATION, ORAL" and "Inhalation, Oral" are split and upper-cased. Inhaled molecules go from 65 to 66.</li>
+      <li><strong>ATC codes inherited from salts</strong>: many ATC codes are stored on the salt (e.g. tiotropium bromide, R03BB04) and are assigned to the parent molecule.</li>
+      <li><strong>Exclusive groups</strong>: a molecule with inhaled products goes into the inhaled group even if it also exists as an oral product (15 cases, flagged with <code>also_oral</code> for the sensitivity analysis).</li>
+    </ul>
+    <p>Then six exclusion rules, with a symmetrical logic between the two groups:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Rule</th><th>Examples</th><th>Excluded</th></tr></thead>
+      <tbody>
+        <tr><td>M1 · Not a small molecule</td><td>inhaled insulin, radiopharmaceuticals</td><td class="num">37</td></tr>
+        <tr><td>M2 · Core properties missing</td><td>sodium chloride, noble gases</td><td class="num">63</td></tr>
+        <tr><td>M3 · Medical gases (&lt; 100 Da or ATC V03AN)</td><td>oxygen, nitrogen, nitric oxide, nitrous oxide</td><td class="num">10</td></tr>
+        <tr><td>M4 · Diagnostics only (ATC V04/V08/V09)</td><td>methacholine, contrast agents</td><td class="num">12</td></tr>
+        <tr><td>M5 · Inhaled drugs acting on the nervous system (ATC N)</td><td>sevoflurane, isoflurane, loxapine, levodopa</td><td class="num">9</td></tr>
+        <tr><td>M6 · Oral drugs acting only in the gut (ATC A06/A07)</td><td>mesalazine, loperamide, lactulose</td><td class="num">20</td></tr>
+      </tbody>
+    </table></div>
+    <p>M5 and M6 are the central choice. An inhaled anaesthetic must reach the blood, the opposite of a drug that must stay in the lung; an oral drug acting in the gut is designed not to be absorbed, the opposite of a systemic oral drug. Keeping them would blur exactly the difference we want to measure.</p>
+
+    <h3>Automatic checks</h3>
+    <ul>
+      <li><strong>References</strong>: albuterol, budesonide, fluticasone propionate, formoterol, ipratropium, salmeterol and tiotropium must be in the inhaled group. If a rule removed them, the notebook stops with an error.</li>
+      <li><strong>Integrity</strong>: kept records + excluded records = starting records, and the recorded exclusions match the sum in the ledger. Here too the notebook stops if the numbers do not add up.</li>
+    </ul>
+    <div class="caveat"><span class="label">Limitation</span><p>Rules M3-M6 use the ATC classification as an indicator of therapeutic intent. It is an approximation: 7 inhaled drugs without an ATC code (including arformoterol, vilanterol and ensifentrine) stay in the group without this filter. Among them, pentetic acid (DTPA), a chelator that acts systemically, should be reviewed by hand.</p></div>
+    <div class="say"><span class="label">In short</span><p>The inhaled group has 46 molecules, not 66. I can say exactly which 20 I removed, with which rule and why, and the notebook proves that the reference drugs are all still there.</p></div>
+  </section>
+
+  <section class="step" id="s7">
+    <div class="step-head"><span class="step-num">07</span><h2>Next steps: statistics and presentation</h2></div>
+    <p>Notebook 03 will compare the two groups for each property with non-parametric tests (Mann-Whitney), effect sizes and bootstrap confidence intervals, repeating the analysis without the 15 <code>also_oral</code> molecules. Then a simple, explainable "inhalability" score, to be checked on the reference drugs, and its application to potent PDE4 inhibitors.</p>
+  </section>
+
+  <section class="step qa" id="qa">
+    <div class="step-head"><span class="step-num">?</span><h2>Questions a reviewer might ask</h2></div>
+    <details><summary>Why SQLite and not a database server?</summary><p>For a 25 MB dataset SQLite is enough: one file, no installation, standard SQL. The schema moves to PostgreSQL without substantial changes if the data grows.</p></details>
+    <details><summary>How do you make sure the data is the right data?</summary><p>Every raw file has its source, date, number of records and SHA-256 hash in the manifest, and the same values are in the <code>dataset_info</code> table. The database can be rebuilt from scratch with two commands.</p></details>
+    <details><summary>Why does your inhaled group exclude some inhaled drugs?</summary><p>Because the question is about drugs that must act in the lung. Medical gases, volatile anaesthetics and drugs inhaled to reach the brain have the opposite goal. The 20 exclusions are listed one by one, with the rule that removed them, in the <code>cleaning_exclusions</code> table.</p></details>
+    <details><summary>Why didn't you clean the data while loading it?</summary><p>Because cleaning is a series of decisions that need to be justified. Keeping the original values, I can show how many rows each rule removes and why, and change a rule without downloading anything again.</p></details>
+    <details><summary>How reliable is the FDA-ChEMBL link?</summary><p>92.3% of the names link exactly, 0.3% after removing the salt, and 7.4% remain excluded. Each row states its method, so the error is measurable and can be spot-checked.</p></details>
+    <details><summary>What does this analysis not show?</summary><p>It does not prove that a molecule works by inhalation. It describes the differences between drugs already approved for inhaled and oral use; with 65 inhaled molecules the results are indications to be validated.</p></details>
+  </section>
+</div>
+
+<script type="module">
+  // Renders the entity-relationship diagram in step 02.
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+  const dark = document.documentElement.dataset.theme === "dark"
+    || (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+  mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "neutral" });
+</script>
+</body>
+</html>

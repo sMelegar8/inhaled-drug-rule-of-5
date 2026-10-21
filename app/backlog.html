@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -52,11 +52,12 @@ code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surfa
 .area-note { color: var(--muted); font-size: 13.5px; margin: -6px 0 10px; }
 .items { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
 .item { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 4px 14px; padding: 12px 14px; border-bottom: 1px solid var(--line); align-items: start; }
+.item[hidden], .area[hidden] { display: none; }
 .item:last-child { border-bottom: 0; }
 .prio { font: 600 11px var(--font-display); text-transform: uppercase; letter-spacing: 0.07em; padding: 2px 0; border-radius: 4px; text-align: center; }
-.prio.alta { background: var(--high-soft); color: var(--high); }
-.prio.media { background: var(--mid-soft); color: var(--mid); }
-.prio.bassa { background: var(--low-soft); color: var(--low); }
+.prio.high { background: var(--high-soft); color: var(--high); }
+.prio.medium { background: var(--mid-soft); color: var(--mid); }
+.prio.low { background: var(--low-soft); color: var(--low); }
 .what { font-weight: 600; }
 .why { grid-column: 2 / 3; color: var(--fg-2); font-size: 14px; }
 .effort { font: 12px var(--font-mono); color: var(--muted); white-space: nowrap; padding-top: 2px; }
@@ -79,131 +80,124 @@ code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surfa
 </style>
 </head>
 <body>
-<nav class="sitenav" aria-label="Pagine del progetto">
+<nav class="sitenav" aria-label="Project pages">
   <span class="sitenav-brand">Inhalation Workbench</span>
-  <a href="index.html">Workbench SQL</a>
-  <a href="come-funziona.html">Come funziona</a>
+  <a href="index.html">SQL workbench</a>
+  <a href="how-it-works.html">How it works</a>
   <a href="backlog.html" aria-current="page">Backlog</a>
 </nav>
 <div class="wrap">
-  <div class="eyebrow">Inhalation SQL Workbench · stato al 21 ottobre 2026</div>
-  <h1>Cosa implementare o migliorare</h1>
-  <p class="lede">Lista di lavoro emersa costruendo la prima versione. Ogni voce dice cosa fare, perché serve e quanto lavoro richiede, stimato a grandi linee (S = poche ore, M = una giornata, L = più giorni).</p>
+  <div class="eyebrow">Inhalation SQL Workbench · status on 21 October 2026</div>
+  <h1>What to build or improve next</h1>
+  <p class="lede">Work list that came out of building the first version. Each item says what to do, why it matters and roughly how much work it takes (S = a few hours, M = about a day, L = several days).</p>
 
-  <div class="summary" role="group" aria-label="Filtra per priorità">
-    <button class="filter" type="button" data-p="all" aria-pressed="true">Tutte <b id="c-all"></b></button>
-    <button class="filter" type="button" data-p="alta" aria-pressed="false">Alta <b id="c-alta"></b></button>
-    <button class="filter" type="button" data-p="media" aria-pressed="false">Media <b id="c-media"></b></button>
-    <button class="filter" type="button" data-p="bassa" aria-pressed="false">Bassa <b id="c-bassa"></b></button>
+  <div class="summary" role="group" aria-label="Filter by priority">
+    <button class="filter" type="button" data-p="all" aria-pressed="true">All <b id="c-all"></b></button>
+    <button class="filter" type="button" data-p="high" aria-pressed="false">High <b id="c-high"></b></button>
+    <button class="filter" type="button" data-p="medium" aria-pressed="false">Medium <b id="c-medium"></b></button>
+    <button class="filter" type="button" data-p="low" aria-pressed="false">Low <b id="c-low"></b></button>
   </div>
 
   <section class="area">
-    <h2>Dati e integrazione</h2>
-    <p class="area-note">Riguarda 01_download_data.py e 02_build_database.py.</p>
+    <h2>Data and integration</h2>
+    <p class="area-note">Covers 01_download_data.py and 02_build_database.py.</p>
     <ul class="items">
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Separare le combinazioni nei nomi FDA</span><span class="effort">M</span>
-        <span class="why">Molti dei 215 nomi non collegati sono combinazioni in un solo campo ("A, B", "A || B", "A AND B"). Serve una tabella ponte molti-a-molti (prodotto → componenti) e un nuovo conteggio dei non collegati.</span></li>
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Verifica manuale a campione del collegamento FDA → ChEMBL</span><span class="effort">S</span>
-        <span class="why">Controllare 50 righe casuali per metodo e stimare il tasso di errore. È il numero che rende credibile il gruppo "inalatori".</span></li>
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Attribuzione e licenze delle fonti</span><span class="effort">S</span>
-        <span class="why">ChEMBL è distribuito con licenza CC BY-SA 3.0 e va citato; openFDA va indicato come fonte. Inserire l'attribuzione nell'app, nel README e nelle pagine pubblicate.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Fonte europea per le vie di somministrazione</span><span class="effort">M</span>
-        <span class="why">openFDA copre il mercato USA. I dati EMA sui medicinali autorizzati aggiungerebbero inalatori approvati in Europa, più vicini al contesto delle aziende italiane.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Altri bersagli respiratori</span><span class="effort">S</span>
-        <span class="why">Oltre a PDE4: recettore β2-adrenergico, recettore muscarinico M3, recettore dei glucocorticoidi. Permette di confrontare classi terapeutiche inalatorie diverse.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Un solo comando per tutta la pipeline e test automatici</span><span class="effort">M</span>
-        <span class="why">Uno script <code>run_pipeline.py</code> e test pytest su <code>strip_salts</code>, sul collegamento dei nomi e sui conteggi attesi delle tabelle. Mostra disciplina da software, non solo da analisi.</span></li>
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Carica e ionizzazione delle molecole</span><span class="effort">M</span>
-        <span class="why">L'API di ChEMBL 37 non restituisce logD, pKa e specie molecolare (colonne sempre vuote). Per gli inalatori la carica conta: molti anticolinergici sono ammoni quaternari. Calcolare carica formale e gruppi ionizzabili con RDKit.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">RDKit per ricalcolo descrittori e scaffold</span><span class="effort">M</span>
-        <span class="why">Oggi le proprietà sono quelle calcolate da ChEMBL. Con RDKit si possono validare gli SMILES, ricalcolare i descrittori e raggruppare i composti per scaffold (Bemis-Murcko). RDKit non è ancora installato.</span></li>
-      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Download incrementale con confronto degli hash</span><span class="effort">S</span>
-        <span class="why">Riscaricare solo se la release ChEMBL o l'export openFDA cambiano, e segnalare le differenze rispetto alla build precedente.</span></li>
-      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Dump ChEMBL completo</span><span class="effort">M</span>
-        <span class="why">Richiede circa 30 GB liberi (oggi 3,9 GB). Darebbe accesso diretto a prodotti, formulazioni e tutte le attività senza limiti dell'API.</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">Split combinations in FDA names</span><span class="effort">M</span>
+        <span class="why">Many of the 215 unlinked names are combinations in a single field ("A, B", "A || B", "A AND B"). This needs a many-to-many bridge table (product → components) and a new count of unlinked names.</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">Manual spot check of the FDA → ChEMBL link</span><span class="effort">S</span>
+        <span class="why">Check 50 random rows per method and estimate the error rate. This is the number that makes the "inhaled" group credible.</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">Source attribution inside the app</span><span class="effort">S</span>
+        <span class="why">ChEMBL is licensed under CC BY-SA 3.0 and must be credited; openFDA must be named as a source. The README and DATA_LICENSE.md already do this; the app pages should show it too.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">European source for routes of administration</span><span class="effort">M</span>
+        <span class="why">openFDA covers the US market. EMA data on authorised medicines would add inhaled drugs approved in Europe, closer to the context of European companies.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">More respiratory targets</span><span class="effort">S</span>
+        <span class="why">Beyond PDE4: the β2-adrenergic receptor, the muscarinic M3 receptor and the glucocorticoid receptor. This allows comparing different inhaled therapeutic classes.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">One command for the whole pipeline, and pipeline tests</span><span class="effort">M</span>
+        <span class="why">A <code>run_pipeline.py</code> script and pytest tests on <code>strip_salts</code>, on name linking and on the expected table counts. Today CI checks only the app statistics.</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">Charge and ionisation of the molecules</span><span class="effort">M</span>
+        <span class="why">The ChEMBL 37 API does not return logD, pKa or molecular species (the columns are always empty). For inhaled drugs charge matters: many anticholinergics are quaternary ammonium compounds. Calculate formal charge and ionisable groups with RDKit.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">RDKit for descriptors and scaffolds</span><span class="effort">M</span>
+        <span class="why">RDKit is already used for the structural motifs. Next: validate the SMILES, recalculate the descriptors that today come from ChEMBL, and group compounds by scaffold (Bemis-Murcko).</span></li>
+      <li class="item" data-p="low"><span class="prio low">Low</span><span class="what">Incremental download with hash comparison</span><span class="effort">S</span>
+        <span class="why">Download again only if the ChEMBL release or the openFDA export changes, and report the differences from the previous build.</span></li>
+      <li class="item" data-p="low"><span class="prio low">Low</span><span class="what">Full ChEMBL dump</span><span class="effort">M</span>
+        <span class="why">Needs about 30 GB of free space. It would give direct access to products, formulations and all activities, without API limits.</span></li>
     </ul>
   </section>
 
   <section class="area">
-    <h2>Pulizia e analisi statistica</h2>
-    <p class="area-note">La prossima fase del progetto, in Python con pandas.</p>
+    <h2>Cleaning and statistical analysis</h2>
+    <p class="area-note">The next phase of the project, in Python with pandas.</p>
     <ul class="items">
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Revisione manuale degli inalatori senza codice ATC</span><span class="effort">S</span>
-        <span class="why">7 molecole del gruppo inalatori non hanno ATC e sfuggono alle regole M3-M6. L'acido pentetico (DTPA) agisce a livello sistemico e probabilmente va escluso: serve una regola documentata, non una cancellazione a mano.</span></li>
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Confronto statistico inalatori vs orali</span><span class="effort">M</span>
-        <span class="why">Test di Mann-Whitney per ogni proprietà, effect size, intervalli di confidenza bootstrap e correzione per confronti multipli. Con 65 inalatori l'effect size conta più del p-value.</span></li>
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Punteggio di inalabilità spiegabile</span><span class="effort">M</span>
-        <span class="why">Poche regole o una regressione logistica semplice. Verifica obbligatoria: budesonide, formoterolo e tiotropio devono ottenere un punteggio alto.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Applicazione ai composti PDE4</span><span class="effort">M</span>
-        <span class="why">Calcolare il punteggio sugli inibitori PDE4 potenti (pIC50 ≥ 7) e mostrare quali chemotipi sono più adatti all'inalazione.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Trend temporali</span><span class="effort">S</span>
-        <span class="why">Come cambiano peso molecolare e polarità degli inalatori per anno di prima approvazione (<code>first_approval</code>).</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">Manual review of inhaled drugs without an ATC code</span><span class="effort">S</span>
+        <span class="why">7 molecules in the inhaled group have no ATC code and escape rules M3-M6. Pentetic acid (DTPA) acts systemically and should probably be excluded: this needs a documented rule, not a manual deletion.</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">Statistical comparison of inhaled vs oral drugs</span><span class="effort">M</span>
+        <span class="why">Mann-Whitney test for each property, effect sizes, bootstrap confidence intervals and correction for multiple comparisons. With 46 inhaled drugs the effect size matters more than the p-value.</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">Explainable inhalability score</span><span class="effort">M</span>
+        <span class="why">A few rules or a simple logistic regression. Required check: budesonide, formoterol and tiotropium must get a high score.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">Application to PDE4 compounds</span><span class="effort">M</span>
+        <span class="why">Calculate the score for potent PDE4 inhibitors (pIC50 ≥ 7) and show which chemotypes are best suited to inhalation.</span></li>
     </ul>
   </section>
 
   <section class="area">
-    <h2>App SQL nel browser</h2>
-    <p class="area-note">Riguarda app/index.html.</p>
+    <h2>In-browser SQL app</h2>
+    <p class="area-note">Covers app/index.html.</p>
     <ul class="items">
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Evidenziazione della sintassi e autocompletamento</span><span class="effort">M</span>
-        <span class="why">Un editor vero (CodeMirror) con colori SQL e suggerimenti di tabelle e colonne lette dallo schema.</span></li>
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Motore SQL WebAssembly</span><span class="effort">S</span>
-        <span class="why">Oggi l'app usa la build asm.js di sql.js. La build WebAssembly è più veloce, ma richiede di pubblicare il file .wasm accanto alla pagina e di verificare che la piattaforma lo esegua.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Query in un Web Worker</span><span class="effort">M</span>
-        <span class="why">Una query lunga oggi blocca la pagina. In un worker l'interfaccia resta reattiva e si può aggiungere un pulsante "Interrompi".</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Cronologia e query salvate</span><span class="effort">S</span>
-        <span class="why">Ritrovare le ultime query e dare un nome a quelle utili per l'analisi.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Regressione e altri grafici</span><span class="effort">M</span>
-        <span class="why">Linea di tendenza con R² sullo scatter, scatter matrix, densità 2D. Descrittive, correlazioni, PCA e test tra gruppi sono già nel pannello statistico.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Clustering (k-means) sui punteggi PCA</span><span class="effort">M</span>
-        <span class="why">Raggruppare le molecole per profilo chimico e vedere se gli inalatori formano un gruppo a sé. Va validato contro scikit-learn come la PCA.</span></li>
-      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Intervalli di confidenza bootstrap nell'app</span><span class="effort">S</span>
-        <span class="why">Per mediane ed effect size dei gruppi piccoli (46 inalatori). Oggi sono previsti nel notebook 03.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Struttura chimica nel tooltip</span><span class="effort">M</span>
-        <span class="why">Disegnare la molecola dallo SMILES al passaggio del mouse su un punto. Per un pubblico pharma rende i grafici subito leggibili.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Risultati di più istruzioni in schede</span><span class="effort">S</span>
-        <span class="why">Con più query separate da punto e virgola oggi si vede solo l'ultimo risultato.</span></li>
-      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Esportazione dei grafici</span><span class="effort">S</span>
-        <span class="why">Nella versione locale abilitare il salvataggio PNG/SVG per le slide; nella pagina pubblicata i download sono bloccati.</span></li>
-      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Paginazione e filtri nella tabella risultati</span><span class="effort">S</span>
-        <span class="why">Oggi si vedono le prime 1.000 righe; il grafico usa comunque tutte le righe.</span></li>
-      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Chiavi esterne e diagramma nella sezione schema</span><span class="effort">S</span>
-        <span class="why">Mostrare quali colonne collegano le tabelle, così si scrivono i JOIN senza aprire la documentazione.</span></li>
-      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Interfaccia in inglese</span><span class="effort">S</span>
-        <span class="why">Per un portfolio internazionale: testi IT/EN selezionabili.</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">Syntax highlighting and autocompletion</span><span class="effort">M</span>
+        <span class="why">A real editor (CodeMirror) with SQL colouring and suggestions of tables and columns read from the schema.</span></li>
+      <li class="item" data-p="high"><span class="prio high">High</span><span class="what">WebAssembly SQL engine</span><span class="effort">S</span>
+        <span class="why">The app uses the asm.js build of sql.js. The WebAssembly build is faster but needs the .wasm file published next to the page.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">Queries in a Web Worker</span><span class="effort">M</span>
+        <span class="why">A long query currently blocks the page. In a worker the interface stays responsive and a "Stop" button can be added.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">History and saved queries</span><span class="effort">S</span>
+        <span class="why">Find recent queries again and name the ones that are useful for the analysis.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">Regression and more charts</span><span class="effort">M</span>
+        <span class="why">Trend line with R² on scatter plots, scatter matrix, 2D density. Descriptive statistics, correlations, PCA and group tests are already in the statistics panel.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">Clustering (k-means) on PCA scores</span><span class="effort">M</span>
+        <span class="why">Group molecules by chemical profile and see whether inhaled drugs form a cluster of their own. To be validated against scikit-learn, like the PCA.</span></li>
+      <li class="item" data-p="low"><span class="prio low">Low</span><span class="what">Bootstrap confidence intervals in the app</span><span class="effort">S</span>
+        <span class="why">For medians and effect sizes of small groups (46 inhaled drugs). Today they are planned for notebook 03.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">Chemical structure in the tooltip</span><span class="effort">M</span>
+        <span class="why">Draw the molecule from its SMILES when hovering over a point. For a pharma audience this makes the charts readable at once.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">Results of several statements in tabs</span><span class="effort">S</span>
+        <span class="why">With several queries separated by semicolons, only the last result is shown today.</span></li>
+      <li class="item" data-p="low"><span class="prio low">Low</span><span class="what">Chart export</span><span class="effort">S</span>
+        <span class="why">Enable PNG/SVG download for slides; the button is currently removed from the chart toolbar.</span></li>
+      <li class="item" data-p="low"><span class="prio low">Low</span><span class="what">Pagination and filters in the results table</span><span class="effort">S</span>
+        <span class="why">The table shows the first 1,000 rows; the chart always uses all rows.</span></li>
+      <li class="item" data-p="low"><span class="prio low">Low</span><span class="what">Foreign keys and a diagram in the schema panel</span><span class="effort">S</span>
+        <span class="why">Show which columns link the tables, so JOINs can be written without opening the documentation.</span></li>
     </ul>
   </section>
 
   <section class="area">
-    <h2>Portfolio e presentazione</h2>
+    <h2>Portfolio and presentation</h2>
     <ul class="items">
-      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">README orientato alle domande di business</span><span class="effort">M</span>
-        <span class="why">Domanda, dati, metodo, risultati con un grafico chiave, limiti dichiarati. Chi recluta legge questo prima del codice.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Repository GitHub pubblico</span><span class="effort">S</span>
-        <span class="why">Codice, query in <code>sql/</code>, notebook numerati e pagine di spiegazione. I dati grezzi restano fuori dal repository e si rigenerano con gli script.</span></li>
-      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Dizionario dati generato dallo schema</span><span class="effort">S</span>
-        <span class="why">Esportare in Markdown tabelle, colonne e commenti, sempre allineato al database.</span></li>
-      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Versione inglese delle pagine di spiegazione</span><span class="effort">S</span>
-        <span class="why">Per candidature in aziende con lingua di lavoro inglese.</span></li>
+      <li class="item" data-p="medium"><span class="prio medium">Medium</span><span class="what">Data dictionary generated from the schema</span><span class="effort">S</span>
+        <span class="why">Export tables, columns and comments to Markdown, always in line with the database.</span></li>
     </ul>
   </section>
 
   <section class="area" id="done">
-    <h2>Completato</h2>
+    <h2>Done</h2>
     <ul class="lede">
-      <li><strong>Notebook di pulizia con registro delle esclusioni</strong> (notebook 02, <code>src/cleaning.py</code>): misure PDE4 da 11.954 a 8.793, insieme di analisi da 1.305 a 1.154 molecole; tabelle <code>cleaning_log</code> e <code>cleaning_exclusions</code>.</li>
-      <li><strong>Regola per i farmaci con più vie</strong>: inalatorio prevale su orale, 15 molecole segnalate con <code>also_oral</code> per l'analisi di sensibilità.</li>
-      <li><strong>Vie di somministrazione normalizzate</strong>: "INHALATION, ORAL" e varianti in minuscolo ora contano.</li>
-      <li><strong>Pannello di analisi statistica nell'app</strong>: descrittive, correlazioni, PCA con biplot e salvataggio in <code>pca_scores</code>, Mann-Whitney e Kruskal-Wallis con correzione di Holm ed effect size. Calcoli validati contro numpy/scipy (<code>tests/validate_stats.py</code>, 40 controlli).</li>
+      <li><strong>Cleaning notebook with exclusion ledger</strong> (notebook 02, <code>src/cleaning.py</code>): PDE4 measurements from 11,954 to 8,793, analysis set from 1,305 to 1,154 molecules; tables <code>cleaning_log</code> and <code>cleaning_exclusions</code>.</li>
+      <li><strong>Rule for drugs with several routes</strong>: inhaled takes precedence over oral, 15 molecules flagged with <code>also_oral</code> for the sensitivity analysis.</li>
+      <li><strong>Normalised routes of administration</strong>: "INHALATION, ORAL" and lower-case variants now count.</li>
+      <li><strong>Statistics panel in the app</strong>: descriptive statistics, correlations, PCA with biplot and saving to <code>pca_scores</code>, Mann-Whitney and Kruskal-Wallis with Holm correction and effect sizes. Calculations validated against numpy/scipy (<code>tests/validate_stats.py</code>, 40 checks).</li>
+      <li><strong>Time trends and structural motifs</strong> (<code>src/explore_trends.py</code>, <code>src/explore_chemistry.py</code>): lipophilicity over approval years, fluorination, quaternary ammonium, PDE4 selectivity and catechol diether trends.</li>
+      <li><strong>Public GitHub repository</strong> with a README built around the question, MIT and CC BY-SA 3.0 licences, CI that runs the statistics validation, and this site on GitHub Pages.</li>
+      <li><strong>English interface</strong> for the app, the explanation pages, the cleaning ledger and notebook 02.</li>
     </ul>
   </section>
 
-  <p class="legend">Stima dello sforzo: S = poche ore · M = circa una giornata · L = più giorni.</p>
+  <p class="legend">Effort estimate: S = a few hours · M = about a day · L = several days.</p>
 </div>
 
 <script>
 const items = [...document.querySelectorAll(".item")];
-for (const p of ["all", "alta", "media", "bassa"]) {
+for (const p of ["all", "high", "medium", "low"]) {
   document.getElementById("c-" + p).textContent = p === "all" ? items.length : items.filter((i) => i.dataset.p === p).length;
 }
 for (const btn of document.querySelectorAll(".filter")) {
@@ -211,7 +205,7 @@ for (const btn of document.querySelectorAll(".filter")) {
     const p = btn.dataset.p;
     document.querySelectorAll(".filter").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
     items.forEach((i) => { i.hidden = p !== "all" && i.dataset.p !== p; });
-    document.querySelectorAll(".area").forEach((a) => { a.hidden = ![...a.querySelectorAll(".item")].some((i) => !i.hidden); });
+    document.querySelectorAll(".area:not(#done)").forEach((a) => { a.hidden = ![...a.querySelectorAll(".item")].some((i) => !i.hidden); });
   });
 }
 </script>

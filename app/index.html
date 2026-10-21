@@ -1,3 +1,5 @@
+<!doctype html>
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Inhalation SQL Workbench</title>
@@ -194,46 +196,46 @@ code { font-family: var(--font-mono); font-size: 0.92em; background: var(--surfa
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
-<nav class="sitenav" aria-label="Pagine del progetto">
+<nav class="sitenav" aria-label="Project pages">
   <span class="sitenav-brand">Inhalation Workbench</span>
-  <a href="index.html" aria-current="page">Workbench SQL</a>
-  <a href="come-funziona.html">Come funziona</a>
+  <a href="index.html" aria-current="page">SQL workbench</a>
+  <a href="how-it-works.html">How it works</a>
   <a href="backlog.html">Backlog</a>
 </nav>
 <header class="top">
   <div class="top-inner">
     <div class="brand">
       <h1>Inhalation SQL Workbench</h1>
-      <p>Farmaci approvati ChEMBL, prodotti FDA con via di somministrazione e misure di attività su PDE4. Il database SQLite gira in memoria nel browser: scrivi SQL, i grafici si aggiornano con ogni risultato.</p>
+      <p>ChEMBL approved drugs, FDA products with their route of administration, and PDE4 activity measurements. The SQLite database runs in memory in your browser: write SQL and the charts update with every result.</p>
     </div>
-    <div class="provenance" id="provenance" aria-label="Provenienza dei dati">
-      <span class="chip">Database <b>in caricamento…</b></span>
+    <div class="provenance" id="provenance" aria-label="Data provenance">
+      <span class="chip">Database <b>loading…</b></span>
     </div>
   </div>
 </header>
 
-<div id="loading" class="loading">Carico il motore SQL e il database (circa 6 MB)…</div>
+<div id="loading" class="loading">Loading the SQL engine and the database (about 7 MB)…</div>
 
 <div id="loadHelp" class="loader-box panel" hidden>
-  <div class="panel-head"><h2>Database non trovato</h2></div>
+  <div class="panel-head"><h2>Database not found</h2></div>
   <div class="panel-body">
     <p id="loadError"></p>
-    <p>In locale avvia un server nella cartella del progetto, poi apri <code>http://localhost:8000</code>:</p>
-    <p><code>py -3.13 -m http.server 8000 -d app</code></p>
-    <p>Oppure scegli direttamente un file SQLite (anche compresso <code>.gz</code>/<code>.bin</code>):</p>
+    <p>Locally, start a server in the project folder, then open <code>http://localhost:8000</code>:</p>
+    <p><code>python -m http.server 8000 -d app</code></p>
+    <p>Or choose a SQLite file directly (compressed <code>.gz</code>/<code>.bin</code> files work too):</p>
     <input type="file" id="fileInputHelp" accept=".sqlite,.db,.sqlite3,.gz,.bin">
   </div>
 </div>
 
 <div class="app" id="app" hidden>
-  <aside class="panel schema" aria-label="Struttura del database">
+  <aside class="panel schema" aria-label="Database structure">
     <div class="panel-head">
-      <h2>Struttura del database</h2>
-      <label class="btn small" for="fileInput">Apri file…</label>
+      <h2>Database structure</h2>
+      <label class="btn small" for="fileInput">Open file…</label>
       <input type="file" id="fileInput" accept=".sqlite,.db,.sqlite3,.gz,.bin" hidden>
     </div>
     <div class="panel-body">
-      <input id="schemaSearch" class="search" type="search" placeholder="Cerca tabella o colonna (es. psa, route)" aria-label="Cerca tabella o colonna">
+      <input id="schemaSearch" class="search" type="search" placeholder="Search tables or columns (e.g. psa, route)" aria-label="Search tables or columns">
       <div class="search-meta" id="schemaMeta"></div>
       <div id="schemaList"></div>
     </div>
@@ -245,101 +247,101 @@ code { font-family: var(--font-mono); font-size: 0.92em; background: var(--surfa
       <div class="panel-head">
         <h2 id="editorTitle">Query SQL</h2>
         <div class="row">
-          <label for="examples" class="check">Esempi</label>
+          <label for="examples" class="check">Examples</label>
           <select id="examples"></select>
         </div>
       </div>
-      <textarea id="sql" spellcheck="false" aria-label="Editor SQL"></textarea>
+      <textarea id="sql" spellcheck="false" aria-label="SQL editor"></textarea>
       <div id="errorBox" class="error-box" hidden></div>
       <div class="editor-foot">
-        <div class="status" id="status" role="status">Pronto.</div>
+        <div class="status" id="status" role="status">Ready.</div>
         <div class="row">
-          <span class="check"><input type="checkbox" id="liveRun" checked><label for="liveRun">Aggiorna mentre scrivi</label></span>
-          <span class="check"><kbd>Ctrl</kbd>+<kbd>Invio</kbd></span>
-          <button class="btn primary" id="runBtn" type="button">Esegui query</button>
+          <span class="check"><input type="checkbox" id="liveRun" checked><label for="liveRun">Update as you type</label></span>
+          <span class="check"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+          <button class="btn primary" id="runBtn" type="button">Run query</button>
         </div>
       </div>
     </section>
 
     <section class="panel" aria-labelledby="chartTitle">
-      <div class="panel-head"><h2 id="chartTitle">Grafico</h2><span class="status" id="chartNote"></span></div>
+      <div class="panel-head"><h2 id="chartTitle">Chart</h2><span class="status" id="chartNote"></span></div>
       <div class="panel-body">
         <div class="chart-controls">
-          <div class="field"><label for="chartType">Tipo</label>
+          <div class="field"><label for="chartType">Type</label>
             <select id="chartType">
               <option value="scatter">Scatter</option>
-              <option value="histogram">Istogramma</option>
+              <option value="histogram">Histogram</option>
               <option value="box">Box plot</option>
               <option value="violin">Violin</option>
-              <option value="bar">Barre</option>
-              <option value="line">Linea</option>
+              <option value="bar">Bar</option>
+              <option value="line">Line</option>
             </select></div>
-          <div class="field"><label for="xCol">Asse X</label><select id="xCol"></select></div>
-          <div class="field" id="yField"><label for="yCol">Asse Y</label><select id="yCol"></select></div>
-          <div class="field"><label for="colorCol">Colore / gruppo</label><select id="colorCol"></select></div>
-          <div class="field" id="aggField"><label for="agg">Aggregazione Y</label>
+          <div class="field"><label for="xCol">X axis</label><select id="xCol"></select></div>
+          <div class="field" id="yField"><label for="yCol">Y axis</label><select id="yCol"></select></div>
+          <div class="field"><label for="colorCol">Colour / group</label><select id="colorCol"></select></div>
+          <div class="field" id="aggField"><label for="agg">Y aggregation</label>
             <select id="agg">
-              <option value="none">Nessuna</option>
-              <option value="count">Conteggio righe</option>
-              <option value="mean">Media</option>
-              <option value="median">Mediana</option>
-              <option value="sum">Somma</option>
+              <option value="none">None</option>
+              <option value="count">Row count</option>
+              <option value="mean">Mean</option>
+              <option value="median">Median</option>
+              <option value="sum">Sum</option>
             </select></div>
-          <div class="field" id="binsField"><label for="bins">Classi</label><input id="bins" class="num-input" type="number" min="5" max="200" value="30"></div>
+          <div class="field" id="binsField"><label for="bins">Bins</label><input id="bins" class="num-input" type="number" min="5" max="200" value="30"></div>
           <div class="field"><span class="check"><input type="checkbox" id="logX"><label for="logX">X log</label></span>
             <span class="check"><input type="checkbox" id="logY"><label for="logY">Y log</label></span></div>
         </div>
       </div>
-      <div id="chart" role="img" aria-label="Grafico del risultato della query"></div>
+      <div id="chart" role="img" aria-label="Chart of the query result"></div>
       <div id="chartEmpty" class="chart-empty" hidden></div>
     </section>
     </div>
 
     <section class="panel" aria-labelledby="statsTitle">
-      <div class="panel-head"><h2 id="statsTitle">Analisi statistica</h2><span class="status" id="statsNote"></span></div>
+      <div class="panel-head"><h2 id="statsTitle">Statistical analysis</h2><span class="status" id="statsNote"></span></div>
       <div class="panel-body">
-        <div class="stat-tabs" role="group" aria-label="Tipo di analisi">
-          <button class="stat-tab" type="button" data-tab="describe" aria-pressed="true">Descrittive</button>
-          <button class="stat-tab" type="button" data-tab="corr" aria-pressed="false">Correlazioni</button>
+        <div class="stat-tabs" role="group" aria-label="Analysis type">
+          <button class="stat-tab" type="button" data-tab="describe" aria-pressed="true">Descriptive</button>
+          <button class="stat-tab" type="button" data-tab="corr" aria-pressed="false">Correlations</button>
           <button class="stat-tab" type="button" data-tab="pca" aria-pressed="false">PCA</button>
-          <button class="stat-tab" type="button" data-tab="group" aria-pressed="false">Confronto tra gruppi</button>
+          <button class="stat-tab" type="button" data-tab="group" aria-pressed="false">Group comparison</button>
         </div>
         <div class="chart-controls">
-          <div class="field"><label for="statGroup">Gruppo</label><select id="statGroup"></select></div>
-          <div class="field" id="corrMethodField"><label for="corrMethod">Metodo</label>
-            <select id="corrMethod"><option value="spearman">Spearman (ranghi)</option><option value="pearson">Pearson</option></select></div>
-          <div class="field" id="pcxField"><label for="pcX">Componente X</label><select id="pcX"></select></div>
-          <div class="field" id="pcyField"><label for="pcY">Componente Y</label><select id="pcY"></select></div>
+          <div class="field"><label for="statGroup">Group</label><select id="statGroup"></select></div>
+          <div class="field" id="corrMethodField"><label for="corrMethod">Method</label>
+            <select id="corrMethod"><option value="spearman">Spearman (ranks)</option><option value="pearson">Pearson</option></select></div>
+          <div class="field" id="pcxField"><label for="pcX">X component</label><select id="pcX"></select></div>
+          <div class="field" id="pcyField"><label for="pcY">Y component</label><select id="pcY"></select></div>
           <div class="field" id="pcaOptsField">
-            <span class="check"><input type="checkbox" id="pcaStd" checked><label for="pcaStd">Standardizza (z-score)</label></span>
-            <span class="check"><input type="checkbox" id="pcaBiplot" checked><label for="pcaBiplot">Vettori delle variabili</label></span></div>
+            <span class="check"><input type="checkbox" id="pcaStd" checked><label for="pcaStd">Standardise (z-score)</label></span>
+            <span class="check"><input type="checkbox" id="pcaBiplot" checked><label for="pcaBiplot">Variable vectors</label></span></div>
         </div>
         <fieldset class="var-picker">
-          <legend>Variabili numeriche
-            <button class="btn small" type="button" id="varsAll">tutte</button>
-            <button class="btn small" type="button" id="varsNone">nessuna</button></legend>
+          <legend>Numeric variables
+            <button class="btn small" type="button" id="varsAll">all</button>
+            <button class="btn small" type="button" id="varsNone">none</button></legend>
           <div id="varList" class="chips"></div>
         </fieldset>
-        <p class="hint">Le analisi usano il risultato della query. Per filtrare i dati modifica il <code>WHERE</code>, per esempio <code>WHERE also_oral = 0</code>, e riesegui.</p>
+        <p class="hint">The analyses use the query result. To filter the data, edit the <code>WHERE</code> clause, for example <code>WHERE also_oral = 0</code>, and run it again.</p>
       </div>
       <div id="statCharts" class="stat-charts"><div id="statChart1"></div><div id="statChart2"></div></div>
       <div id="statMessage" class="chart-empty" hidden></div>
       <div class="table-wrap stat-table-wrap"><table id="statTable"></table></div>
       <div class="foot-note" id="statFoot"></div>
       <div class="editor-foot" id="pcaSaveRow" hidden>
-        <span class="status" id="pcaSaveStatus">Salva i punteggi per interrogarli con SQL (resta solo in questa sessione).</span>
-        <button class="btn small" type="button" id="pcaSave">Salva in tabella pca_scores</button>
+        <span class="status" id="pcaSaveStatus">Save the scores to query them with SQL (kept for this session only).</span>
+        <button class="btn small" type="button" id="pcaSave">Save to table pca_scores</button>
       </div>
     </section>
 
     <section class="panel" aria-labelledby="resultTitle">
       <div class="panel-head">
-        <h2 id="resultTitle">Risultati</h2>
-        <button class="btn small" id="copyCsv" type="button">Copia come CSV</button>
+        <h2 id="resultTitle">Results</h2>
+        <button class="btn small" id="copyCsv" type="button">Copy as CSV</button>
       </div>
       <div class="table-wrap"><table id="resultTable"></table></div>
       <div class="foot-note" id="tableNote"></div>
-      <textarea id="csvFallback" hidden aria-label="CSV da copiare"></textarea>
+      <textarea id="csvFallback" hidden aria-label="CSV to copy"></textarea>
     </section>
   </main>
 </div>
@@ -351,64 +353,64 @@ code { font-family: var(--font-mono); font-size: 0.92em; background: var(--surfa
 <script>
 const DB_URL = "pharma_inhalation.sqlite.gz.b64.txt";
 const MAX_TABLE_ROWS = 1000;
-const MAX_GROUPS = 7; // 7 colored groups + "Altro"
+const MAX_GROUPS = 7; // 7 colored groups + "Other"
 
 const TABLE_NOTES = {
-  dataset_info: "Provenienza: release delle fonti, date di download e hash SHA-256.",
-  molecules: "Una riga per molecola ChEMBL: farmaci approvati e composti testati su PDE4, con proprietà calcolate.",
-  molecule_synonyms: "Nomi alternativi (INN, USAN, BAN, nomi commerciali) usati per il collegamento con FDA.",
-  atc_classes: "Gerarchia WHO ATC: dal gruppo anatomico (livello 1) alla sostanza (livello 5).",
-  molecule_atc: "Codici ATC di ogni molecola approvata.",
-  fda_applications: "Domande FDA (NDA, ANDA, BLA) con lo sponsor.",
-  fda_products: "Prodotti FDA con forma farmaceutica e via di somministrazione.",
-  fda_product_ingredients: "Principi attivi di ogni prodotto FDA, con il nome scritto da FDA.",
-  fda_ingredient_map: "Ponte tra nome FDA e molecola ChEMBL, con il metodo di abbinamento.",
-  targets: "Bersagli PDE4 umani (isoforme A-D e famiglia).",
-  activities: "Misure IC50 e Ki su PDE4 come pubblicate e come standardizzate da ChEMBL.",
-  molecule_routes: "Una riga per molecola parent e via di somministrazione FDA. Copia materializzata della vista v_molecule_routes.",
-  v_molecule_routes: "Vista: la regola di join FDA → ChEMBL che produce molecule_routes (più lenta da interrogare).",
-  cleaning_log: "Registro della pulizia: una riga per regola, con righe prima, escluse, dopo e segnalate.",
-  cleaning_exclusions: "Ogni record escluso e la prima regola che lo ha escluso (join con cleaning_log su rule_id).",
-  activities_clean: "Misure PDE4 che superano tutte le regole, con pIC50/pKi calcolato.",
-  activity_potency: "Misure ripetute aggregate: mediana per molecola × bersaglio × tipo di misura.",
-  molecule_routes_clean: "Vie di somministrazione separate e in maiuscolo (\"INHALATION, ORAL\" → due righe).",
-  inhalation_dataset: "Insieme di analisi pulito: inalatori per il polmone vs orali sistemici, una riga per molecola.",
+  dataset_info: "Provenance: source releases, download dates and SHA-256 hashes.",
+  molecules: "One row per ChEMBL molecule: approved drugs and compounds tested on PDE4, with calculated properties.",
+  molecule_synonyms: "Alternative names (INN, USAN, BAN, brand names) used to link molecules to FDA products.",
+  atc_classes: "WHO ATC hierarchy: from anatomical group (level 1) to substance (level 5).",
+  molecule_atc: "ATC codes of each approved molecule.",
+  fda_applications: "FDA applications (NDA, ANDA, BLA) with their sponsor.",
+  fda_products: "FDA products with dosage form and route of administration.",
+  fda_product_ingredients: "Active ingredients of each FDA product, with the name as written by FDA.",
+  fda_ingredient_map: "Bridge between FDA ingredient name and ChEMBL molecule, with the matching method.",
+  targets: "Human PDE4 targets (isoforms A-D and the family).",
+  activities: "IC50 and Ki measurements on PDE4, as published and as standardised by ChEMBL.",
+  molecule_routes: "One row per parent molecule and FDA route of administration. Materialised copy of the view v_molecule_routes.",
+  v_molecule_routes: "View: the FDA → ChEMBL join rule that produces molecule_routes (slower to query).",
+  cleaning_log: "Cleaning ledger: one row per rule, with rows before, removed, after and flagged.",
+  cleaning_exclusions: "Every excluded record and the first rule that excluded it (join with cleaning_log on rule_id).",
+  activities_clean: "PDE4 measurements that pass every rule, with calculated pIC50/pKi.",
+  activity_potency: "Repeated measurements aggregated: median per molecule × target × measurement type.",
+  molecule_routes_clean: "Routes of administration split and upper-cased (\"INHALATION, ORAL\" → two rows).",
+  inhalation_dataset: "Clean analysis set: lung-targeted inhaled drugs vs systemic oral drugs, one row per molecule.",
 };
 
 const EXAMPLES = [
-  { title: "Dopo la pulizia: inalatori vs orali",
+  { title: "After cleaning: inhaled vs oral",
     chart: { type: "scatter", x: "mw_freebase", y: "psa", color: "route_group" },
     stats: { tab: "group", group: "route_group" },
-    sql: `-- Insieme di analisi pulito (notebook 02)
+    sql: `-- Clean analysis set (notebook 02)
 SELECT chembl_id, pref_name, route_group, also_oral,
        mw_freebase, alogp, psa, hbd, hba, rtb, aromatic_rings, qed_weighted
 FROM inhalation_dataset;` },
-  { title: "Statistica: PCA delle proprietà chimiche",
+  { title: "Statistics: PCA of chemical properties",
     chart: { type: "scatter", x: "alogp", y: "psa", color: "route_group" },
     stats: { tab: "pca", group: "route_group" },
-    sql: `-- PCA su 8 descrittori; filtro: senza le molecole anche orali
+    sql: `-- PCA on 8 descriptors; filter: without molecules that are also oral
 SELECT chembl_id, pref_name, route_group,
        mw_freebase, alogp, psa, hbd, hba, rtb, aromatic_rings, qed_weighted
 FROM inhalation_dataset
 WHERE also_oral = 0;` },
-  { title: "Statistica: correlazioni tra descrittori",
+  { title: "Statistics: correlations between descriptors",
     chart: { type: "scatter", x: "heavy_atoms", y: "mw_freebase" },
     stats: { tab: "corr", group: "" },
     sql: `SELECT pref_name, mw_freebase, heavy_atoms, alogp, psa, hbd, hba, rtb,
        aromatic_rings, qed_weighted, num_ro5_violations
 FROM inhalation_dataset;` },
-  { title: "Statistica: potenza per isoforma PDE4 (Kruskal-Wallis)",
+  { title: "Statistics: potency by PDE4 isoform (Kruskal-Wallis)",
     chart: { type: "box", y: "p_median", color: "target_name" },
     stats: { tab: "group", group: "target_name" },
     sql: `SELECT molecule_chembl_id, target_name, p_median, n_measurements
 FROM activity_potency
 WHERE standard_type = 'IC50';` },
-  { title: "Registro delle esclusioni",
+  { title: "Exclusion ledger",
     chart: { type: "bar", x: "rule_id", y: "rows_removed", agg: "none", color: "dataset" },
     sql: `SELECT dataset, rule_id, kind, rule, rows_before, rows_removed, rows_after, rows_flagged, reason
 FROM cleaning_log
 ORDER BY dataset, step;` },
-  { title: "Perché queste molecole inalatorie sono state escluse?",
+  { title: "Why were these inhaled molecules excluded?",
     chart: { type: "bar", x: "rule_id", y: "", agg: "count" },
     sql: `SELECT e.rule_id, l.rule, m.pref_name
 FROM cleaning_exclusions AS e
@@ -417,44 +419,44 @@ JOIN molecules AS m ON m.chembl_id = e.record_id
 JOIN molecule_routes_clean AS r ON r.chembl_id = e.record_id AND r.route = 'INHALATION'
 WHERE e.dataset = 'molecules'
 ORDER BY e.rule_id, m.pref_name;` },
-  { title: "Potenza PDE4 pulita: mediane per bersaglio",
+  { title: "Clean PDE4 potency: medians by target",
     chart: { type: "box", y: "p_median", color: "target_name" },
     sql: `SELECT molecule_chembl_id, target_name, standard_type,
        p_median, n_measurements, p_range, inconsistent
 FROM activity_potency;` },
-  { title: "Dati grezzi: inalatori vs orali (prima della pulizia)",
+  { title: "Raw data: inhaled vs oral (before cleaning)",
     chart: { type: "scatter", x: "mw_freebase", y: "psa", color: "route" },
-    sql: `-- Farmaci approvati a piccola molecola: via inalatoria vs orale
+    sql: `-- Approved small-molecule drugs: inhaled vs oral route
 SELECT m.chembl_id, m.pref_name, r.route,
        m.mw_freebase, m.alogp, m.psa, m.hbd, m.hba, m.rtb, m.qed_weighted
 FROM molecule_routes AS r
 JOIN molecules AS m ON m.chembl_id = r.chembl_id
 WHERE r.route IN ('INHALATION', 'ORAL')
   AND m.molecule_type = 'Small molecule';` },
-  { title: "Distribuzione del logP per via",
+  { title: "logP distribution by route",
     chart: { type: "histogram", x: "alogp", color: "route" },
     sql: `SELECT m.pref_name, r.route, m.alogp
 FROM molecule_routes AS r
 JOIN molecules AS m ON m.chembl_id = r.chembl_id
 WHERE r.route IN ('INHALATION', 'ORAL')
   AND m.alogp IS NOT NULL;` },
-  { title: "Polar surface area: box plot per via",
+  { title: "Polar surface area: box plot by route",
     chart: { type: "box", y: "psa", color: "route" },
     sql: `SELECT m.pref_name, r.route, m.psa
 FROM molecule_routes AS r
 JOIN molecules AS m ON m.chembl_id = r.chembl_id
 WHERE r.route IN ('INHALATION', 'ORAL', 'TOPICAL', 'INTRAVENOUS')
   AND m.molecule_type = 'Small molecule';` },
-  { title: "Prodotti FDA per via di somministrazione",
+  { title: "FDA products by route of administration",
     chart: { type: "bar", x: "route", y: "n_products", agg: "none" },
     sql: `SELECT route, COUNT(*) AS n_products
 FROM fda_products
 GROUP BY route
 ORDER BY n_products DESC
 LIMIT 15;` },
-  { title: "Farmaci respiratori (ATC R03)",
+  { title: "Respiratory drugs (ATC R03)",
     chart: { type: "scatter", x: "alogp", y: "psa", color: "atc_group" },
-    sql: `-- R03 = farmaci per le malattie ostruttive delle vie aeree
+    sql: `-- R03 = drugs for obstructive airway diseases
 SELECT DISTINCT m.pref_name, a.level4_description AS atc_group,
        m.mw_freebase, m.alogp, m.psa, m.hbd
 FROM molecule_atc AS ma
@@ -462,28 +464,28 @@ JOIN atc_classes AS a ON a.level5 = ma.level5
 JOIN molecules AS m ON m.chembl_id = ma.chembl_id
 WHERE a.level2 = 'R03'
 ORDER BY atc_group, m.pref_name;` },
-  { title: "Potenza PDE4 per isoforma (pChEMBL)",
+  { title: "PDE4 potency by isoform (pChEMBL)",
     chart: { type: "box", y: "pchembl_value", color: "target" },
     sql: `SELECT REPLACE(t.pref_name, '3'',5''-cyclic-AMP phosphodiesterase ', 'PDE') AS target,
        a.standard_type, a.pchembl_value
 FROM activities AS a
 JOIN targets AS t ON t.target_chembl_id = a.target_chembl_id
 WHERE a.pchembl_value IS NOT NULL;` },
-  { title: "Composti PDE4: potenza vs peso molecolare",
+  { title: "PDE4 compounds: potency vs molecular weight",
     chart: { type: "scatter", x: "mw_freebase", y: "best_pchembl", color: "stage" },
     sql: `SELECT a.molecule_chembl_id, m.pref_name,
-       CASE WHEN m.max_phase = 4 THEN 'approvato'
-            WHEN m.max_phase > 0 THEN 'clinico'
-            ELSE 'preclinico' END AS stage,
+       CASE WHEN m.max_phase = 4 THEN 'approved'
+            WHEN m.max_phase > 0 THEN 'clinical'
+            ELSE 'preclinical' END AS stage,
        MAX(a.pchembl_value) AS best_pchembl,
        m.mw_freebase, m.alogp, m.psa
 FROM activities AS a
 JOIN molecules AS m ON m.chembl_id = a.molecule_chembl_id
 WHERE a.pchembl_value IS NOT NULL
 GROUP BY a.molecule_chembl_id;` },
-  { title: "Qualità dei dati: relazioni e unità",
+  { title: "Data quality: relations and units",
     chart: { type: "bar", x: "standard_relation", y: "n", agg: "sum", color: "standard_units" },
-    sql: `-- Quante misure sono pulite ('=' in nM) e quante vanno trattate?
+    sql: `-- How many measurements are clean ('=' in nM) and how many need handling?
 SELECT COALESCE(standard_relation, 'NULL') AS standard_relation,
        COALESCE(standard_units, 'NULL') AS standard_units,
        COUNT(*) AS n,
@@ -492,7 +494,7 @@ SELECT COALESCE(standard_relation, 'NULL') AS standard_relation,
 FROM activities
 GROUP BY 1, 2
 ORDER BY n DESC;` },
-  { title: "Ricerca PDE4 per anno di pubblicazione",
+  { title: "PDE4 research by publication year",
     chart: { type: "line", x: "year", y: "n_measurements", agg: "none" },
     sql: `SELECT document_year AS year,
        COUNT(*) AS n_measurements,
@@ -501,7 +503,7 @@ FROM activities
 WHERE document_year IS NOT NULL
 GROUP BY document_year
 ORDER BY year;` },
-  { title: "Audit del collegamento FDA → ChEMBL",
+  { title: "Audit of the FDA → ChEMBL link",
     chart: { type: "bar", x: "match_method", y: "n_names", agg: "none" },
     sql: `SELECT match_method, COUNT(*) AS n_names
 FROM fda_ingredient_map
@@ -511,7 +513,7 @@ ORDER BY n_names DESC;` },
 
 const state = { SQL: null, db: null, result: null, types: [], sort: { col: -1, dir: 1 }, schema: [], colorSlots: new Map() };
 const $ = (id) => document.getElementById(id);
-const fmtInt = new Intl.NumberFormat("it-IT");
+const fmtInt = new Intl.NumberFormat("en-US");
 
 // ---------- loading ----------
 async function gunzipBytes(bytes) {
@@ -525,12 +527,12 @@ async function boot() {
   try {
     state.SQL = await initSqlJs();
   } catch (e) {
-    $("loading").textContent = "Il motore SQL non si è caricato: " + e.message;
+    $("loading").textContent = "The SQL engine did not load: " + e.message;
     return;
   }
   try {
     const res = await fetch(DB_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status} su ${DB_URL}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${DB_URL}`);
     // The database ships as gzip + base64 text (see src/02_build_database.py).
     const binary = atob((await res.text()).trim());
     const bytes = new Uint8Array(binary.length);
@@ -538,7 +540,7 @@ async function boot() {
     openDb(await prepareBytes(bytes));
   } catch (e) {
     $("loading").hidden = true;
-    $("loadError").textContent = "Non riesco a leggere il database incluso (" + e.message + ").";
+    $("loadError").textContent = "Cannot read the bundled database (" + e.message + ").";
     $("loadHelp").hidden = false;
   }
 }
@@ -547,7 +549,7 @@ async function openFile(file) {
   try {
     openDb(await prepareBytes(new Uint8Array(await file.arrayBuffer())), file.name);
   } catch (e) {
-    showError("Il file non è un database SQLite leggibile: " + e.message);
+    showError("The file is not a readable SQLite database: " + e.message);
   }
 }
 function openDb(bytes, label) {
@@ -576,9 +578,9 @@ function renderProvenance(label) {
     if (info.chembl_release) chips.push(["ChEMBL", `${info.chembl_release.replace("ChEMBL_", "")} · ${info.chembl_release_date}`]);
     if (info.openfda_last_updated) chips.push(["openFDA", info.openfda_last_updated]);
   }
-  if (has("molecules")) chips.push(["Molecole", fmtInt.format(q("SELECT COUNT(*) FROM molecules")[0][0])]);
-  if (has("fda_products")) chips.push(["Prodotti FDA", fmtInt.format(q("SELECT COUNT(*) FROM fda_products")[0][0])]);
-  if (has("activities")) chips.push(["Misure PDE4", fmtInt.format(q("SELECT COUNT(*) FROM activities")[0][0])]);
+  if (has("molecules")) chips.push(["Molecules", fmtInt.format(q("SELECT COUNT(*) FROM molecules")[0][0])]);
+  if (has("fda_products")) chips.push(["FDA products", fmtInt.format(q("SELECT COUNT(*) FROM fda_products")[0][0])]);
+  if (has("activities")) chips.push(["PDE4 measurements", fmtInt.format(q("SELECT COUNT(*) FROM activities")[0][0])]);
   if (label) chips.unshift(["File", label]);
   $("provenance").replaceChildren(...chips.map(([k, v]) => {
     const s = document.createElement("span"); s.className = "chip";
@@ -634,20 +636,20 @@ function drawSchema() {
     const d = el("details", "tbl"); d.open = !!term;
     const s = el("summary");
     const nm = el("span", "tbl-name"); nm.append(highlight(t.name, term));
-    s.append(nm, el("span", "pill" + (t.type === "view" ? " view" : ""), t.type === "view" ? "vista" : "tabella"));
-    s.append(el("span", "count", t.count == null ? "" : fmtInt.format(t.count) + " righe"));
+    s.append(nm, el("span", "pill" + (t.type === "view" ? " view" : ""), t.type === "view" ? "view" : "table"));
+    s.append(el("span", "count", t.count == null ? "" : fmtInt.format(t.count) + " rows"));
     d.append(s);
     if (t.note) { const p = el("p", "tbl-note"); p.append(highlight(t.note, term)); d.append(p); }
     const actions = el("div", "tbl-actions");
-    const prev = el("button", "btn small", "Anteprima"); prev.type = "button";
+    const prev = el("button", "btn small", "Preview"); prev.type = "button";
     prev.addEventListener("click", () => { $("sql").value = `SELECT *\nFROM ${t.name}\nLIMIT 100;`; runQuery(); });
-    const ins = el("button", "btn small", "Inserisci nome"); ins.type = "button";
+    const ins = el("button", "btn small", "Insert name"); ins.type = "button";
     ins.addEventListener("click", () => insertAtCursor(t.name));
     actions.append(prev, ins); d.append(actions);
     const ul = el("ul", "cols");
     for (const c of cols) {
       const li = el("li"); const b = el("button", "col-btn"); b.type = "button";
-      b.title = "Inserisci " + c.name + " nella query";
+      b.title = "Insert " + c.name + " into the query";
       const n = el("span", "col-name"); n.append(highlight(c.name, term)); if (c.pk) n.append(el("span", "pk", " PK"));
       b.append(n, el("span", "col-type", c.type));
       if (c.note) { const ds = el("span", "col-desc"); ds.append(highlight(c.note, term)); b.append(ds); }
@@ -657,8 +659,8 @@ function drawSchema() {
     d.append(ul); list.append(d);
   }
   $("schemaMeta").textContent = term
-    ? (nTables ? `${nTables} tabelle, ${nCols} colonne corrispondono a “${term}”` : `Nessuna tabella o colonna contiene “${term}”`)
-    : `${state.schema.length} oggetti · clic su una colonna per inserirla nella query`;
+    ? (nTables ? `${nTables} tables, ${nCols} columns match “${term}”` : `No table or column contains “${term}”`)
+    : `${state.schema.length} objects · click a column to insert it into the query`;
 }
 function insertAtCursor(text) {
   const ta = $("sql"); const { selectionStart: a, selectionEnd: b, value } = ta;
@@ -668,7 +670,7 @@ function insertAtCursor(text) {
 }
 
 // ---------- query ----------
-function showError(msg) { $("errorBox").textContent = msg; $("errorBox").hidden = false; $("status").textContent = "Errore nella query."; $("status").classList.add("error"); }
+function showError(msg) { $("errorBox").textContent = msg; $("errorBox").hidden = false; $("status").textContent = "Query error."; $("status").classList.add("error"); }
 function clearError() { $("errorBox").hidden = true; $("status").classList.remove("error"); }
 function runQuery(pref, statPref) {
   if (!state.db) return;
@@ -684,8 +686,8 @@ function runQuery(pref, statPref) {
   inferTypes();
   if (/\b(create|drop|alter|insert|update|delete)\b/i.test(sql)) renderSchema();
   $("status").textContent = last
-    ? `${fmtInt.format(state.result.rows.length)} righe · ${state.result.columns.length} colonne · ${ms} ms`
-    : `Eseguita in ${ms} ms, nessuna riga restituita (le modifiche restano solo in questa sessione).`;
+    ? `${fmtInt.format(state.result.rows.length)} rows · ${state.result.columns.length} columns · ${ms} ms`
+    : `Ran in ${ms} ms, no rows returned (changes are kept for this session only).`;
   syncChartControls(pref);
   renderChart();
   syncStatControls(statPref);
@@ -720,10 +722,10 @@ function syncChartControls(pref) {
   const xOptions = (xIsNum ? nums : columns).map((c) => [c, c]);
   const xDefault = type === "bar" ? (groupable.find((c) => types[columns.indexOf(c)].kind === "text") || columns[0]) : nums[0];
   fillSelect($("xCol"), xOptions, keep, pref?.x ?? xDefault);
-  const yOptions = (type === "bar" || type === "line" ? [["", "(conteggio)"]] : []).concat(nums.map((c) => [c, c]));
+  const yOptions = (type === "bar" || type === "line" ? [["", "(count)"]] : []).concat(nums.map((c) => [c, c]));
   const yDefault = type === "scatter" ? (nums.find((c) => c !== $("xCol").value) || nums[0]) : nums.find((c) => c !== $("xCol").value) ?? "";
   fillSelect($("yCol"), yOptions, keep, pref?.y ?? yDefault);
-  fillSelect($("colorCol"), [["", "(nessuno)"]].concat(groupable.map((c) => [c, c])), keep, pref?.color ?? (type === "box" || type === "violin" ? (smallGroups[0] || groupable[0] || "") : (smallGroups[0] || "")));
+  fillSelect($("colorCol"), [["", "(none)"]].concat(groupable.map((c) => [c, c])), keep, pref?.color ?? (type === "box" || type === "violin" ? (smallGroups[0] || groupable[0] || "") : (smallGroups[0] || "")));
   if (pref?.agg) $("agg").value = pref.agg;
   else if (pref || !keep) $("agg").value = "none";
   if (pref) { $("logX").checked = false; $("logY").checked = false; }
@@ -771,28 +773,28 @@ function chartMessage(text) {
 }
 function renderChart() {
   const r = state.result;
-  if (!r || !r.rows.length) return chartMessage("Nessuna riga da disegnare. Esegui una query che restituisce dati.");
+  if (!r || !r.rows.length) return chartMessage("No rows to plot. Run a query that returns data.");
   const type = $("chartType").value, cols = r.columns;
   const xi = cols.indexOf($("xCol").value), yi = cols.indexOf($("yCol").value), ci = cols.indexOf($("colorCol").value);
   const needsX = !(type === "box" || type === "violin"), needsY = type === "scatter" || type === "box" || type === "violin";
-  if (needsX && xi < 0) return chartMessage(type === "scatter" || type === "histogram" ? "Questo grafico richiede una colonna numerica sull'asse X." : "Scegli una colonna per l'asse X.");
-  if (needsY && yi < 0) return chartMessage("Questo grafico richiede una colonna numerica sull'asse Y.");
+  if (needsX && xi < 0) return chartMessage(type === "scatter" || type === "histogram" ? "This chart needs a numeric column on the X axis." : "Choose a column for the X axis.");
+  if (needsY && yi < 0) return chartMessage("This chart needs a numeric column on the Y axis.");
   $("chart").hidden = false; $("chartEmpty").hidden = true;
 
   const th = theme();
-  // Groups: top 7 by size get a color, the rest fold into "Altro".
+  // Groups: top 7 by size get a color, the rest fold into "Other".
   const groups = new Map();
   for (const row of r.rows) {
-    const key = ci < 0 ? "Tutti" : String(row[ci] ?? "NULL");
+    const key = ci < 0 ? "All" : String(row[ci] ?? "NULL");
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(row);
   }
   let ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
   if (ordered.length > MAX_GROUPS + 1) {
     const rest = ordered.slice(MAX_GROUPS).flatMap(([, rows]) => rows);
-    ordered = ordered.slice(0, MAX_GROUPS).concat([["Altro", rest]]);
+    ordered = ordered.slice(0, MAX_GROUPS).concat([["Other", rest]]);
   }
-  const colorOf = (name) => ci < 0 ? th.series[0] : name === "Altro" ? th.muted : th.series[slotFor(name)];
+  const colorOf = (name) => ci < 0 ? th.series[0] : name === "Other" ? th.muted : th.series[slotFor(name)];
   const labelIdx = cols.findIndex((c, i) => i !== ci && state.types[i].kind === "text");
   const xName = cols[xi], yName = cols[yi];
   const agg = $("agg").value;
@@ -816,7 +818,7 @@ function renderChart() {
       dropped += rows.length - xs.length;
       traces.push({ type: "histogram", name, x: xs, nbinsx: Number($("bins").value) || 30,
         marker: { color, line: { width: 1, color: th.surface } }, opacity: ordered.length > 1 ? 0.65 : 1,
-        hovertemplate: `${xName}: %{x}<br>righe: %{y}<extra>${name}</extra>` });
+        hovertemplate: `${xName}: %{x}<br>rows: %{y}<extra>${name}</extra>` });
     } else if (type === "box" || type === "violin") {
       const ys = rows.map((row) => row[yi]).filter((v) => typeof v === "number");
       dropped += rows.length - ys.length;
@@ -838,9 +840,9 @@ function renderChart() {
       const xs = keys.map((k) => k ?? "NULL");
       traces.push(type === "bar"
         ? { type: "bar", name, x: xs, y: ys, marker: { color, line: { width: 2, color: th.surface } },
-            hovertemplate: `${xName}: %{x}<br>${yi < 0 ? "righe" : yName}: %{y}<extra>${name}</extra>` }
+            hovertemplate: `${xName}: %{x}<br>${yi < 0 ? "rows" : yName}: %{y}<extra>${name}</extra>` }
         : { type: "scatter", mode: "lines+markers", name, x: xs, y: ys, line: { width: 2, color }, marker: { size: 8, color, line: { width: 1, color: th.surface } },
-            hovertemplate: `${xName}: %{x}<br>${yi < 0 ? "righe" : yName}: %{y}<extra>${name}</extra>` });
+            hovertemplate: `${xName}: %{x}<br>${yi < 0 ? "rows" : yName}: %{y}<extra>${name}</extra>` });
     }
   }
 
@@ -848,7 +850,7 @@ function renderChart() {
     title: { text: title, font: { color: th.fg2 } }, type: log ? "log" : "-", automargin: true,
     gridcolor: th.grid, zerolinecolor: th.axis, linecolor: th.axis, tickfont: { color: th.muted },
   });
-  const yTitle = type === "histogram" ? "righe" : (yi < 0 ? "righe" : (type === "bar" || type === "line") && agg !== "none" ? `${agg}(${yName})` : yName);
+  const yTitle = type === "histogram" ? "rows" : (yi < 0 ? "rows" : (type === "bar" || type === "line") && agg !== "none" ? `${agg}(${yName})` : yName);
   const layout = {
     paper_bgcolor: th.surface, plot_bgcolor: th.surface,
     font: { family: getComputedStyle(document.body).fontFamily, color: th.fg2, size: 12 },
@@ -861,8 +863,8 @@ function renderChart() {
     hoverlabel: { bgcolor: th.surface, bordercolor: th.line, font: { color: th.fg } },
   };
   Plotly.react("chart", traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
-  const groupsNote = ordered.length > 1 ? `${ordered.length} gruppi` : "";
-  $("chartNote").textContent = [groupsNote, dropped ? `${fmtInt.format(dropped)} righe senza valore numerico escluse` : ""].filter(Boolean).join(" · ");
+  const groupsNote = ordered.length > 1 ? `${ordered.length} groups` : "";
+  $("chartNote").textContent = [groupsNote, dropped ? `${fmtInt.format(dropped)} rows without a numeric value excluded` : ""].filter(Boolean).join(" · ");
 }
 
 // ---------- results table ----------
@@ -901,8 +903,8 @@ function renderTable() {
   }
   table.append(thead, tbody);
   $("tableNote").textContent = rows.length > MAX_TABLE_ROWS
-    ? `Mostrate le prime ${fmtInt.format(MAX_TABLE_ROWS)} di ${fmtInt.format(rows.length)} righe. Il grafico usa tutte le righe. Clic sull'intestazione per ordinare.`
-    : "Clic sull'intestazione di una colonna per ordinare.";
+    ? `Showing the first ${fmtInt.format(MAX_TABLE_ROWS)} of ${fmtInt.format(rows.length)} rows. The chart uses all rows. Click a header to sort.`
+    : "Click a column header to sort.";
 }
 function toCsv() {
   const { columns, rows } = state.result;
@@ -915,10 +917,10 @@ async function copyCsv() {
   try {
     await navigator.clipboard.writeText(csv);
     $("csvFallback").hidden = true;
-    $("tableNote").textContent = `Copiate ${fmtInt.format(state.result.rows.length)} righe come CSV.`;
+    $("tableNote").textContent = `Copied ${fmtInt.format(state.result.rows.length)} rows as CSV.`;
   } catch (_) {
     const ta = $("csvFallback"); ta.value = csv; ta.hidden = false; ta.focus(); ta.select();
-    $("tableNote").textContent = "Copia automatica non disponibile: il CSV è selezionato qui sotto, premi Ctrl+C.";
+    $("tableNote").textContent = "Automatic copy is not available: the CSV is selected below, press Ctrl+C.";
   }
 }
 
@@ -932,7 +934,7 @@ function fmt(v, digits = 3) {
   if (v === 0) return "0";
   const a = Math.abs(v);
   if (a >= 1e5 || a < 1e-3) return v.toExponential(2);
-  if (a >= 1000) return String(Math.round(v)); // no thousands separator: "." is the decimal mark here
+  if (a >= 1000) return String(Math.round(v)); // no thousands separator, to keep table numbers compact
   return String(Number(v.toPrecision(digits + 1)));
 }
 function fmtP(p) {
@@ -959,12 +961,12 @@ function syncStatControls(pref) {
     input.checked = chosen.has(c); input.addEventListener("change", () => { statState.vars = selectedVars(); renderStats(); });
     label.append(input, c); return label;
   }));
-  if (!candidates.length) $("varList").append(el("span", "hint", "La query non restituisce colonne numeriche."));
+  if (!candidates.length) $("varList").append(el("span", "hint", "The query returns no numeric columns."));
   statState.vars = selectedVars();
   const groupable = columns.filter((c, i) => (types[i].kind === "text" && types[i].distinct >= 2 && types[i].distinct <= 30)
     || (types[i].kind === "num" && types[i].distinct >= 2 && types[i].distinct <= 12));
   const fallback = groupable.find((c) => types[columns.indexOf(c)].kind === "text") || "";
-  fillSelect($("statGroup"), [["", "(nessuno)"]].concat(groupable.map((c) => [c, c])), !pref, pref?.group ?? fallback);
+  fillSelect($("statGroup"), [["", "(none)"]].concat(groupable.map((c) => [c, c])), !pref, pref?.group ?? fallback);
   updateStatVisibility();
 }
 function updateStatVisibility() {
@@ -1021,7 +1023,7 @@ function groupLabels() {
 function renderStats() {
   statState.pca = null;
   const r = state.result;
-  if (!r || !r.rows.length) return statMessage("Nessuna riga: esegui una query che restituisce dati.");
+  if (!r || !r.rows.length) return statMessage("No rows: run a query that returns data.");
   const vars = selectedVars();
   try {
     if (statState.tab === "describe") renderDescribe(vars);
@@ -1029,32 +1031,32 @@ function renderStats() {
     else if (statState.tab === "pca") renderPca(vars);
     else renderGroupTest(vars);
   } catch (e) {
-    statMessage("Analisi non possibile: " + e.message);
+    statMessage("Analysis not possible: " + e.message);
   }
   updateStatVisibility();
 }
 
 function renderDescribe(vars) {
-  if (!vars.length) return statMessage("Seleziona almeno una variabile numerica.");
+  if (!vars.length) return statMessage("Select at least one numeric variable.");
   showCharts(0);
   const labels = groupLabels();
   const groups = labels ? [...new Set(labels.filter((l) => l != null))].sort() : [null];
-  if (groups.length > 12) return statMessage("Il gruppo scelto ha più di 12 valori: scegline uno con meno categorie.");
+  if (groups.length > 12) return statMessage("The chosen group has more than 12 values: choose one with fewer categories.");
   const rows = [];
   for (const v of vars) {
     const values = columnValues(v);
     for (const g of groups) {
       const d = Stats.describe(g == null ? values : values.filter((_, i) => labels[i] === g));
-      rows.push([{ v, cls: "strong" }, g ?? "tutti", d.n, d.missing, d.mean, d.sd, d.min, d.q1, d.median, d.q3, d.max]);
+      rows.push([{ v, cls: "strong" }, g ?? "all", d.n, d.missing, d.mean, d.sd, d.min, d.q1, d.median, d.q3, d.max]);
     }
   }
-  statTable(["Variabile", "Gruppo", "n", "Mancanti", "Media", "Dev. std.", "Min", "Q1", "Mediana", "Q3", "Max"], rows);
-  $("statFoot").textContent = "Deviazione standard campionaria (n − 1); quartili con interpolazione lineare.";
-  $("statsNote").textContent = `${vars.length} variabili${labels ? ` × ${groups.length} gruppi` : ""}`;
+  statTable(["Variable", "Group", "n", "Missing", "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max"], rows);
+  $("statFoot").textContent = "Sample standard deviation (n − 1); quartiles with linear interpolation.";
+  $("statsNote").textContent = `${vars.length} variables${labels ? ` × ${groups.length} groups` : ""}`;
 }
 
 function renderCorrelation(vars) {
-  if (vars.length < 2) return statMessage("Seleziona almeno due variabili numeriche.");
+  if (vars.length < 2) return statMessage("Select at least two numeric variables.");
   const method = $("corrMethod").value;
   const { r, n } = Stats.correlationMatrix(vars.map(columnValues), method);
   const th = theme();
@@ -1070,20 +1072,20 @@ function renderCorrelation(vars) {
   const pairs = [];
   for (let i = 0; i < vars.length; i++) for (let j = i + 1; j < vars.length; j++) pairs.push([vars[i], vars[j], r[i][j], n[i][j]]);
   pairs.sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]));
-  statTable(["Variabile 1", "Variabile 2", method === "pearson" ? "r di Pearson" : "ρ di Spearman", "n coppie"],
+  statTable(["Variable 1", "Variable 2", method === "pearson" ? "Pearson r" : "Spearman ρ", "n pairs"],
     pairs.map(([a, b, rv, nv]) => [a, b, { v: rv, cls: Math.abs(rv) >= 0.7 ? "strong" : Math.abs(rv) < 0.3 ? "weak" : null }, nv]));
-  $("statFoot").textContent = "Coppie ordinate per |correlazione|. Ogni coppia usa le righe in cui entrambe le variabili hanno un valore. Spearman lavora sui ranghi ed è robusto ad asimmetrie e valori estremi.";
-  $("statsNote").textContent = `${vars.length} variabili · ${method === "pearson" ? "Pearson" : "Spearman"}`;
+  $("statFoot").textContent = "Pairs sorted by |correlation|. Each pair uses the rows where both variables have a value. Spearman works on ranks and is robust to skew and extreme values.";
+  $("statsNote").textContent = `${vars.length} variables · ${method === "pearson" ? "Pearson" : "Spearman"}`;
 }
 
 function renderPca(vars) {
-  if (vars.length < 2) return statMessage("Seleziona almeno due variabili numeriche.");
+  if (vars.length < 2) return statMessage("Select at least two numeric variables.");
   const cols = vars.map(columnValues), labels = groupLabels();
   const keep = [];
   for (let i = 0; i < state.result.rows.length; i++) if (cols.every((c) => Stats.isNum(c[i]))) keep.push(i);
   const data = keep.map((i) => cols.map((c) => c[i]));
   const constant = vars.filter((_, j) => data.every((row) => row[j] === data[0]?.[j]));
-  if (constant.length) return statMessage(`Variabili costanti in queste righe: ${constant.join(", ")}. Toglile dalla selezione.`);
+  if (constant.length) return statMessage(`Constant variables in these rows: ${constant.join(", ")}. Remove them from the selection.`);
   const standardize = $("pcaStd").checked;
   const res = Stats.pca(data, { standardize });
   const k = res.p;
@@ -1099,25 +1101,25 @@ function renderPca(vars) {
   const pct = res.explained.map((e) => e * 100);
   let acc = 0; const cum = pct.map((p) => (acc += p));
   Plotly.react("statChart1", [
-    { type: "bar", name: "varianza spiegata", x: pcNames, y: pct, marker: { color: th.series[0] }, hovertemplate: "%{x}: %{y:.1f}%<extra></extra>" },
-    { type: "scatter", mode: "lines+markers", name: "cumulata", x: pcNames, y: cum, line: { width: 2, color: th.fg2 }, marker: { size: 7, color: th.fg2 }, hovertemplate: "fino a %{x}: %{y:.1f}%<extra></extra>" },
-  ], plotLayout(th, { xaxis: statAxis(th, "componente"), yaxis: statAxis(th, "varianza spiegata (%)", { range: [0, 105] }) }), PLOT_CONFIG);
+    { type: "bar", name: "explained variance", x: pcNames, y: pct, marker: { color: th.series[0] }, hovertemplate: "%{x}: %{y:.1f}%<extra></extra>" },
+    { type: "scatter", mode: "lines+markers", name: "cumulative", x: pcNames, y: cum, line: { width: 2, color: th.fg2 }, marker: { size: 7, color: th.fg2 }, hovertemplate: "up to %{x}: %{y:.1f}%<extra></extra>" },
+  ], plotLayout(th, { xaxis: statAxis(th, "component"), yaxis: statAxis(th, "explained variance (%)", { range: [0, 105] }) }), PLOT_CONFIG);
 
   // Score plot coloured by group, with loading vectors (biplot).
   const labelIdx = state.result.columns.findIndex((c, i) => state.types[i].kind === "text" && c !== $("statGroup").value);
   const groupsMap = new Map();
   keep.forEach((rowIdx, n) => {
-    const g = labels ? (labels[rowIdx] ?? "NULL") : "Tutti";
+    const g = labels ? (labels[rowIdx] ?? "NULL") : "All";
     if (!groupsMap.has(g)) groupsMap.set(g, []);
     groupsMap.get(g).push(n);
   });
   let ordered = [...groupsMap.entries()].sort((a, b) => b[1].length - a[1].length);
-  if (ordered.length > MAX_GROUPS + 1) ordered = ordered.slice(0, MAX_GROUPS).concat([["Altro", ordered.slice(MAX_GROUPS).flatMap(([, v]) => v)]]);
+  if (ordered.length > MAX_GROUPS + 1) ordered = ordered.slice(0, MAX_GROUPS).concat([["Other", ordered.slice(MAX_GROUPS).flatMap(([, v]) => v)]]);
   const traces = ordered.map(([g, idx]) => ({
     type: idx.length > 4000 ? "scattergl" : "scatter", mode: "markers", name: `${g} (n=${idx.length})`,
     x: idx.map((n) => res.scores[n][cx]), y: idx.map((n) => res.scores[n][cy]),
     text: labelIdx >= 0 ? idx.map((n) => state.result.rows[keep[n]][labelIdx] ?? "") : undefined,
-    marker: { size: 7, opacity: 0.8, color: !labels ? th.series[0] : g === "Altro" ? th.muted : th.series[slotFor(g)], line: { width: 1, color: th.surface } },
+    marker: { size: 7, opacity: 0.8, color: !labels ? th.series[0] : g === "Other" ? th.muted : th.series[slotFor(g)], line: { width: 1, color: th.surface } },
     hovertemplate: (labelIdx >= 0 ? "<b>%{text}</b><br>" : "") + `${pcNames[cx]}: %{x:.2f}<br>${pcNames[cy]}: %{y:.2f}<extra>${g}</extra>`,
   }));
   const annotations = [];
@@ -1142,29 +1144,29 @@ function renderPca(vars) {
   const shown = Math.min(k, 5);
   const rows = vars.map((v, j) => [{ v, cls: "strong" }, ...res.loadings[j].slice(0, shown).map((l) =>
     ({ v: l, cls: Math.abs(l) >= 0.5 ? "strong" : Math.abs(l) < 0.3 ? "weak" : null }))]);
-  rows.push(["Autovalore", ...res.eigenvalues.slice(0, shown)], ["Varianza spiegata %", ...pct.slice(0, shown)], ["Cumulata %", ...cum.slice(0, shown)]);
+  rows.push(["Eigenvalue", ...res.eigenvalues.slice(0, shown)], ["Explained variance %", ...pct.slice(0, shown)], ["Cumulative %", ...cum.slice(0, shown)]);
   statTable(["Loading", ...pcNames.slice(0, shown)], rows);
   const dropped = state.result.rows.length - keep.length;
-  $("statFoot").textContent = `${fmtInt.format(keep.length)} righe complete usate${dropped ? `, ${fmtInt.format(dropped)} escluse per valori mancanti` : ""}. `
-    + (standardize ? "Variabili standardizzate (z-score): la PCA usa la matrice di correlazione e il loading è la correlazione tra variabile e componente. Il criterio di Kaiser tiene le componenti con autovalore > 1."
-                   : "Variabili non standardizzate: la PCA usa la covarianza, quindi pesano di più le variabili con valori grandi (es. peso molecolare).");
-  $("statsNote").textContent = `${vars.length} variabili · ${fmtInt.format(keep.length)} righe`;
+  $("statFoot").textContent = `${fmtInt.format(keep.length)} complete rows used${dropped ? `, ${fmtInt.format(dropped)} excluded for missing values` : ""}. `
+    + (standardize ? "Standardised variables (z-score): the PCA uses the correlation matrix, and each loading is the correlation between variable and component. The Kaiser criterion keeps components with eigenvalue > 1."
+                   : "Variables not standardised: the PCA uses the covariance, so variables with large values (e.g. molecular weight) weigh more.");
+  $("statsNote").textContent = `${vars.length} variables · ${fmtInt.format(keep.length)} rows`;
   statState.pca = { res, keep, pcNames, vars, labelIdx };
 }
 
 function effectLabel(value, kind) {
   const a = Math.abs(value);
   const [small, medium, large] = kind === "r" ? [0.1, 0.3, 0.5] : [0.01, 0.08, 0.26];
-  const text = a >= large ? "grande" : a >= medium ? "medio" : a >= small ? "piccolo" : "trascurabile";
+  const text = a >= large ? "large" : a >= medium ? "medium" : a >= small ? "small" : "negligible";
   return el("span", "effect " + (a >= large ? "large" : a >= medium ? "medium" : ""), text);
 }
 function renderGroupTest(vars) {
-  if (!vars.length) return statMessage("Seleziona almeno una variabile numerica.");
+  if (!vars.length) return statMessage("Select at least one numeric variable.");
   const labels = groupLabels();
-  if (!labels) return statMessage("Scegli una colonna Gruppo (es. route_group) per confrontare i gruppi.");
+  if (!labels) return statMessage("Choose a Group column (e.g. route_group) to compare groups.");
   const groups = [...new Set(labels.filter((l) => l != null))].sort();
-  if (groups.length < 2) return statMessage("Il gruppo scelto ha un solo valore in queste righe.");
-  if (groups.length > 12) return statMessage("Il gruppo scelto ha più di 12 valori: scegline uno con meno categorie.");
+  if (groups.length < 2) return statMessage("The chosen group has only one value in these rows.");
+  if (groups.length > 12) return statMessage("The chosen group has more than 12 values: choose one with fewer categories.");
   const two = groups.length === 2;
   const results = vars.map((v) => {
     const values = columnValues(v);
@@ -1186,22 +1188,22 @@ function renderGroupTest(vars) {
     hovertemplate: "%{y}: %{x:.3f}<extra></extra>",
   }], plotLayout(th, {
     title: { text: two ? `Effect size: r rank-biserial (${groups[0]} vs ${groups[1]})` : "Effect size: ε² (Kruskal-Wallis)", font: { size: 13, color: th.fg } },
-    xaxis: statAxis(th, two ? `r > 0: ${groups[0]} tende a valori più alti` : "ε²", two ? { range: [-1, 1] } : { rangemode: "tozero" }),
+    xaxis: statAxis(th, two ? `r > 0: ${groups[0]} tends to higher values` : "ε²", two ? { range: [-1, 1] } : { rangemode: "tozero" }),
     yaxis: statAxis(th, ""), margin: { l: 130, r: 18, t: 40, b: 50 }, showlegend: false,
   }), PLOT_CONFIG);
   const median = (s) => Stats.describe(s).median;
-  statTable(["Variabile", ...groups.map((g) => `Mediana ${g}`), "n", "Test", "Statistica", "p", "p Holm", "Effetto", ""],
+  statTable(["Variable", ...groups.map((g) => `Median ${g}`), "n", "Test", "Statistic", "p", "Holm p", "Effect", ""],
     valid.map((r) => [{ v: r.v, cls: "strong" }, ...r.samples.map(median), r.samples.map((s) => s.length).join(" / "),
       two ? "Mann-Whitney" : "Kruskal-Wallis", two ? r.test.U : r.test.H,
       { v: fmtP(r.p), cls: "num" }, { v: fmtP(r.pAdj), cls: r.pAdj < 0.05 ? "num strong" : "num weak" },
       r.effect, { v: effectLabel(r.effect, two ? "r" : "e") }]));
   const skipped = results.filter((r) => r.skip).map((r) => r.v);
   $("statFoot").textContent = (two
-    ? `Mann-Whitney a due code (approssimazione normale, correzione per ties e continuità). r rank-biserial da −1 a 1: soglie 0,1 / 0,3 / 0,5. `
-    : `Kruskal-Wallis con correzione per ties; ε² = H/(n − 1), soglie 0,01 / 0,08 / 0,26. `)
-    + `p Holm corregge per i ${valid.length} test eseguiti. Con gruppi grandi anche differenze minime diventano significative: conta l'effetto.`
-    + (skipped.length ? ` Saltate (meno di 2 valori in un gruppo): ${skipped.join(", ")}.` : "");
-  $("statsNote").textContent = `${groups.length} gruppi · ${valid.length} test`;
+    ? `Two-sided Mann-Whitney (normal approximation, tie and continuity correction). Rank-biserial r from −1 to 1: thresholds 0.1 / 0.3 / 0.5. `
+    : `Kruskal-Wallis with tie correction; ε² = H/(n − 1), thresholds 0.01 / 0.08 / 0.26. `)
+    + `Holm p corrects for the ${valid.length} tests run. With large groups even tiny differences become significant: the effect size is what matters.`
+    + (skipped.length ? ` Skipped (fewer than 2 values in a group): ${skipped.join(", ")}.` : "");
+  $("statsNote").textContent = `${groups.length} groups · ${valid.length} tests`;
 }
 
 function savePcaScores() {
@@ -1219,7 +1221,7 @@ function savePcaScores() {
   });
   stmt.free();
   renderSchema();
-  $("pcaSaveStatus").textContent = `Tabella pca_scores creata: ${fmtInt.format(s.keep.length)} righe, colonne ${pcCols.join(", ")}. Esempio: SELECT * FROM pca_scores ORDER BY PC1 DESC;`;
+  $("pcaSaveStatus").textContent = `Table pca_scores created: ${fmtInt.format(s.keep.length)} rows, columns ${pcCols.join(", ")}. Example: SELECT * FROM pca_scores ORDER BY PC1 DESC;`;
 }
 
 // ---------- wiring ----------
@@ -1251,7 +1253,7 @@ $("sql").addEventListener("input", () => {
     const sql = $("sql").value;
     if (sql.trim() === lastLiveSql.trim()) return;
     if (!isReadOnly(sql)) {
-      $("status").textContent = "Aggiornamento live in pausa: le istruzioni che modificano i dati partono solo con Esegui query.";
+      $("status").textContent = "Live update paused: statements that change data run only with Run query.";
       return;
     }
     lastLiveSql = sql;
