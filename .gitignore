@@ -1,4 +1,5 @@
-data/raw/
+data/raw/*
+!data/raw/manifest.json
 data/processed/
 data_download.log
 __pycache__/

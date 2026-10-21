@@ -1,0 +1,42 @@
+{
+  "chembl_release": "ChEMBL_37",
+  "chembl_release_date": "2026-05-01",
+  "files": {
+    "chembl_approved_molecules.json": {
+      "source": "https://www.ebi.ac.uk/chembl/api/data/molecule?max_phase=4",
+      "records": 4225,
+      "sha256": "0b141ea5b47f2de7c009f0a38b2452049060b4c68a4059ed9f72cf6c204a255a",
+      "retrieved_at": "2026-10-21T04:40:21+00:00"
+    },
+    "chembl_atc_classes.json": {
+      "source": "https://www.ebi.ac.uk/chembl/api/data/atc_class",
+      "records": 5579,
+      "sha256": "cc659e85d5e893f390b7f9e036d8affffc5263ca66406f8ec570ed78a27bbc4f",
+      "retrieved_at": "2026-10-21T04:40:25+00:00"
+    },
+    "chembl_pde4_targets.json": {
+      "source": "https://www.ebi.ac.uk/chembl/api/data/target",
+      "records": 5,
+      "sha256": "3d9d98fb4cd4156474d0bc30a7a3497b31769a04b9d413d6a10b49405d473eb8",
+      "retrieved_at": "2026-10-21T04:40:25+00:00"
+    },
+    "chembl_pde4_activities.json": {
+      "source": "https://www.ebi.ac.uk/chembl/api/data/activity",
+      "records": 11954,
+      "sha256": "f6fb975542d1b12885196f08e33edfb48afb72894a7b4f2b01107b107787eb15",
+      "retrieved_at": "2026-10-21T04:41:34+00:00"
+    },
+    "chembl_pde4_compounds.json": {
+      "source": "https://www.ebi.ac.uk/chembl/api/data/molecule?molecule_chembl_id__in=...",
+      "records": 7326,
+      "sha256": "c321935d906ac3b324bf4aa5020625aac8fe69bc0631bb5267193022f1b3eddd",
+      "retrieved_at": "2026-10-21T04:42:19+00:00"
+    },
+    "openfda_drugsfda.json.zip": {
+      "source": "https://download.open.fda.gov/drug/drugsfda/drug-drugsfda-0001-of-0001.json.zip",
+      "records": null,
+      "sha256": "0fc282a2e2cb3b6a3a8b921ab81a38fdcc2dc378c7899a242766e728bc64005c",
+      "retrieved_at": "2026-10-21T04:42:22+00:00"
+    }
+  }
+}

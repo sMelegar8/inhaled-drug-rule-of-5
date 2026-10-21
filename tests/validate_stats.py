@@ -5,13 +5,17 @@ and compares every statistic the app shows. Fails with an AssertionError if a
 difference exceeds the tolerance.
 
 Usage:  py -3.13 tests/validate_stats.py      (needs Node.js on PATH)
+Without a local build it uses the database shipped with the app (identical file).
 """
 
 from __future__ import annotations
 
+import base64
+import gzip
 import json
 import sqlite3
 import subprocess
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -45,8 +49,18 @@ def holm(p: np.ndarray) -> np.ndarray:
     return adj
 
 
+def database() -> Path:
+    built = ROOT / "data" / "processed" / "pharma_inhalation.sqlite"
+    if built.exists():
+        return built
+    shipped = ROOT / "app" / "pharma_inhalation.sqlite.gz.b64.txt"
+    copy = Path(tempfile.gettempdir()) / "pharma_inhalation_app_copy.sqlite"
+    copy.write_bytes(gzip.decompress(base64.b64decode(shipped.read_bytes())))
+    return copy
+
+
 def main() -> None:
-    con = sqlite3.connect(ROOT / "data" / "processed" / "pharma_inhalation.sqlite")
+    con = sqlite3.connect(database())
     df = pd.read_sql_query(f"""SELECT route_group, CAST(num_ro5_violations AS TEXT) AS ro5_class,
                                       {', '.join(VARIABLES)} FROM inhalation_dataset""", con)
     # Some correlations and the PCA need missing values: blank 5% of alogp and psa at random.
