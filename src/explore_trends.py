@@ -29,24 +29,21 @@ REPORTS = ROOT / "reports"
 SEED = 42
 PROPERTIES = ["alogp", "rtb", "mw_freebase", "psa", "hbd", "aromatic_rings"]
 # Respiratory molecules without an ATC code in ChEMBL, assigned by pharmacological class.
-NO_ATC_CLASS = {"ARFORMOTEROL": "β2-agonisti", "LEVOSALBUTAMOL": "β2-agonisti", "VILANTEROL": "β2-agonisti",
-                "TRIAMCINOLONE ACETONIDE": "corticosteroidi"}
-CLASS_COLORS = {"β2-agonisti": "#2a78d6", "antimuscarinici": "#eb6834", "corticosteroidi": "#1baf7a",
-                "altri inalatori": "#6250d6"}
-# Figure labels only: the class keys above also order the permutation test, so they stay unchanged.
-CLASS_LABELS = {"β2-agonisti": "inhaled: β2-agonists", "antimuscarinici": "inhaled: antimuscarinics",
-                "corticosteroidi": "inhaled: corticosteroids", "altri inalatori": "other inhaled"}
+NO_ATC_CLASS = {"ARFORMOTEROL": "β2-agonists", "LEVOSALBUTAMOL": "β2-agonists", "VILANTEROL": "β2-agonists",
+                "TRIAMCINOLONE ACETONIDE": "corticosteroids"}
+CLASS_COLORS = {"β2-agonists": "#2a78d6", "antimuscarinics": "#eb6834", "corticosteroids": "#1baf7a",
+                "other inhaled": "#6250d6"}
 
 
 def respiratory_class(row: pd.Series) -> str:
     atc = row["atc_codes"]
     if any(code in atc for code in ("R03AA", "R03AB", "R03AC")):
-        return "β2-agonisti"
+        return "β2-agonists"
     if "R03BB" in atc:
-        return "antimuscarinici"
+        return "antimuscarinics"
     if "R03BA" in atc:
-        return "corticosteroidi"
-    return NO_ATC_CLASS.get(row["pref_name"], "altri inalatori")
+        return "corticosteroids"
+    return NO_ATC_CLASS.get(row["pref_name"], "other inhaled")
 
 
 def bootstrap_rho(x: np.ndarray, y: np.ndarray, rng, n_boot: int) -> np.ndarray:
@@ -81,7 +78,7 @@ def main() -> None:
     inhaled = data[data.route_group == "inhaled"].copy()
     oral = data[data.route_group == "oral"]
     inhaled["cls"] = inhaled.apply(respiratory_class, axis=1)
-    respiratory = inhaled[inhaled.cls != "altri inalatori"]
+    respiratory = inhaled[inhaled.cls != "other inhaled"]
     print(f"Inhaled {len(inhaled)} (respiratory classes {len(respiratory)}), oral {len(oral)}")
 
     rows = []
@@ -112,7 +109,7 @@ def main() -> None:
     for cls, color in CLASS_COLORS.items():
         g = inhaled[inhaled.cls == cls]
         ax.scatter(g.first_approval, g.alogp, s=55, color=color, edgecolor="white", linewidth=0.8,
-                   label=f"{CLASS_LABELS[cls]} (n={len(g)})", zorder=3)
+                   label=f"{cls if cls.startswith('other') else 'inhaled: ' + cls} (n={len(g)})", zorder=3)
     for df, color, label in [(oral, "#898781", "oral trend"), (inhaled, "#0b0b0b", "inhaled trend")]:
         slope, intercept = np.polyfit(df.first_approval, df.alogp, 1)
         xs = np.array([df.first_approval.min(), df.first_approval.max()])

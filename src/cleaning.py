@@ -12,7 +12,7 @@ excluded record has exactly one reason. The ledger is saved as two tables:
 cleaning_log (one row per rule, with counts) and cleaning_exclusions (one row
 per excluded record). Raw tables are never modified.
 
-Usage:  py -3.13 src/cleaning.py      (or run notebooks/02_pulizia_dati.ipynb)
+Usage:  py -3.13 src/cleaning.py      (or run notebooks/02_data_cleaning.ipynb)
 """
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ class Ledger:
         })
 
     def start(self, df: pd.DataFrame, rule: str, unit: str) -> None:
-        self._log(f"{self.dataset[0].upper()}0", "input", rule, "Dati di partenza", unit, len(df), 0, len(df))
+        self._log(f"{self.dataset[0].upper()}0", "input", rule, "Starting data", unit, len(df), 0, len(df))
 
     def exclude(self, df: pd.DataFrame, rule_id: str, rule: str, reason: str,
                 mask: pd.Series, unit: str) -> pd.DataFrame:
@@ -97,32 +97,32 @@ def load_activities(con: sqlite3.Connection) -> pd.DataFrame:
 
 def clean_activities(raw: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, Ledger]:
     led = Ledger("activities", "activity_id")
-    unit = "misure"
-    led.start(raw, "Misure IC50 e Ki sulle PDE4 umane scaricate da ChEMBL", unit)
+    unit = "measurements"
+    led.start(raw, "IC50 and Ki measurements on human PDE4 downloaded from ChEMBL", unit)
     df = raw.copy()
 
-    df = led.exclude(df, "A1", "Misure segnalate dai curatori ChEMBL",
-                     "Il campo data_validity_comment indica un valore sospetto (unità, trascrizione, fuori scala).",
+    df = led.exclude(df, "A1", "Measurements flagged by ChEMBL curators",
+                     "The data_validity_comment field marks a suspect value (units, transcription, out of range).",
                      df["data_validity_comment"].notna(), unit)
-    df = led.exclude(df, "A2", "Relazione diversa da '='",
-                     "I valori censurati (<, >) dicono solo che la potenza è sopra o sotto una soglia: non sono una stima puntuale.",
+    df = led.exclude(df, "A2", "Relation other than '='",
+                     "Censored values (<, >) only say that potency is above or below a threshold: they are not a point estimate.",
                      df["standard_relation"].fillna("").ne("="), unit)
-    df = led.exclude(df, "A3", "Unità standard diversa da nM",
-                     "Percentuali o unità mancanti non si convertono in una concentrazione.",
+    df = led.exclude(df, "A3", "Standard unit other than nM",
+                     "Percentages or missing units cannot be converted into a concentration.",
                      df["standard_units"].fillna("").ne("nM"), unit)
-    df = led.exclude(df, "A4", "Valore mancante o non positivo",
-                     "Il logaritmo richiede un valore numerico maggiore di zero.",
+    df = led.exclude(df, "A4", "Missing or non-positive value",
+                     "The logarithm needs a numeric value greater than zero.",
                      ~(df["standard_value"] > 0), unit)
 
     df["p_activity"] = 9 - np.log10(df["standard_value"])
-    df = led.exclude(df, "A5", f"pIC50/pKi fuori da {P_RANGE[0]:g}-{P_RANGE[1]:g}",
-                     "Una potenza sotto 1 mM o sopra 1 pM è quasi sempre un errore di unità.",
+    df = led.exclude(df, "A5", f"pIC50/pKi outside {P_RANGE[0]:g}-{P_RANGE[1]:g}",
+                     "A potency weaker than 1 mM or stronger than 1 pM is almost always a unit error.",
                      ~df["p_activity"].between(*P_RANGE), unit)
 
     diff = (df["p_activity"] - df["pchembl_value"]).abs()
     df["pchembl_mismatch"] = (diff > PCHEMBL_TOLERANCE).astype(int)
-    led.note(df, "A6", "check", "Confronto con il pChEMBL calcolato da ChEMBL",
-             f"Segnala le misure in cui il pX calcolato differisce più di {PCHEMBL_TOLERANCE} da pChEMBL.",
+    led.note(df, "A6", "check", "Comparison with the pChEMBL value calculated by ChEMBL",
+             f"Flags measurements where the calculated pX differs from pChEMBL by more than {PCHEMBL_TOLERANCE}.",
              unit, flagged=int(df["pchembl_mismatch"].sum()))
 
     keys = ["molecule_chembl_id", "target_chembl_id", "target_name", "standard_type"]
@@ -133,12 +133,12 @@ def clean_activities(raw: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, Led
                  .reset_index())
     potency["p_range"] = potency["p_max"] - potency["p_min"]
     potency["inconsistent"] = (potency["p_range"] > INCONSISTENT_RANGE).astype(int)
-    led.note(potency, "A7", "aggregate", "Mediana delle misure ripetute",
-             "Una riga per molecola × bersaglio × tipo di misura; la mediana resiste ai valori anomali.",
-             "coppie molecola-bersaglio", rows_before=len(df))
-    led.note(potency, "A8", "check", f"Repliche distanti più di {INCONSISTENT_RANGE:g} unità log",
-             "Coppie con misure che differiscono più di 10 volte: tenute ma segnalate.",
-             "coppie molecola-bersaglio", flagged=int(potency["inconsistent"].sum()))
+    led.note(potency, "A7", "aggregate", "Median of repeated measurements",
+             "One row per molecule × target × measurement type; the median is robust to outliers.",
+             "molecule-target pairs", rows_before=len(df))
+    led.note(potency, "A8", "check", f"Replicates more than {INCONSISTENT_RANGE:g} log unit apart",
+             "Pairs whose measurements differ more than 10-fold: kept but flagged.",
+             "molecule-target pairs", flagged=int(potency["inconsistent"].sum()))
 
     clean = df[["activity_id", "molecule_chembl_id", "target_chembl_id", "target_name", "target_type",
                 "assay_chembl_id", "assay_type", "document_chembl_id", "document_year",
@@ -208,46 +208,46 @@ def clean_molecules(con: sqlite3.Connection) -> tuple[pd.DataFrame, pd.DataFrame
     df["also_oral"] = ((df["n_inhaled_products"] > 0) & (df["n_oral_products"] > 0)).astype(int)
 
     led = Ledger("molecules", "chembl_id")
-    unit = "molecole"
-    led.start(df, "Molecole parent con almeno un prodotto FDA orale o inalatorio", unit)
-    led.note(df, "M0a", "transform", "Vie di somministrazione separate e in maiuscolo",
-             f"\"INHALATION, ORAL\" e \"Inhalation, Oral\" contano per entrambe le vie: le molecole inalatorie passano "
-             f"da {raw_inhaled} (solo testo esatto INHALATION) a {int((df['n_inhaled_products'] > 0).sum())}.", unit)
-    led.note(df, "M0b", "transform", "Codici ATC ereditati dai sali",
-             "Molti codici ATC sono registrati sul sale (es. tiotropio bromuro): vengono attribuiti alla molecola parent.", unit)
-    led.note(df, "M0c", "transform", "Gruppi esclusivi: inalatorio prevale su orale",
-             "Una molecola con prodotti inalatori va nel gruppo inhaled (also_oral = 1 se esiste anche per bocca); "
-             "il gruppo oral contiene solo molecole mai inalate.", unit, flagged=int(df["also_oral"].sum()))
+    unit = "molecules"
+    led.start(df, "Parent molecules with at least one oral or inhaled FDA product", unit)
+    led.note(df, "M0a", "transform", "Routes of administration split and upper-cased",
+             f"\"INHALATION, ORAL\" and \"Inhalation, Oral\" count for both routes: inhaled molecules go "
+             f"from {raw_inhaled} (exact text INHALATION only) to {int((df['n_inhaled_products'] > 0).sum())}.", unit)
+    led.note(df, "M0b", "transform", "ATC codes inherited from salts",
+             "Many ATC codes are stored on the salt (e.g. tiotropium bromide): they are assigned to the parent molecule.", unit)
+    led.note(df, "M0c", "transform", "Exclusive groups: inhaled takes precedence over oral",
+             "A molecule with inhaled products goes into the inhaled group (also_oral = 1 if it also exists as an oral product); "
+             "the oral group contains only molecules that are never inhaled.", unit, flagged=int(df["also_oral"].sum()))
 
-    df = led.exclude(df, "M1", "Non è una piccola molecola",
-                     "Proteine e miscele non hanno proprietà calcolate confrontabili.",
+    df = led.exclude(df, "M1", "Not a small molecule",
+                     "Proteins and mixtures have no comparable calculated properties.",
                      df["molecule_type"].ne("Small molecule"), unit)
-    df = led.exclude(df, "M2", "Proprietà chimiche principali mancanti",
-                     f"Servono tutte: {', '.join(CORE_PROPERTIES)}. Mancano per ioni e gas nobili.",
+    df = led.exclude(df, "M2", "Core chemical properties missing",
+                     f"All are required: {', '.join(CORE_PROPERTIES)}. They are missing for ions and noble gases.",
                      df[CORE_PROPERTIES].isna().any(axis=1), unit)
-    df = led.exclude(df, "M3", "Gas medicali",
-                     "Peso molecolare sotto 100 Da o ATC V03AN (ossigeno, azoto, protossido...): non sono farmaci progettati.",
+    df = led.exclude(df, "M3", "Medical gases",
+                     "Molecular weight below 100 Da or ATC V03AN (oxygen, nitrogen, nitrous oxide...): not designed drugs.",
                      (df["mw_freebase"] < 100) | _atc_any(df["atc_codes"], ("V03AN",)), unit)
-    df = led.exclude(df, "M4", "Solo diagnostici",
-                     "Tutti i codici ATC sono V04/V08/V09 (test di provocazione, mezzi di contrasto, radiofarmaci).",
+    df = led.exclude(df, "M4", "Diagnostics only",
+                     "All ATC codes are V04/V08/V09 (challenge tests, contrast agents, radiopharmaceuticals).",
                      _atc_all(df["atc_codes"], ("V04", "V08", "V09")), unit)
     inhaled = df["route_group"].eq("inhaled")
-    df = led.exclude(df, "M5", "Inalatori ad azione sistemica sul sistema nervoso",
-                     "ATC di primo livello N (anestetici volatili, loxapina, levodopa): sono inalati per arrivare "
-                     "nel sangue, l'opposto di un farmaco che deve restare nel polmone.",
+    df = led.exclude(df, "M5", "Inhaled drugs acting systemically on the nervous system",
+                     "First-level ATC N (volatile anaesthetics, loxapine, levodopa): they are inhaled to reach "
+                     "the blood, the opposite of a drug meant to stay in the lung.",
                      inhaled & _atc_any(df["atc_codes"], ("N",)), unit)
     oral = df["route_group"].eq("oral")
-    df = led.exclude(df, "M6", "Orali ad azione locale nell'intestino",
-                     "Tutti i codici ATC sono A06/A07 (lassativi, antinfettivi e antinfiammatori intestinali): "
-                     "sono pensati per non essere assorbiti, quindi non rappresentano i farmaci orali sistemici.",
+    df = led.exclude(df, "M6", "Oral drugs acting locally in the gut",
+                     "All ATC codes are A06/A07 (laxatives, intestinal anti-infectives and anti-inflammatories): "
+                     "they are designed not to be absorbed, so they do not represent systemic oral drugs.",
                      oral & _atc_all(df["atc_codes"], ("A06", "A07")), unit)
 
     columns = ["chembl_id", "pref_name", "route_group", "also_oral", "n_inhaled_products", "n_oral_products",
                "atc_codes", "first_approval"] + PROPERTY_COLUMNS
     df = df[columns].sort_values(["route_group", "pref_name"]).reset_index(drop=True)
     for group in ("inhaled", "oral"):
-        led.note(df[df["route_group"] == group], f"M7{group[0]}", "check", f"Insieme finale: gruppo {group}",
-                 "Molecole disponibili per il confronto statistico.", unit,
+        led.note(df[df["route_group"] == group], f"M7{group[0]}", "check", f"Final set: {group} group",
+                 "Molecules available for the statistical comparison.", unit,
                  rows_before=int((df["route_group"] == group).sum()))
     return df, routes, led
 

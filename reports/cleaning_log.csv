@@ -1,22 +1,22 @@
 dataset,step,rule_id,kind,rule,reason,unit,rows_before,rows_removed,rows_after,rows_flagged
-activities,0,A0,input,Misure IC50 e Ki sulle PDE4 umane scaricate da ChEMBL,Dati di partenza,misure,11954,0,11954,0
-activities,1,A1,exclude,Misure segnalate dai curatori ChEMBL,"Il campo data_validity_comment indica un valore sospetto (unità, trascrizione, fuori scala).",misure,11954,259,11695,0
-activities,2,A2,exclude,Relazione diversa da '=',"I valori censurati (<, >) dicono solo che la potenza è sopra o sotto una soglia: non sono una stima puntuale.",misure,11695,2892,8803,0
-activities,3,A3,exclude,Unità standard diversa da nM,Percentuali o unità mancanti non si convertono in una concentrazione.,misure,8803,10,8793,0
-activities,4,A4,exclude,Valore mancante o non positivo,Il logaritmo richiede un valore numerico maggiore di zero.,misure,8793,0,8793,0
-activities,5,A5,exclude,pIC50/pKi fuori da 3-12,Una potenza sotto 1 mM o sopra 1 pM è quasi sempre un errore di unità.,misure,8793,0,8793,0
-activities,6,A6,check,Confronto con il pChEMBL calcolato da ChEMBL,Segnala le misure in cui il pX calcolato differisce più di 0.05 da pChEMBL.,misure,8793,0,8793,0
-activities,7,A7,aggregate,Mediana delle misure ripetute,Una riga per molecola × bersaglio × tipo di misura; la mediana resiste ai valori anomali.,coppie molecola-bersaglio,8793,0,6887,0
-activities,8,A8,check,Repliche distanti più di 1 unità log,Coppie con misure che differiscono più di 10 volte: tenute ma segnalate.,coppie molecola-bersaglio,6887,0,6887,208
-molecules,0,M0,input,Molecole parent con almeno un prodotto FDA orale o inalatorio,Dati di partenza,molecole,1305,0,1305,0
-molecules,1,M0a,transform,Vie di somministrazione separate e in maiuscolo,"""INHALATION, ORAL"" e ""Inhalation, Oral"" contano per entrambe le vie: le molecole inalatorie passano da 65 (solo testo esatto INHALATION) a 66.",molecole,1305,0,1305,0
-molecules,2,M0b,transform,Codici ATC ereditati dai sali,Molti codici ATC sono registrati sul sale (es. tiotropio bromuro): vengono attribuiti alla molecola parent.,molecole,1305,0,1305,0
-molecules,3,M0c,transform,Gruppi esclusivi: inalatorio prevale su orale,Una molecola con prodotti inalatori va nel gruppo inhaled (also_oral = 1 se esiste anche per bocca); il gruppo oral contiene solo molecole mai inalate.,molecole,1305,0,1305,15
-molecules,4,M1,exclude,Non è una piccola molecola,Proteine e miscele non hanno proprietà calcolate confrontabili.,molecole,1305,37,1268,0
-molecules,5,M2,exclude,Proprietà chimiche principali mancanti,"Servono tutte: mw_freebase, alogp, psa, hbd, hba. Mancano per ioni e gas nobili.",molecole,1268,63,1205,0
-molecules,6,M3,exclude,Gas medicali,"Peso molecolare sotto 100 Da o ATC V03AN (ossigeno, azoto, protossido...): non sono farmaci progettati.",molecole,1205,10,1195,0
-molecules,7,M4,exclude,Solo diagnostici,"Tutti i codici ATC sono V04/V08/V09 (test di provocazione, mezzi di contrasto, radiofarmaci).",molecole,1195,12,1183,0
-molecules,8,M5,exclude,Inalatori ad azione sistemica sul sistema nervoso,"ATC di primo livello N (anestetici volatili, loxapina, levodopa): sono inalati per arrivare nel sangue, l'opposto di un farmaco che deve restare nel polmone.",molecole,1183,9,1174,0
-molecules,9,M6,exclude,Orali ad azione locale nell'intestino,"Tutti i codici ATC sono A06/A07 (lassativi, antinfettivi e antinfiammatori intestinali): sono pensati per non essere assorbiti, quindi non rappresentano i farmaci orali sistemici.",molecole,1174,20,1154,0
-molecules,10,M7i,check,Insieme finale: gruppo inhaled,Molecole disponibili per il confronto statistico.,molecole,46,0,46,0
-molecules,11,M7o,check,Insieme finale: gruppo oral,Molecole disponibili per il confronto statistico.,molecole,1108,0,1108,0
+activities,0,A0,input,IC50 and Ki measurements on human PDE4 downloaded from ChEMBL,Starting data,measurements,11954,0,11954,0
+activities,1,A1,exclude,Measurements flagged by ChEMBL curators,"The data_validity_comment field marks a suspect value (units, transcription, out of range).",measurements,11954,259,11695,0
+activities,2,A2,exclude,Relation other than '=',"Censored values (<, >) only say that potency is above or below a threshold: they are not a point estimate.",measurements,11695,2892,8803,0
+activities,3,A3,exclude,Standard unit other than nM,Percentages or missing units cannot be converted into a concentration.,measurements,8803,10,8793,0
+activities,4,A4,exclude,Missing or non-positive value,The logarithm needs a numeric value greater than zero.,measurements,8793,0,8793,0
+activities,5,A5,exclude,pIC50/pKi outside 3-12,A potency weaker than 1 mM or stronger than 1 pM is almost always a unit error.,measurements,8793,0,8793,0
+activities,6,A6,check,Comparison with the pChEMBL value calculated by ChEMBL,Flags measurements where the calculated pX differs from pChEMBL by more than 0.05.,measurements,8793,0,8793,0
+activities,7,A7,aggregate,Median of repeated measurements,One row per molecule × target × measurement type; the median is robust to outliers.,molecule-target pairs,8793,0,6887,0
+activities,8,A8,check,Replicates more than 1 log unit apart,Pairs whose measurements differ more than 10-fold: kept but flagged.,molecule-target pairs,6887,0,6887,208
+molecules,0,M0,input,Parent molecules with at least one oral or inhaled FDA product,Starting data,molecules,1305,0,1305,0
+molecules,1,M0a,transform,Routes of administration split and upper-cased,"""INHALATION, ORAL"" and ""Inhalation, Oral"" count for both routes: inhaled molecules go from 65 (exact text INHALATION only) to 66.",molecules,1305,0,1305,0
+molecules,2,M0b,transform,ATC codes inherited from salts,Many ATC codes are stored on the salt (e.g. tiotropium bromide): they are assigned to the parent molecule.,molecules,1305,0,1305,0
+molecules,3,M0c,transform,Exclusive groups: inhaled takes precedence over oral,A molecule with inhaled products goes into the inhaled group (also_oral = 1 if it also exists as an oral product); the oral group contains only molecules that are never inhaled.,molecules,1305,0,1305,15
+molecules,4,M1,exclude,Not a small molecule,Proteins and mixtures have no comparable calculated properties.,molecules,1305,37,1268,0
+molecules,5,M2,exclude,Core chemical properties missing,"All are required: mw_freebase, alogp, psa, hbd, hba. They are missing for ions and noble gases.",molecules,1268,63,1205,0
+molecules,6,M3,exclude,Medical gases,"Molecular weight below 100 Da or ATC V03AN (oxygen, nitrogen, nitrous oxide...): not designed drugs.",molecules,1205,10,1195,0
+molecules,7,M4,exclude,Diagnostics only,"All ATC codes are V04/V08/V09 (challenge tests, contrast agents, radiopharmaceuticals).",molecules,1195,12,1183,0
+molecules,8,M5,exclude,Inhaled drugs acting systemically on the nervous system,"First-level ATC N (volatile anaesthetics, loxapine, levodopa): they are inhaled to reach the blood, the opposite of a drug meant to stay in the lung.",molecules,1183,9,1174,0
+molecules,9,M6,exclude,Oral drugs acting locally in the gut,"All ATC codes are A06/A07 (laxatives, intestinal anti-infectives and anti-inflammatories): they are designed not to be absorbed, so they do not represent systemic oral drugs.",molecules,1174,20,1154,0
+molecules,10,M7i,check,Final set: inhaled group,Molecules available for the statistical comparison.,molecules,46,0,46,0
+molecules,11,M7o,check,Final set: oral group,Molecules available for the statistical comparison.,molecules,1108,0,1108,0
