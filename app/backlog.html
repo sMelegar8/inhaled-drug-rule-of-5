@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inhalation Workbench Backlog</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a filterable work list grouped by area; priority is encoded as a coloured chip with its word, never colour alone. */
+:root {
+  --bg: #f3f5f4; --surface: #fcfcfb; --surface-2: #e9edeb; --fg: #111614; --fg-2: #4a524e; --muted: #7b837f;
+  --line: #d9dfdc; --accent: #0b6a72; --accent-soft: #d6ebec;
+  --high: #b73232; --high-soft: #f8e2e2; --mid: #8a5a00; --mid-soft: #fbefd2; --low: #4a524e; --low-soft: #e9edeb;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+    --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d;
+    --high: #f08a8a; --high-soft: #3a1c1c; --mid: #e3b04b; --mid-soft: #3a2f14; --low: #b8c0bc; --low-soft: #232826; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+  --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d;
+  --high: #f08a8a; --high-soft: #3a1c1c; --mid: #e3b04b; --mid-soft: #3a2f14; --low: #b8c0bc; --low-soft: #232826; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--font-body); }
+.wrap {
+  max-width: 980px; margin: 0 auto; padding-block: 34px 60px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 2rem; font-weight: 600; margin: 0 0 8px; }
+h2 { font-size: 1.2rem; font-weight: 600; margin: 0 0 10px; }
+.lede { color: var(--fg-2); max-width: 68ch; margin: 0 0 18px; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.eyebrow { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 8px; }
+
+.summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.filter { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; cursor: pointer; font: inherit; font-size: 13px; color: var(--fg-2); }
+.filter[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+.filter b { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.area { margin-top: 26px; }
+.area-note { color: var(--muted); font-size: 13.5px; margin: -6px 0 10px; }
+.items { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.item { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 4px 14px; padding: 12px 14px; border-bottom: 1px solid var(--line); align-items: start; }
+.item:last-child { border-bottom: 0; }
+.prio { font: 600 11px var(--font-display); text-transform: uppercase; letter-spacing: 0.07em; padding: 2px 0; border-radius: 4px; text-align: center; }
+.prio.alta { background: var(--high-soft); color: var(--high); }
+.prio.media { background: var(--mid-soft); color: var(--mid); }
+.prio.bassa { background: var(--low-soft); color: var(--low); }
+.what { font-weight: 600; }
+.why { grid-column: 2 / 3; color: var(--fg-2); font-size: 14px; }
+.effort { font: 12px var(--font-mono); color: var(--muted); white-space: nowrap; padding-top: 2px; }
+@media (max-width: 560px) {
+  .item { grid-template-columns: minmax(0, 1fr) auto; }
+  .prio { justify-self: start; padding: 2px 8px; }
+  .why { grid-column: 1 / -1; }
+  .what { grid-column: 1 / -1; }
+}
+.legend { color: var(--muted); font-size: 13px; margin-top: 26px; }
+
+/* Shared navigation between the project pages */
+.sitenav { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line); background: var(--surface); font-size: 13.5px; }
+.sitenav-brand { font: 600 12.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-right: 6px; }
+.sitenav a { color: var(--fg-2); text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; }
+.sitenav a:hover { color: var(--fg); }
+.sitenav a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Pagine del progetto">
+  <span class="sitenav-brand">Inhalation Workbench</span>
+  <a href="index.html">Workbench SQL</a>
+  <a href="come-funziona.html">Come funziona</a>
+  <a href="backlog.html" aria-current="page">Backlog</a>
+</nav>
+<div class="wrap">
+  <div class="eyebrow">Inhalation SQL Workbench · stato al 21 ottobre 2026</div>
+  <h1>Cosa implementare o migliorare</h1>
+  <p class="lede">Lista di lavoro emersa costruendo la prima versione. Ogni voce dice cosa fare, perché serve e quanto lavoro richiede, stimato a grandi linee (S = poche ore, M = una giornata, L = più giorni).</p>
+
+  <div class="summary" role="group" aria-label="Filtra per priorità">
+    <button class="filter" type="button" data-p="all" aria-pressed="true">Tutte <b id="c-all"></b></button>
+    <button class="filter" type="button" data-p="alta" aria-pressed="false">Alta <b id="c-alta"></b></button>
+    <button class="filter" type="button" data-p="media" aria-pressed="false">Media <b id="c-media"></b></button>
+    <button class="filter" type="button" data-p="bassa" aria-pressed="false">Bassa <b id="c-bassa"></b></button>
+  </div>
+
+  <section class="area">
+    <h2>Dati e integrazione</h2>
+    <p class="area-note">Riguarda 01_download_data.py e 02_build_database.py.</p>
+    <ul class="items">
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Separare le combinazioni nei nomi FDA</span><span class="effort">M</span>
+        <span class="why">Molti dei 215 nomi non collegati sono combinazioni in un solo campo ("A, B", "A || B", "A AND B"). Serve una tabella ponte molti-a-molti (prodotto → componenti) e un nuovo conteggio dei non collegati.</span></li>
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Verifica manuale a campione del collegamento FDA → ChEMBL</span><span class="effort">S</span>
+        <span class="why">Controllare 50 righe casuali per metodo e stimare il tasso di errore. È il numero che rende credibile il gruppo "inalatori".</span></li>
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Attribuzione e licenze delle fonti</span><span class="effort">S</span>
+        <span class="why">ChEMBL è distribuito con licenza CC BY-SA 3.0 e va citato; openFDA va indicato come fonte. Inserire l'attribuzione nell'app, nel README e nelle pagine pubblicate.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Fonte europea per le vie di somministrazione</span><span class="effort">M</span>
+        <span class="why">openFDA copre il mercato USA. I dati EMA sui medicinali autorizzati aggiungerebbero inalatori approvati in Europa, più vicini al contesto delle aziende italiane.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Altri bersagli respiratori</span><span class="effort">S</span>
+        <span class="why">Oltre a PDE4: recettore β2-adrenergico, recettore muscarinico M3, recettore dei glucocorticoidi. Permette di confrontare classi terapeutiche inalatorie diverse.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Un solo comando per tutta la pipeline e test automatici</span><span class="effort">M</span>
+        <span class="why">Uno script <code>run_pipeline.py</code> e test pytest su <code>strip_salts</code>, sul collegamento dei nomi e sui conteggi attesi delle tabelle. Mostra disciplina da software, non solo da analisi.</span></li>
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Carica e ionizzazione delle molecole</span><span class="effort">M</span>
+        <span class="why">L'API di ChEMBL 37 non restituisce logD, pKa e specie molecolare (colonne sempre vuote). Per gli inalatori la carica conta: molti anticolinergici sono ammoni quaternari. Calcolare carica formale e gruppi ionizzabili con RDKit.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">RDKit per ricalcolo descrittori e scaffold</span><span class="effort">M</span>
+        <span class="why">Oggi le proprietà sono quelle calcolate da ChEMBL. Con RDKit si possono validare gli SMILES, ricalcolare i descrittori e raggruppare i composti per scaffold (Bemis-Murcko). RDKit non è ancora installato.</span></li>
+      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Download incrementale con confronto degli hash</span><span class="effort">S</span>
+        <span class="why">Riscaricare solo se la release ChEMBL o l'export openFDA cambiano, e segnalare le differenze rispetto alla build precedente.</span></li>
+      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Dump ChEMBL completo</span><span class="effort">M</span>
+        <span class="why">Richiede circa 30 GB liberi (oggi 3,9 GB). Darebbe accesso diretto a prodotti, formulazioni e tutte le attività senza limiti dell'API.</span></li>
+    </ul>
+  </section>
+
+  <section class="area">
+    <h2>Pulizia e analisi statistica</h2>
+    <p class="area-note">La prossima fase del progetto, in Python con pandas.</p>
+    <ul class="items">
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Revisione manuale degli inalatori senza codice ATC</span><span class="effort">S</span>
+        <span class="why">7 molecole del gruppo inalatori non hanno ATC e sfuggono alle regole M3-M6. L'acido pentetico (DTPA) agisce a livello sistemico e probabilmente va escluso: serve una regola documentata, non una cancellazione a mano.</span></li>
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Confronto statistico inalatori vs orali</span><span class="effort">M</span>
+        <span class="why">Test di Mann-Whitney per ogni proprietà, effect size, intervalli di confidenza bootstrap e correzione per confronti multipli. Con 65 inalatori l'effect size conta più del p-value.</span></li>
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Punteggio di inalabilità spiegabile</span><span class="effort">M</span>
+        <span class="why">Poche regole o una regressione logistica semplice. Verifica obbligatoria: budesonide, formoterolo e tiotropio devono ottenere un punteggio alto.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Applicazione ai composti PDE4</span><span class="effort">M</span>
+        <span class="why">Calcolare il punteggio sugli inibitori PDE4 potenti (pIC50 ≥ 7) e mostrare quali chemotipi sono più adatti all'inalazione.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Trend temporali</span><span class="effort">S</span>
+        <span class="why">Come cambiano peso molecolare e polarità degli inalatori per anno di prima approvazione (<code>first_approval</code>).</span></li>
+    </ul>
+  </section>
+
+  <section class="area">
+    <h2>App SQL nel browser</h2>
+    <p class="area-note">Riguarda app/index.html.</p>
+    <ul class="items">
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Evidenziazione della sintassi e autocompletamento</span><span class="effort">M</span>
+        <span class="why">Un editor vero (CodeMirror) con colori SQL e suggerimenti di tabelle e colonne lette dallo schema.</span></li>
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">Motore SQL WebAssembly</span><span class="effort">S</span>
+        <span class="why">Oggi l'app usa la build asm.js di sql.js. La build WebAssembly è più veloce, ma richiede di pubblicare il file .wasm accanto alla pagina e di verificare che la piattaforma lo esegua.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Query in un Web Worker</span><span class="effort">M</span>
+        <span class="why">Una query lunga oggi blocca la pagina. In un worker l'interfaccia resta reattiva e si può aggiungere un pulsante "Interrompi".</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Cronologia e query salvate</span><span class="effort">S</span>
+        <span class="why">Ritrovare le ultime query e dare un nome a quelle utili per l'analisi.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Regressione e altri grafici</span><span class="effort">M</span>
+        <span class="why">Linea di tendenza con R² sullo scatter, scatter matrix, densità 2D. Descrittive, correlazioni, PCA e test tra gruppi sono già nel pannello statistico.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Clustering (k-means) sui punteggi PCA</span><span class="effort">M</span>
+        <span class="why">Raggruppare le molecole per profilo chimico e vedere se gli inalatori formano un gruppo a sé. Va validato contro scikit-learn come la PCA.</span></li>
+      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Intervalli di confidenza bootstrap nell'app</span><span class="effort">S</span>
+        <span class="why">Per mediane ed effect size dei gruppi piccoli (46 inalatori). Oggi sono previsti nel notebook 03.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Struttura chimica nel tooltip</span><span class="effort">M</span>
+        <span class="why">Disegnare la molecola dallo SMILES al passaggio del mouse su un punto. Per un pubblico pharma rende i grafici subito leggibili.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Risultati di più istruzioni in schede</span><span class="effort">S</span>
+        <span class="why">Con più query separate da punto e virgola oggi si vede solo l'ultimo risultato.</span></li>
+      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Esportazione dei grafici</span><span class="effort">S</span>
+        <span class="why">Nella versione locale abilitare il salvataggio PNG/SVG per le slide; nella pagina pubblicata i download sono bloccati.</span></li>
+      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Paginazione e filtri nella tabella risultati</span><span class="effort">S</span>
+        <span class="why">Oggi si vedono le prime 1.000 righe; il grafico usa comunque tutte le righe.</span></li>
+      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Chiavi esterne e diagramma nella sezione schema</span><span class="effort">S</span>
+        <span class="why">Mostrare quali colonne collegano le tabelle, così si scrivono i JOIN senza aprire la documentazione.</span></li>
+      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Interfaccia in inglese</span><span class="effort">S</span>
+        <span class="why">Per un portfolio internazionale: testi IT/EN selezionabili.</span></li>
+    </ul>
+  </section>
+
+  <section class="area">
+    <h2>Portfolio e presentazione</h2>
+    <ul class="items">
+      <li class="item" data-p="alta"><span class="prio alta">Alta</span><span class="what">README orientato alle domande di business</span><span class="effort">M</span>
+        <span class="why">Domanda, dati, metodo, risultati con un grafico chiave, limiti dichiarati. Chi recluta legge questo prima del codice.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Repository GitHub pubblico</span><span class="effort">S</span>
+        <span class="why">Codice, query in <code>sql/</code>, notebook numerati e pagine di spiegazione. I dati grezzi restano fuori dal repository e si rigenerano con gli script.</span></li>
+      <li class="item" data-p="media"><span class="prio media">Media</span><span class="what">Dizionario dati generato dallo schema</span><span class="effort">S</span>
+        <span class="why">Esportare in Markdown tabelle, colonne e commenti, sempre allineato al database.</span></li>
+      <li class="item" data-p="bassa"><span class="prio bassa">Bassa</span><span class="what">Versione inglese delle pagine di spiegazione</span><span class="effort">S</span>
+        <span class="why">Per candidature in aziende con lingua di lavoro inglese.</span></li>
+    </ul>
+  </section>
+
+  <section class="area" id="done">
+    <h2>Completato</h2>
+    <ul class="lede">
+      <li><strong>Notebook di pulizia con registro delle esclusioni</strong> (notebook 02, <code>src/cleaning.py</code>): misure PDE4 da 11.954 a 8.793, insieme di analisi da 1.305 a 1.154 molecole; tabelle <code>cleaning_log</code> e <code>cleaning_exclusions</code>.</li>
+      <li><strong>Regola per i farmaci con più vie</strong>: inalatorio prevale su orale, 15 molecole segnalate con <code>also_oral</code> per l'analisi di sensibilità.</li>
+      <li><strong>Vie di somministrazione normalizzate</strong>: "INHALATION, ORAL" e varianti in minuscolo ora contano.</li>
+      <li><strong>Pannello di analisi statistica nell'app</strong>: descrittive, correlazioni, PCA con biplot e salvataggio in <code>pca_scores</code>, Mann-Whitney e Kruskal-Wallis con correzione di Holm ed effect size. Calcoli validati contro numpy/scipy (<code>tests/validate_stats.py</code>, 40 controlli).</li>
+    </ul>
+  </section>
+
+  <p class="legend">Stima dello sforzo: S = poche ore · M = circa una giornata · L = più giorni.</p>
+</div>
+
+<script>
+const items = [...document.querySelectorAll(".item")];
+for (const p of ["all", "alta", "media", "bassa"]) {
+  document.getElementById("c-" + p).textContent = p === "all" ? items.length : items.filter((i) => i.dataset.p === p).length;
+}
+for (const btn of document.querySelectorAll(".filter")) {
+  btn.addEventListener("click", () => {
+    const p = btn.dataset.p;
+    document.querySelectorAll(".filter").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    items.forEach((i) => { i.hidden = p !== "all" && i.dataset.p !== p; });
+    document.querySelectorAll(".area").forEach((a) => { a.hidden = ![...a.querySelectorAll(".item")].some((i) => !i.hidden); });
+  });
+}
+</script>
+
+</body>
+</html>

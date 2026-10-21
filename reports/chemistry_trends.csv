@@ -1,0 +1,6 @@
+trend,effect,p,test
+T2 quaternary ammonium enriched in inhaled drugs,"10.9% vs 1.7%, OR 7.0",0.017493144611104412,"Fisher exact, Holm over 10 motifs"
+T1 inhaled drugs did not follow the fluorination trend,"approved 2000+: inhaled 1/15, oral 136/411 fluorinated",0.004904387892667563,"logistic LR test, year x route interaction"
+T3 PDE4 chemistry moved towards PDE4B over PDE4D selectivity,median pB-pD -0.20 (2001-08) -> 0.94 (2015+); B-selective 2% -> 49%,0.051052679638033574,"Spearman, paper level (compound level p=1.7e-33)"
+T4 PDE4 papers moved away from the catechol diether pharmacophore,papers mostly catechol diether: 48% (2001-08) -> 28% (2015+),0.0033631565852598067,"Spearman, paper level (n=430)"
+T5 compounds from inhaled PDE4 programmes are much larger and more flexible,"median MW 571 vs 393 Da, rotatable bonds 9 vs 5, r(MW) = +0.63",0.0017250239479033292,"Mann-Whitney, paper level (7 inhaled papers vs 423; compound level p=2.1e-62)"

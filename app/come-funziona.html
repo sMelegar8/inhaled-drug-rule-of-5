@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inhalation Workbench Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a single reading column with a pipeline strip at the top; each step is a numbered section because the order is the real execution order. */
+:root {
+  --bg: #f3f5f4; --surface: #fcfcfb; --surface-2: #e9edeb; --fg: #111614; --fg-2: #4a524e; --muted: #7b837f;
+  --line: #d9dfdc; --accent: #0b6a72; --accent-soft: #d6ebec; --warn: #8a5a00; --warn-soft: #fbefd2;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+    --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+  --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 16px/1.65 var(--font-body); }
+.wrap {
+  max-width: 900px; margin: 0 auto; padding-block: 36px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 2.1rem; font-weight: 600; margin: 0 0 8px; }
+h2 { font-size: 1.45rem; font-weight: 600; margin: 0; }
+h3 { font-size: 1.05rem; font-weight: 600; margin: 22px 0 6px; }
+p { margin: 0 0 12px; max-width: 68ch; }
+.lede { color: var(--fg-2); font-size: 1.08rem; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre { font: 13px/1.55 var(--font-mono); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 68ch; }
+li { margin-bottom: 4px; }
+.eyebrow { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 8px; }
+a { color: var(--accent); }
+
+/* pipeline strip */
+.pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 26px 0 8px; counter-reset: stage; }
+.stage { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; text-decoration: none; color: inherit; display: block; }
+.stage:hover { border-color: var(--accent); }
+.stage .n { font: 500 12px var(--font-mono); color: var(--accent); }
+.stage .t { display: block; font: 600 14px/1.3 var(--font-display); margin: 2px 0; }
+.stage .f { display: block; font: 11.5px var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+
+section.step { border-top: 1px solid var(--line); padding-top: 30px; margin-top: 34px; }
+.step-head { display: flex; gap: 14px; align-items: baseline; margin-bottom: 12px; }
+.step-num { font: 600 1.45rem var(--font-mono); color: var(--accent); min-width: 2ch; }
+.files { font: 13px var(--font-mono); color: var(--muted); margin: -6px 0 14px; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 6px 0 16px; }
+.fact { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.fact b { display: block; font: 600 1.25rem var(--font-display); font-variant-numeric: tabular-nums; }
+.fact span { font-size: 13px; color: var(--fg-2); }
+
+.say { background: var(--accent-soft); border-radius: 6px; padding: 12px 16px; margin: 16px 0 6px; }
+.say .label { font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); display: block; margin-bottom: 2px; }
+.say p { margin: 0; }
+.caveat { background: var(--warn-soft); border-radius: 6px; padding: 12px 16px; margin: 14px 0; }
+.caveat .label { font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.09em; color: var(--warn); display: block; margin-bottom: 2px; }
+.caveat p { margin: 0; }
+
+.table-wrap { overflow-x: auto; margin: 4px 0 16px; }
+table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-2); }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+
+.qa details { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.qa summary { cursor: pointer; font-weight: 600; }
+.qa details p { margin: 8px 0 0; }
+pre.mermaid { background: var(--surface); text-align: center; }
+
+/* Shared navigation between the project pages */
+.sitenav { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line); background: var(--surface); font-size: 13.5px; }
+.sitenav-brand { font: 600 12.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-right: 6px; }
+.sitenav a { color: var(--fg-2); text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; }
+.sitenav a:hover { color: var(--fg); }
+.sitenav a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Pagine del progetto">
+  <span class="sitenav-brand">Inhalation Workbench</span>
+  <a href="index.html">Workbench SQL</a>
+  <a href="come-funziona.html" aria-current="page">Come funziona</a>
+  <a href="backlog.html">Backlog</a>
+</nav>
+<div class="wrap">
+  <div class="eyebrow">Portfolio data analyst · pharma</div>
+  <h1>Come funziona l'Inhalation SQL Workbench</h1>
+  <p class="lede">Questa pagina spiega ogni processo del programma, dall'acquisizione dei dati al grafico nel browser: cosa fa, perché è fatto così e come raccontarlo a un'azienda. I numeri sono quelli della build del 21 ottobre 2026.</p>
+
+  <nav class="pipeline" aria-label="Fasi del programma">
+    <a class="stage" href="#s0"><span class="n">00</span><span class="t">Domanda</span><span class="f">README</span></a>
+    <a class="stage" href="#s1"><span class="n">01</span><span class="t">Acquisizione</span><span class="f">01_download_data.py</span></a>
+    <a class="stage" href="#s2"><span class="n">02</span><span class="t">Modello dati</span><span class="f">schema.sql</span></a>
+    <a class="stage" href="#s3"><span class="n">03</span><span class="t">Caricamento e integrazione</span><span class="f">02_build_database.py</span></a>
+    <a class="stage" href="#s4"><span class="n">04</span><span class="t">Distribuzione</span><span class="f">.sqlite.gz.b64.txt</span></a>
+    <a class="stage" href="#s5"><span class="n">05</span><span class="t">Esplorazione SQL e statistica</span><span class="f">app/index.html · stats.js</span></a>
+    <a class="stage" href="#s6"><span class="n">06</span><span class="t">Pulizia e registro esclusioni</span><span class="f">cleaning.py · notebook 02</span></a>
+    <a class="stage" href="#s7"><span class="n">07</span><span class="t">Prossimi passi</span><span class="f">statistica, presentazione</span></a>
+  </nav>
+
+  <section class="step" id="s0">
+    <div class="step-head"><span class="step-num">00</span><h2>La domanda di business</h2></div>
+    <p>La regola di Lipinski (Rule of 5) descrive i farmaci <em>orali</em>: devono essere assorbiti nell'intestino. Un farmaco inalatorio ha un obiettivo diverso: agire nel polmone e passare poco nel resto del corpo. Non esiste una regola pubblica condivisa per gli inalatori.</p>
+    <p>Domanda del progetto: <strong>le proprietà chimiche dei farmaci inalatori approvati sono diverse da quelle dei farmaci orali, e in che modo?</strong> Il secondo passo applica quanto trovato ai composti attivi su PDE4, un bersaglio respiratorio (per esempio nella BPCO).</p>
+    <div class="caveat"><span class="label">Limite da dichiarare</span><p>È un'analisi esplorativa su dati pubblici. Le molecole inalatorie approvate collegate nel database sono 65, contro 1.249 orali: un campione piccolo, da presentare come ipotesi e non come scoperta.</p></div>
+    <div class="say"><span class="label">Come lo racconti</span><p>"Ho preso una regola che tutti usano e ho verificato se vale anche per gli inalatori, che sono il cuore di molte aziende respiratorie."</p></div>
+  </section>
+
+  <section class="step" id="s1">
+    <div class="step-head"><span class="step-num">01</span><h2>Acquisizione dei dati</h2></div>
+    <p class="files">src/01_download_data.py · output: data/raw/ + manifest.json</p>
+    <p>Il programma scarica due fonti pubbliche e le salva <strong>senza modificarle</strong>:</p>
+    <ul>
+      <li><strong>ChEMBL</strong> (EMBL-EBI), release 37 del 1° maggio 2026: farmaci approvati con proprietà calcolate, sinonimi, codici ATC; misure IC50 e Ki sulle PDE4 umane e i composti testati.</li>
+      <li><strong>openFDA Drugs@FDA</strong>, export del 20 ottobre 2026: prodotti FDA con forma farmaceutica e <em>via di somministrazione</em>. ChEMBL ha solo i flag orale/parenterale/topico, quindi la via inalatoria arriva da qui.</li>
+    </ul>
+    <div class="facts">
+      <div class="fact"><b>4.225</b><span>farmaci approvati ChEMBL</span></div>
+      <div class="fact"><b>11.954</b><span>misure IC50/Ki su PDE4</span></div>
+      <div class="fact"><b>7.326</b><span>composti testati su PDE4</span></div>
+      <div class="fact"><b>51.886</b><span>prodotti FDA</span></div>
+    </div>
+    <h3>Perché l'API e non il database completo</h3>
+    <p>Il dump SQLite completo di ChEMBL pesa 5,37 GB compresso e circa 25 GB estratto; sul PC c'erano 3,9 GB liberi. Il programma interroga quindi l'API ufficiale e scarica solo le parti utili alla domanda. È una scelta di scoping: prendi i dati che servono, non tutti quelli disponibili.</p>
+    <h3>Come funziona il codice</h3>
+    <ul>
+      <li><strong>Paginazione</strong>: l'API restituisce al massimo 1.000 righe per pagina; la funzione <code>paginate()</code> segue il link <code>next</code> finché non finiscono.</li>
+      <li><strong>Campi selezionati</strong>: il parametro <code>only=</code> chiede solo le colonne utili e riduce il volume.</li>
+      <li><strong>Retry con backoff</strong>: su errori di rete il programma riprova dopo 5, 10, 20 secondi invece di fallire.</li>
+      <li><strong>Batch</strong>: le proprietà dei 7.326 composti PDE4 vengono chieste 100 alla volta.</li>
+      <li><strong>Manifest</strong>: per ogni file registra URL, data e ora, numero di record e hash SHA-256. Se un file cambia, l'hash lo rivela.</li>
+    </ul>
+    <div class="say"><span class="label">Come lo racconti</span><p>"Ogni dato ha una provenienza verificabile: fonte, release, data di download e impronta del file. Chiunque può rifare l'analisi e controllare di avere gli stessi input."</p></div>
+  </section>
+
+  <section class="step" id="s2">
+    <div class="step-head"><span class="step-num">02</span><h2>Il modello dati</h2></div>
+    <p class="files">sql/schema.sql</p>
+    <p>I dati sono organizzati in un database relazionale SQLite: ogni tabella descrive una sola entità, collegata alle altre da chiavi. Così le domande si risolvono con <code>JOIN</code> invece che con fogli copiati a mano.</p>
+    <pre class="mermaid">
+erDiagram
+  molecules ||--o{ molecule_synonyms : "ha nomi"
+  molecules ||--o{ molecule_atc : "classificata"
+  atc_classes ||--o{ molecule_atc : "codice"
+  molecules ||--o{ activities : "misurata"
+  targets ||--o{ activities : "bersaglio"
+  fda_applications ||--o{ fda_products : "contiene"
+  fda_products ||--o{ fda_product_ingredients : "principi attivi"
+  fda_product_ingredients }o--|| fda_ingredient_map : "nome FDA"
+  fda_ingredient_map }o--o| molecules : "collegato a"
+  molecules ||--o{ molecule_routes : "vie di somministrazione"
+</pre>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Tabella</th><th>Contenuto</th><th>Righe</th></tr></thead>
+      <tbody>
+        <tr><td><code>molecules</code></td><td>Una riga per molecola, con peso, logP, PSA, donatori/accettori H, QED</td><td class="num">11.551</td></tr>
+        <tr><td><code>molecule_synonyms</code></td><td>Nomi INN, USAN, BAN e commerciali</td><td class="num">57.694</td></tr>
+        <tr><td><code>atc_classes</code> · <code>molecule_atc</code></td><td>Classificazione WHO ATC e codici per molecola</td><td class="num">5.579 · 3.168</td></tr>
+        <tr><td><code>fda_applications</code> · <code>fda_products</code></td><td>Domande FDA e prodotti con via di somministrazione</td><td class="num">29.404 · 51.886</td></tr>
+        <tr><td><code>fda_product_ingredients</code></td><td>Principi attivi come scritti da FDA</td><td class="num">60.448</td></tr>
+        <tr><td><code>fda_ingredient_map</code></td><td>Ponte nome FDA → molecola ChEMBL</td><td class="num">2.910</td></tr>
+        <tr><td><code>molecule_routes</code></td><td>Molecola × via di somministrazione</td><td class="num">3.433</td></tr>
+        <tr><td><code>targets</code> · <code>activities</code></td><td>Bersagli PDE4 e misure di attività</td><td class="num">5 · 11.954</td></tr>
+        <tr><td><code>dataset_info</code></td><td>Provenienza: release, date, hash</td><td class="num">16</td></tr>
+      </tbody>
+    </table></div>
+    <div class="caveat"><span class="label">Colonne vuote</span><p>L'API di ChEMBL 37 non restituisce i descrittori calcolati con ChemAxon (<code>cx_logp</code>, <code>cx_logd</code>, pKa, <code>molecular_species</code>): nello schema sono dichiarati sempre vuoti e sono esclusi dall'insieme di analisi. La carica della molecola, importante per gli inalatori (per esempio l'ammonio quaternario del tiotropio), andrà calcolata con RDKit.</p></div>
+    <h3>Tre scelte di progetto</h3>
+    <ul>
+      <li><strong>Valori grezzi conservati.</strong> Le misure restano come pubblicate (<code>published_value</code>, <code>published_units</code>) accanto alla versione standardizzata da ChEMBL. La pulizia avviene dopo, in modo visibile.</li>
+      <li><strong>Documentazione nello schema.</strong> Ogni colonna ha un commento nel codice SQL; l'app lo legge e lo mostra nella sezione "Struttura del database".</li>
+      <li><strong>Parent e sali.</strong> Molti farmaci esistono come sale (es. albuterolo solfato). Ogni molecola punta al suo <code>parent_chembl_id</code>, e le proprietà si confrontano sul parent.</li>
+    </ul>
+    <div class="say"><span class="label">Come lo racconti</span><p>"Ho separato le entità, ho tenuto i valori originali e ho documentato ogni colonna dentro lo schema stesso, così il dizionario dati non diventa mai obsoleto."</p></div>
+  </section>
+
+  <section class="step" id="s3">
+    <div class="step-head"><span class="step-num">03</span><h2>Caricamento e integrazione delle fonti</h2></div>
+    <p class="files">src/02_build_database.py · output: data/processed/pharma_inhalation.sqlite (23,0 MB)</p>
+    <p>Lo script ricrea il database da zero a ogni esecuzione: cancella il file, esegue <code>schema.sql</code>, carica i JSON e il file FDA. Ricostruire da zero garantisce che il risultato dipenda solo dai file grezzi e dal codice.</p>
+    <h3>Il problema dell'integrazione: collegare FDA e ChEMBL</h3>
+    <p>FDA e ChEMBL non condividono un identificativo. L'unico collegamento è il <strong>nome</strong> del principio attivo, scritto in modi diversi. Lo script lo risolve in due passaggi:</p>
+    <ol>
+      <li><strong>Corrispondenza esatta</strong> del nome FDA con il nome preferito o con un sinonimo ChEMBL (dopo maiuscole e spazi uniformati). Esempio: <code>ALBUTEROL SULFATE</code> trova la molecola sale, che punta al parent <code>CHEMBL714</code>.</li>
+      <li>Se fallisce, <strong>rimozione di controioni e idrati</strong> dalla fine del nome (SULFATE, HYDROCHLORIDE, MONOHYDRATE…) e nuova ricerca.</li>
+    </ol>
+    <p>Ogni riga registra il metodo usato (<code>match_method</code>), così il collegamento si può verificare:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Metodo</th><th>Nomi FDA</th><th>Quota</th></tr></thead>
+      <tbody>
+        <tr><td><code>exact</code></td><td class="num">2.687</td><td class="num">92,3%</td></tr>
+        <tr><td><code>salt_stripped</code></td><td class="num">8</td><td class="num">0,3%</td></tr>
+        <tr><td><code>unmatched</code></td><td class="num">215</td><td class="num">7,4%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="caveat"><span class="label">Cosa resta fuori</span><p>I 215 nomi non collegati sono soprattutto combinazioni scritte in un solo campo ("ABACAVIR, DOLUTEGRAVIR, LAMIVUDINE"), biologici con suffisso ("AFLIBERCEPT-BOAV") e farmaci molto recenti. Per la domanda sugli inalatori a piccola molecola l'impatto è limitato, ma va misurato prima dell'analisi finale.</p></div>
+    <h3>Una vista materializzata per la velocità</h3>
+    <p>La vista <code>v_molecule_routes</code> contiene la regola di join: prodotti → principi attivi → mappa → molecola parent, raggruppati per via. Nel browser ricalcolarla a ogni query costava circa 5,4 secondi. Lo script la calcola una volta e la salva nella tabella <code>molecule_routes</code> con un indice: la stessa query scende a circa 0,2 secondi.</p>
+    <div class="say"><span class="label">Come lo racconti</span><p>"Il 92% dei nomi si collega in modo esatto. Per gli altri so esattamente quali sono e perché non si collegano, e ogni collegamento è tracciato."</p></div>
+  </section>
+
+  <section class="step" id="s4">
+    <div class="step-head"><span class="step-num">04</span><h2>Distribuzione del database</h2></div>
+    <p class="files">app/pharma_inhalation.sqlite.gz.b64.txt (8,6 MB)</p>
+    <p>L'app gira interamente nel browser, senza server. Per spedirle il database lo script lo comprime con gzip (23,0 MB → 6,4 MB) e lo codifica in base64, un formato di testo che la piattaforma degli artefatti accetta. Il browser fa il percorso inverso: decodifica il base64, decomprime con l'API nativa <code>DecompressionStream</code> e apre il file.</p>
+    <div class="say"><span class="label">Come lo racconti</span><p>"Chi riceve il link non installa nulla: database e motore SQL arrivano con la pagina."</p></div>
+  </section>
+
+  <section class="step" id="s5">
+    <div class="step-head"><span class="step-num">05</span><h2>Esplorazione: SQL, grafici e schema</h2></div>
+    <p class="files">app/index.html · app/stats.js · librerie: sql.js 1.10.3, Plotly 2.35.2 (build strict)</p>
+    <h3>Il motore SQL</h3>
+    <p><strong>sql.js</strong> è SQLite compilato in JavaScript. Il database viene caricato in memoria: le query sono vere query SQLite, con <code>JOIN</code>, <code>GROUP BY</code>, sottoquery e funzioni. Le modifiche (<code>CREATE</code>, <code>UPDATE</code>) valgono solo nella sessione e non toccano il file originale.</p>
+    <h3>Dalla query al grafico, in automatico</h3>
+    <ol>
+      <li>La query restituisce colonne e righe; la tabella mostra le prime 1.000 righe, ordinabili.</li>
+      <li><strong>Inferenza dei tipi</strong>: una colonna è numerica se tutti i valori non nulli sono numeri; per le altre si contano i valori distinti.</li>
+      <li><strong>Scelta degli assi</strong>: scatter usa le prime due colonne numeriche, istogramma la prima, box plot raggruppa per una colonna di testo con 2-12 valori. Se la colonna scelta prima esiste ancora, la selezione resta.</li>
+      <li><strong>Gruppi e colori</strong>: i 7 gruppi più numerosi hanno un colore, gli altri finiscono in "Altro". Lo stesso valore (per esempio <code>INHALATION</code>) mantiene lo stesso colore da una query all'altra. La palette è verificata per il daltonismo.</li>
+      <li><strong>Valori mancanti</strong>: le righe senza valore numerico non vengono disegnate e il grafico dichiara quante sono state escluse.</li>
+    </ol>
+    <h3>La struttura del database</h3>
+    <p>La sezione a sinistra legge le tabelle da <code>sqlite_master</code>, le colonne da <code>PRAGMA table_info</code> e le descrizioni dai commenti nello schema. La ricerca filtra tabelle e colonne per nome o descrizione; un clic su una colonna la inserisce nella query.</p>
+    <h3>Analisi statistica sul risultato filtrato</h3>
+    <p>Il pannello "Analisi statistica" lavora sulle righe restituite dalla query: il filtro è il <code>WHERE</code>. Si scelgono le variabili numeriche e, se serve, una colonna di gruppo. Quattro analisi:</p>
+    <ul>
+      <li><strong>Descrittive</strong>: n, mancanti, media, deviazione standard, quartili, per variabile e per gruppo.</li>
+      <li><strong>Correlazioni</strong>: matrice di Pearson o Spearman (sui ranghi, più robusta ad asimmetrie e valori estremi) come heatmap, più l'elenco delle coppie ordinate per forza. Ogni coppia usa le righe in cui entrambi i valori esistono.</li>
+      <li><strong>PCA</strong>: riduce molte proprietà correlate a poche componenti. Le variabili vengono standardizzate (z-score), così peso molecolare e numero di donatori H contano allo stesso modo. L'app mostra la varianza spiegata (scree plot), i punteggi colorati per gruppo con i vettori delle variabili (biplot) e la tabella dei loading. I punteggi si possono salvare nella tabella <code>pca_scores</code> e interrogare con SQL.</li>
+      <li><strong>Confronto tra gruppi</strong>: Mann-Whitney per due gruppi, Kruskal-Wallis per tre o più. Sono test non parametrici: non assumono distribuzioni normali, che per queste proprietà non lo sono. I p-value sono corretti con il metodo di Holm per i test multipli, e ogni test riporta un effect size (r rank-biserial o ε²) con la sua soglia.</li>
+    </ul>
+    <p>Esempio sui dati puliti, 46 inalatori contro 1.108 orali: gli inalatori hanno più donatori di legami H (mediana 3,5 contro 2, effetto medio) e un QED più basso. Nella PCA su 8 descrittori, escludendo le molecole che esistono anche per bocca, la prima componente spiega il 46,8% della varianza, la prima e la seconda insieme il 72,5%.</p>
+    <h3>Come so che i calcoli sono giusti</h3>
+    <p>I calcoli stanno in un file separato, <code>app/stats.js</code>. Lo script <code>tests/validate_stats.py</code> lo esegue con Node sugli stessi dati e confronta ogni risultato con numpy, pandas e scipy: 40 controlli, dalle statistiche descrittive ai loading della PCA. Le differenze massime sono dell'ordine di 10⁻¹⁴ per i calcoli esatti e 10⁻⁷ relativo per i p-value.</p>
+    <div class="say"><span class="label">Come lo racconti</span><p>"Ho costruito lo strumento con cui esploro i dati: ogni ipotesi diventa una query, ogni query diventa subito un grafico e un test. E ho verificato i calcoli dello strumento contro le librerie scientifiche standard."</p></div>
+  </section>
+
+  <section class="step" id="s6">
+    <div class="step-head"><span class="step-num">06</span><h2>Pulizia dei dati e registro delle esclusioni</h2></div>
+    <p class="files">src/cleaning.py · notebooks/02_pulizia_dati.ipynb · output: 6 tabelle nuove + reports/cleaning_log.csv</p>
+    <p>La pulizia è una serie di decisioni. Il programma le rende <strong>esplicite, ordinate e contabili</strong>:</p>
+    <ul>
+      <li>Le tabelle grezze non cambiano: il risultato va in tabelle nuove (<code>activities_clean</code>, <code>activity_potency</code>, <code>molecule_routes_clean</code>, <code>inhalation_dataset</code>).</li>
+      <li>Le regole si applicano in sequenza e ognuna vede solo ciò che resta dalle precedenti: <strong>ogni record escluso ha un solo motivo</strong>.</li>
+      <li>Un oggetto Python, il <code>Ledger</code>, registra per ogni regola righe prima, escluse, dopo e segnalate, e l'identificativo di ogni record escluso. Finisce nelle tabelle <code>cleaning_log</code> e <code>cleaning_exclusions</code>, interrogabili con SQL dall'app.</li>
+      <li>La logica sta in un modulo Python riusabile; il notebook la esegue passo per passo con le prove (tabelle, grafici, controlli).</li>
+    </ul>
+
+    <h3>Parte A · Misure di attività su PDE4: da 11.954 a 8.793</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Regola</th><th>Motivo</th><th>Escluse</th></tr></thead>
+      <tbody>
+        <tr><td>A1 · Segnalate dai curatori</td><td>ChEMBL indica un valore sospetto</td><td class="num">259</td></tr>
+        <tr><td>A2 · Relazione diversa da "="</td><td>I valori censurati (&lt;, &gt;) indicano solo una soglia, non una potenza</td><td class="num">2.892</td></tr>
+        <tr><td>A3 · Unità diversa da nM</td><td>Percentuali e unità mancanti non diventano concentrazioni</td><td class="num">10</td></tr>
+        <tr><td>A4 · Valore mancante o ≤ 0</td><td>Il logaritmo richiede un numero positivo</td><td class="num">0</td></tr>
+        <tr><td>A5 · pX fuori da 3-12</td><td>Sotto 1 mM o sopra 1 pM è quasi sempre un errore di unità</td><td class="num">0</td></tr>
+      </tbody>
+    </table></div>
+    <p>Ogni misura diventa un logaritmo: <strong>pX = 9 − log10(valore in nM)</strong>. Su scala logaritmica valori da picomolare a millimolare diventano confrontabili e una unità vale un fattore 10.</p>
+    <ul>
+      <li><strong>Controllo A6</strong>: il pX calcolato coincide con il pChEMBL calcolato da ChEMBL in tutte le 8.793 misure (0 differenze oltre 0,05). Due strade indipendenti, stesso numero.</li>
+      <li><strong>Aggregazione A7</strong>: le misure ripetute diventano una mediana per molecola × bersaglio × tipo di misura: 6.887 coppie. La mediana resiste ai valori anomali meglio della media.</li>
+      <li><strong>Controllo A8</strong>: 208 coppie hanno repliche che differiscono più di 10 volte. Restano nei dati, segnalate con <code>inconsistent = 1</code>.</li>
+    </ul>
+
+    <h3>Parte B · Insieme di analisi: da 1.305 molecole a 46 inalatori + 1.108 orali</h3>
+    <p>Prima tre trasformazioni, che non escludono nulla ma correggono il modo in cui i dati sono scritti:</p>
+    <ul>
+      <li><strong>Vie di somministrazione normalizzate</strong>: "INHALATION, ORAL" e "Inhalation, Oral" vengono separate e messe in maiuscolo. Le molecole inalatorie passano da 65 a 66.</li>
+      <li><strong>ATC ereditati dai sali</strong>: molti codici ATC sono registrati sul sale (es. tiotropio bromuro, R03BB04) e vengono attribuiti alla molecola parent.</li>
+      <li><strong>Gruppi esclusivi</strong>: una molecola con prodotti inalatori va nel gruppo inalatori anche se esiste per bocca (15 casi, segnalati con <code>also_oral</code> per l'analisi di sensibilità).</li>
+    </ul>
+    <p>Poi sei regole di esclusione, con una logica simmetrica tra i due gruppi:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Regola</th><th>Esempi</th><th>Escluse</th></tr></thead>
+      <tbody>
+        <tr><td>M1 · Non piccola molecola</td><td>insulina inalatoria, radiofarmaci</td><td class="num">37</td></tr>
+        <tr><td>M2 · Proprietà principali mancanti</td><td>cloruro di sodio, gas nobili</td><td class="num">63</td></tr>
+        <tr><td>M3 · Gas medicali (&lt; 100 Da o ATC V03AN)</td><td>ossigeno, azoto, ossido nitrico, protossido</td><td class="num">10</td></tr>
+        <tr><td>M4 · Solo diagnostici (ATC V04/V08/V09)</td><td>metacolina, mezzi di contrasto</td><td class="num">12</td></tr>
+        <tr><td>M5 · Inalatori che agiscono sul sistema nervoso (ATC N)</td><td>sevoflurano, isoflurano, loxapina, levodopa</td><td class="num">9</td></tr>
+        <tr><td>M6 · Orali che agiscono solo nell'intestino (ATC A06/A07)</td><td>mesalazina, loperamide, lattulosio</td><td class="num">20</td></tr>
+      </tbody>
+    </table></div>
+    <p>M5 e M6 sono la scelta centrale. Un anestetico inalato deve arrivare nel sangue, l'opposto di un farmaco che deve restare nel polmone; un orale che agisce nell'intestino è progettato per non essere assorbito, l'opposto di un farmaco orale sistemico. Tenerli confonderebbe proprio la differenza che vogliamo misurare.</p>
+
+    <h3>Controlli automatici</h3>
+    <ul>
+      <li><strong>Riferimenti</strong>: albuterolo, budesonide, fluticasone propionato, formoterolo, ipratropio, salmeterolo e tiotropio devono essere nel gruppo inalatori. Se una regola li togliesse, il notebook si ferma con un errore.</li>
+      <li><strong>Integrità</strong>: record tenuti + record esclusi = record di partenza, e le esclusioni registrate coincidono con la somma del registro. Anche qui il notebook si ferma se i conti non tornano.</li>
+    </ul>
+    <div class="caveat"><span class="label">Limite da dichiarare</span><p>Le regole M3-M6 usano la classificazione ATC come indicatore dell'intento terapeutico. È un'approssimazione: 7 inalatori senza codice ATC (tra cui arformoterolo, vilanterolo, ensifentrina) restano nel gruppo senza questo filtro. Tra questi l'acido pentetico (DTPA), un chelante che agisce a livello sistemico, andrebbe rivisto a mano.</p></div>
+    <div class="say"><span class="label">Come lo racconti</span><p>"Il gruppo inalatori ha 46 molecole e non 66. Posso dire esattamente quali 20 ho tolto, con quale regola e perché, e il notebook dimostra che i farmaci di riferimento sono ancora tutti lì."</p></div>
+  </section>
+
+  <section class="step" id="s7">
+    <div class="step-head"><span class="step-num">07</span><h2>Prossimi passi: statistica e presentazione</h2></div>
+    <p>Il notebook 03 confronterà i due gruppi per ogni proprietà con test non parametrici (Mann-Whitney), effect size e intervalli di confidenza bootstrap, ripetendo l'analisi senza le 15 molecole <code>also_oral</code>. Poi un punteggio di "inalabilità" semplice e spiegabile, da verificare sui farmaci di riferimento, e la sua applicazione agli inibitori PDE4 potenti.</p>
+  </section>
+
+  <section class="step qa" id="qa">
+    <div class="step-head"><span class="step-num">?</span><h2>Domande che un'azienda potrebbe fare</h2></div>
+    <details><summary>Perché SQLite e non un database server?</summary><p>Per un dataset di 23 MB SQLite è sufficiente: un solo file, nessuna installazione, SQL standard. Lo schema si porta su PostgreSQL senza cambi sostanziali se i dati crescono.</p></details>
+    <details><summary>Come garantisci che i dati siano quelli giusti?</summary><p>Ogni file grezzo ha fonte, data, numero di record e hash SHA-256 nel manifest, e gli stessi valori sono nella tabella <code>dataset_info</code>. Il database si ricostruisce da zero con due comandi.</p></details>
+    <details><summary>Perché il tuo gruppo inalatori esclude alcuni farmaci inalatori?</summary><p>Perché la domanda riguarda i farmaci che devono agire nel polmone. Gas medicali, anestetici volatili e farmaci inalati per arrivare al cervello hanno l'obiettivo opposto. Le 20 esclusioni sono elencate una per una, con la regola che le ha tolte, nella tabella <code>cleaning_exclusions</code>.</p></details>
+    <details><summary>Perché non hai pulito i dati già durante il caricamento?</summary><p>Perché la pulizia è una serie di decisioni da giustificare. Tenendo i valori originali posso mostrare quante righe ogni regola elimina e perché, e cambiare una regola senza riscaricare nulla.</p></details>
+    <details><summary>Quanto è affidabile il collegamento FDA-ChEMBL?</summary><p>Il 92,3% dei nomi si collega esattamente, lo 0,3% dopo aver tolto il sale, il 7,4% resta escluso. Ogni riga dichiara il metodo, quindi l'errore è misurabile e verificabile a campione.</p></details>
+    <details><summary>Cosa non dimostra questa analisi?</summary><p>Non prova che una molecola funzioni per inalazione. Descrive le differenze tra farmaci già approvati per via inalatoria e orale; con 65 molecole inalatorie i risultati sono indicazioni da validare.</p></details>
+  </section>
+</div>
+
+</body>
+</html>

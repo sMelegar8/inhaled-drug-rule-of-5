@@ -1,0 +1,1281 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inhalation SQL Workbench</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: lab-notebook workbench. Schema rail on the left, query -> chart -> table stacked on the right. */
+:root {
+  --bg: #f3f5f4;
+  --surface: #fcfcfb;
+  --surface-2: #e9edeb;
+  --fg: #111614;
+  --fg-2: #4a524e;
+  --muted: #7b837f;
+  --line: #d9dfdc;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --accent: #0b6a72;
+  --accent-soft: #d6ebec;
+  --accent-fg: #ffffff;
+  --danger: #b73232;
+  --danger-soft: #f8e2e2;
+  --mark: #fde9a8;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc;
+    --muted: #8a928e; --line: #2f3532; --grid: #2c2c2a; --axis: #383835; --accent: #43b4bb;
+    --accent-soft: #163a3d; --accent-fg: #071314; --danger: #e66767; --danger-soft: #3a1c1c; --mark: #5a4a12;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc;
+  --muted: #8a928e; --line: #2f3532; --grid: #2c2c2a; --axis: #383835; --accent: #43b4bb;
+  --accent-soft: #163a3d; --accent-fg: #071314; --danger: #e66767; --danger-soft: #3a1c1c; --mark: #5a4a12;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--font-body); }
+button, select, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top {
+  padding-block: 18px 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.top-inner { max-width: 1800px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; justify-content: space-between; }
+.brand h1 { margin: 0; font: 600 1.55rem/1.15 var(--font-display); letter-spacing: 0.01em; text-wrap: balance; }
+.brand p { margin: 4px 0 0; color: var(--fg-2); max-width: 70ch; }
+.provenance { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; gap: 6px; align-items: baseline; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); font-size: 12px; color: var(--fg-2); white-space: nowrap; }
+.chip b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.app {
+  max-width: 1800px; margin: 0 auto;
+  padding-block: 18px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: minmax(250px, 330px) minmax(0, 1fr); gap: 18px; align-items: start;
+}
+.main { display: grid; gap: 18px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.panel-head h2 { margin: 0; font: 600 0.8rem/1.2 var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-2); }
+.panel-body { padding: 12px 14px; }
+
+/* Schema rail */
+.schema { position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); max-height: calc(100vh - 24px); display: flex; flex-direction: column; }
+.schema .panel-body { overflow: auto; padding-top: 8px; }
+.search { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }
+.search-meta { font-size: 12px; color: var(--muted); margin: 6px 0 2px; }
+.tbl { border-bottom: 1px solid var(--line); }
+.tbl:last-child { border-bottom: 0; }
+.tbl summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; padding: 8px 0 6px; }
+.tbl summary::-webkit-details-marker { display: none; }
+.tbl summary::before { content: "▸"; color: var(--muted); font-size: 11px; transition: transform .15s; }
+.tbl[open] summary::before { transform: rotate(90deg); }
+.tbl-name { font: 500 13px var(--font-mono); color: var(--fg); }
+.pill { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 6px; border-radius: 4px; background: var(--surface-2); color: var(--fg-2); }
+.pill.view { background: var(--accent-soft); color: var(--accent); }
+.count { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tbl-note { margin: 0 0 6px 18px; font-size: 12.5px; color: var(--fg-2); }
+.tbl-actions { margin: 0 0 6px 18px; display: flex; gap: 6px; }
+.cols { list-style: none; margin: 0 0 8px 10px; padding: 0; }
+.col-btn { width: 100%; text-align: left; border: 0; background: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; }
+.col-btn:hover { background: var(--surface-2); }
+.col-name { font: 12.5px var(--font-mono); overflow-wrap: anywhere; }
+.col-type { font: 11px var(--font-mono); color: var(--muted); text-transform: uppercase; }
+.col-desc { grid-column: 1 / -1; font-size: 11.5px; color: var(--fg-2); line-height: 1.35; }
+.pk { color: var(--accent); font-weight: 600; }
+mark { background: var(--mark); color: inherit; border-radius: 2px; }
+
+/* Controls */
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 5px 11px; border-radius: var(--radius); cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.small { padding: 1px 8px; font-size: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+select, .num-input { padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); max-width: 100%; }
+.check { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg-2); }
+kbd { font: 11px var(--font-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--surface-2); }
+
+/* Editor */
+#sql { display: block; width: 100%; min-height: 190px; resize: vertical; border: 0; border-bottom: 1px solid var(--line); padding: 12px 14px; background: var(--surface); font: 13px/1.6 var(--font-mono); tab-size: 2; white-space: pre; overflow: auto; }
+#sql:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.editor-foot { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 9px 14px; }
+.status { font-size: 13px; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.status.error { color: var(--danger); }
+.error-box { margin: 0 14px 12px; padding: 8px 12px; border-radius: var(--radius); background: var(--danger-soft); color: var(--danger); font: 12.5px/1.5 var(--font-mono); white-space: pre-wrap; }
+
+/* Chart */
+.chart-controls { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 12px; align-items: end; }
+#chart { width: 100%; height: 440px; }
+.chart-empty { padding: 40px 14px; text-align: center; color: var(--muted); }
+
+/* Results table */
+.table-wrap { overflow: auto; max-height: 460px; }
+table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: 12.5px; }
+th, td { padding: 5px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; max-width: 420px; overflow: hidden; text-overflow: ellipsis; }
+th { position: sticky; top: 0; background: var(--surface-2); font: 500 12px var(--font-mono); cursor: pointer; user-select: none; z-index: 1; }
+th[aria-sort="ascending"]::after { content: " ▲"; color: var(--accent); }
+th[aria-sort="descending"]::after { content: " ▼"; color: var(--accent); }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+td.null { color: var(--muted); font-style: italic; }
+tbody tr:hover td { background: var(--surface-2); }
+.foot-note { padding: 8px 14px; font-size: 12px; color: var(--muted); }
+#csvFallback { width: calc(100% - 28px); margin: 0 14px 12px; height: 120px; font: 12px var(--font-mono); }
+
+/* Query and chart side by side: edit on the left, watch the chart change on the right */
+.work-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: stretch; }
+.editor-panel { display: flex; flex-direction: column; }
+.editor-panel .panel-head > .row { flex: 1 1 220px; min-width: 0; justify-content: flex-end; flex-wrap: nowrap; }
+#examples { flex: 1 1 auto; min-width: 0; max-width: 420px; }
+.editor-panel #sql { flex: 1 1 auto; min-height: 260px; resize: none; }
+@media (max-width: 1250px) { .work-row { grid-template-columns: minmax(0, 1fr); } .editor-panel #sql { resize: vertical; } }
+
+/* Shared navigation between the project pages */
+.sitenav { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line); background: var(--surface); font-size: 13.5px; }
+.sitenav-brand { font: 600 12.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-right: 6px; }
+.sitenav a { color: var(--fg-2); text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; }
+.sitenav a:hover { color: var(--fg); }
+.sitenav a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* Statistics panel */
+.stat-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.stat-tab { border: 1px solid var(--line); background: var(--surface); padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: 13px; color: var(--fg-2); }
+.stat-tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.var-picker { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px 10px; margin: 12px 0 0; min-width: 0; }
+.var-picker legend { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding: 0 4px; display: flex; gap: 6px; align-items: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-check { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 6px; border: 1px solid var(--line); border-radius: 999px; font: 12px var(--font-mono); cursor: pointer; background: var(--bg); }
+.chip-check:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.hint { margin: 10px 0 0; font-size: 12.5px; color: var(--fg-2); }
+.stat-charts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 12px; }
+.stat-charts.single { grid-template-columns: minmax(0, 1fr); }
+.stat-charts > div { height: 400px; min-width: 0; }
+.stat-table-wrap { max-height: 420px; border-top: 1px solid var(--line); }
+td.strong { font-weight: 600; color: var(--fg); }
+td.weak { color: var(--muted); }
+.effect { display: inline-block; padding: 0 7px; border-radius: 4px; font-size: 11.5px; background: var(--surface-2); color: var(--fg-2); }
+.effect.large, .effect.medium { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+@media (max-width: 900px) { .stat-charts { grid-template-columns: minmax(0, 1fr); } .stat-charts > div { height: 340px; } }
+
+.loading { padding: 60px 16px; text-align: center; color: var(--fg-2); }
+.loader-box { max-width: 560px; margin: 40px auto; text-align: left; }
+code { font-family: var(--font-mono); font-size: 0.92em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .schema { position: static; max-height: none; order: 2; }
+  #chart { height: 360px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<nav class="sitenav" aria-label="Pagine del progetto">
+  <span class="sitenav-brand">Inhalation Workbench</span>
+  <a href="index.html" aria-current="page">Workbench SQL</a>
+  <a href="come-funziona.html">Come funziona</a>
+  <a href="backlog.html">Backlog</a>
+</nav>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <h1>Inhalation SQL Workbench</h1>
+      <p>Farmaci approvati ChEMBL, prodotti FDA con via di somministrazione e misure di attività su PDE4. Il database SQLite gira in memoria nel browser: scrivi SQL, i grafici si aggiornano con ogni risultato.</p>
+    </div>
+    <div class="provenance" id="provenance" aria-label="Provenienza dei dati">
+      <span class="chip">Database <b>in caricamento…</b></span>
+    </div>
+  </div>
+</header>
+
+<div id="loading" class="loading">Carico il motore SQL e il database (circa 6 MB)…</div>
+
+<div id="loadHelp" class="loader-box panel" hidden>
+  <div class="panel-head"><h2>Database non trovato</h2></div>
+  <div class="panel-body">
+    <p id="loadError"></p>
+    <p>In locale avvia un server nella cartella del progetto, poi apri <code>http://localhost:8000</code>:</p>
+    <p><code>py -3.13 -m http.server 8000 -d app</code></p>
+    <p>Oppure scegli direttamente un file SQLite (anche compresso <code>.gz</code>/<code>.bin</code>):</p>
+    <input type="file" id="fileInputHelp" accept=".sqlite,.db,.sqlite3,.gz,.bin">
+  </div>
+</div>
+
+<div class="app" id="app" hidden>
+  <aside class="panel schema" aria-label="Struttura del database">
+    <div class="panel-head">
+      <h2>Struttura del database</h2>
+      <label class="btn small" for="fileInput">Apri file…</label>
+      <input type="file" id="fileInput" accept=".sqlite,.db,.sqlite3,.gz,.bin" hidden>
+    </div>
+    <div class="panel-body">
+      <input id="schemaSearch" class="search" type="search" placeholder="Cerca tabella o colonna (es. psa, route)" aria-label="Cerca tabella o colonna">
+      <div class="search-meta" id="schemaMeta"></div>
+      <div id="schemaList"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="work-row">
+    <section class="panel editor-panel" aria-labelledby="editorTitle">
+      <div class="panel-head">
+        <h2 id="editorTitle">Query SQL</h2>
+        <div class="row">
+          <label for="examples" class="check">Esempi</label>
+          <select id="examples"></select>
+        </div>
+      </div>
+      <textarea id="sql" spellcheck="false" aria-label="Editor SQL"></textarea>
+      <div id="errorBox" class="error-box" hidden></div>
+      <div class="editor-foot">
+        <div class="status" id="status" role="status">Pronto.</div>
+        <div class="row">
+          <span class="check"><input type="checkbox" id="liveRun" checked><label for="liveRun">Aggiorna mentre scrivi</label></span>
+          <span class="check"><kbd>Ctrl</kbd>+<kbd>Invio</kbd></span>
+          <button class="btn primary" id="runBtn" type="button">Esegui query</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="chartTitle">
+      <div class="panel-head"><h2 id="chartTitle">Grafico</h2><span class="status" id="chartNote"></span></div>
+      <div class="panel-body">
+        <div class="chart-controls">
+          <div class="field"><label for="chartType">Tipo</label>
+            <select id="chartType">
+              <option value="scatter">Scatter</option>
+              <option value="histogram">Istogramma</option>
+              <option value="box">Box plot</option>
+              <option value="violin">Violin</option>
+              <option value="bar">Barre</option>
+              <option value="line">Linea</option>
+            </select></div>
+          <div class="field"><label for="xCol">Asse X</label><select id="xCol"></select></div>
+          <div class="field" id="yField"><label for="yCol">Asse Y</label><select id="yCol"></select></div>
+          <div class="field"><label for="colorCol">Colore / gruppo</label><select id="colorCol"></select></div>
+          <div class="field" id="aggField"><label for="agg">Aggregazione Y</label>
+            <select id="agg">
+              <option value="none">Nessuna</option>
+              <option value="count">Conteggio righe</option>
+              <option value="mean">Media</option>
+              <option value="median">Mediana</option>
+              <option value="sum">Somma</option>
+            </select></div>
+          <div class="field" id="binsField"><label for="bins">Classi</label><input id="bins" class="num-input" type="number" min="5" max="200" value="30"></div>
+          <div class="field"><span class="check"><input type="checkbox" id="logX"><label for="logX">X log</label></span>
+            <span class="check"><input type="checkbox" id="logY"><label for="logY">Y log</label></span></div>
+        </div>
+      </div>
+      <div id="chart" role="img" aria-label="Grafico del risultato della query"></div>
+      <div id="chartEmpty" class="chart-empty" hidden></div>
+    </section>
+    </div>
+
+    <section class="panel" aria-labelledby="statsTitle">
+      <div class="panel-head"><h2 id="statsTitle">Analisi statistica</h2><span class="status" id="statsNote"></span></div>
+      <div class="panel-body">
+        <div class="stat-tabs" role="group" aria-label="Tipo di analisi">
+          <button class="stat-tab" type="button" data-tab="describe" aria-pressed="true">Descrittive</button>
+          <button class="stat-tab" type="button" data-tab="corr" aria-pressed="false">Correlazioni</button>
+          <button class="stat-tab" type="button" data-tab="pca" aria-pressed="false">PCA</button>
+          <button class="stat-tab" type="button" data-tab="group" aria-pressed="false">Confronto tra gruppi</button>
+        </div>
+        <div class="chart-controls">
+          <div class="field"><label for="statGroup">Gruppo</label><select id="statGroup"></select></div>
+          <div class="field" id="corrMethodField"><label for="corrMethod">Metodo</label>
+            <select id="corrMethod"><option value="spearman">Spearman (ranghi)</option><option value="pearson">Pearson</option></select></div>
+          <div class="field" id="pcxField"><label for="pcX">Componente X</label><select id="pcX"></select></div>
+          <div class="field" id="pcyField"><label for="pcY">Componente Y</label><select id="pcY"></select></div>
+          <div class="field" id="pcaOptsField">
+            <span class="check"><input type="checkbox" id="pcaStd" checked><label for="pcaStd">Standardizza (z-score)</label></span>
+            <span class="check"><input type="checkbox" id="pcaBiplot" checked><label for="pcaBiplot">Vettori delle variabili</label></span></div>
+        </div>
+        <fieldset class="var-picker">
+          <legend>Variabili numeriche
+            <button class="btn small" type="button" id="varsAll">tutte</button>
+            <button class="btn small" type="button" id="varsNone">nessuna</button></legend>
+          <div id="varList" class="chips"></div>
+        </fieldset>
+        <p class="hint">Le analisi usano il risultato della query. Per filtrare i dati modifica il <code>WHERE</code>, per esempio <code>WHERE also_oral = 0</code>, e riesegui.</p>
+      </div>
+      <div id="statCharts" class="stat-charts"><div id="statChart1"></div><div id="statChart2"></div></div>
+      <div id="statMessage" class="chart-empty" hidden></div>
+      <div class="table-wrap stat-table-wrap"><table id="statTable"></table></div>
+      <div class="foot-note" id="statFoot"></div>
+      <div class="editor-foot" id="pcaSaveRow" hidden>
+        <span class="status" id="pcaSaveStatus">Salva i punteggi per interrogarli con SQL (resta solo in questa sessione).</span>
+        <button class="btn small" type="button" id="pcaSave">Salva in tabella pca_scores</button>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="resultTitle">
+      <div class="panel-head">
+        <h2 id="resultTitle">Risultati</h2>
+        <button class="btn small" id="copyCsv" type="button">Copia come CSV</button>
+      </div>
+      <div class="table-wrap"><table id="resultTable"></table></div>
+      <div class="foot-note" id="tableNote"></div>
+      <textarea id="csvFallback" hidden aria-label="CSV da copiare"></textarea>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-asm.js"></script>
+<script src="stats.js"></script>
+<!-- "strict" bundle: same API, no eval/new Function, so it runs under a strict CSP -->
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-strict-dist-min@2.35.2/plotly-strict.min.js"></script>
+<script>
+const DB_URL = "pharma_inhalation.sqlite.gz.b64.txt";
+const MAX_TABLE_ROWS = 1000;
+const MAX_GROUPS = 7; // 7 colored groups + "Altro"
+
+const TABLE_NOTES = {
+  dataset_info: "Provenienza: release delle fonti, date di download e hash SHA-256.",
+  molecules: "Una riga per molecola ChEMBL: farmaci approvati e composti testati su PDE4, con proprietà calcolate.",
+  molecule_synonyms: "Nomi alternativi (INN, USAN, BAN, nomi commerciali) usati per il collegamento con FDA.",
+  atc_classes: "Gerarchia WHO ATC: dal gruppo anatomico (livello 1) alla sostanza (livello 5).",
+  molecule_atc: "Codici ATC di ogni molecola approvata.",
+  fda_applications: "Domande FDA (NDA, ANDA, BLA) con lo sponsor.",
+  fda_products: "Prodotti FDA con forma farmaceutica e via di somministrazione.",
+  fda_product_ingredients: "Principi attivi di ogni prodotto FDA, con il nome scritto da FDA.",
+  fda_ingredient_map: "Ponte tra nome FDA e molecola ChEMBL, con il metodo di abbinamento.",
+  targets: "Bersagli PDE4 umani (isoforme A-D e famiglia).",
+  activities: "Misure IC50 e Ki su PDE4 come pubblicate e come standardizzate da ChEMBL.",
+  molecule_routes: "Una riga per molecola parent e via di somministrazione FDA. Copia materializzata della vista v_molecule_routes.",
+  v_molecule_routes: "Vista: la regola di join FDA → ChEMBL che produce molecule_routes (più lenta da interrogare).",
+  cleaning_log: "Registro della pulizia: una riga per regola, con righe prima, escluse, dopo e segnalate.",
+  cleaning_exclusions: "Ogni record escluso e la prima regola che lo ha escluso (join con cleaning_log su rule_id).",
+  activities_clean: "Misure PDE4 che superano tutte le regole, con pIC50/pKi calcolato.",
+  activity_potency: "Misure ripetute aggregate: mediana per molecola × bersaglio × tipo di misura.",
+  molecule_routes_clean: "Vie di somministrazione separate e in maiuscolo (\"INHALATION, ORAL\" → due righe).",
+  inhalation_dataset: "Insieme di analisi pulito: inalatori per il polmone vs orali sistemici, una riga per molecola.",
+};
+
+const EXAMPLES = [
+  { title: "Dopo la pulizia: inalatori vs orali",
+    chart: { type: "scatter", x: "mw_freebase", y: "psa", color: "route_group" },
+    stats: { tab: "group", group: "route_group" },
+    sql: `-- Insieme di analisi pulito (notebook 02)
+SELECT chembl_id, pref_name, route_group, also_oral,
+       mw_freebase, alogp, psa, hbd, hba, rtb, aromatic_rings, qed_weighted
+FROM inhalation_dataset;` },
+  { title: "Statistica: PCA delle proprietà chimiche",
+    chart: { type: "scatter", x: "alogp", y: "psa", color: "route_group" },
+    stats: { tab: "pca", group: "route_group" },
+    sql: `-- PCA su 8 descrittori; filtro: senza le molecole anche orali
+SELECT chembl_id, pref_name, route_group,
+       mw_freebase, alogp, psa, hbd, hba, rtb, aromatic_rings, qed_weighted
+FROM inhalation_dataset
+WHERE also_oral = 0;` },
+  { title: "Statistica: correlazioni tra descrittori",
+    chart: { type: "scatter", x: "heavy_atoms", y: "mw_freebase" },
+    stats: { tab: "corr", group: "" },
+    sql: `SELECT pref_name, mw_freebase, heavy_atoms, alogp, psa, hbd, hba, rtb,
+       aromatic_rings, qed_weighted, num_ro5_violations
+FROM inhalation_dataset;` },
+  { title: "Statistica: potenza per isoforma PDE4 (Kruskal-Wallis)",
+    chart: { type: "box", y: "p_median", color: "target_name" },
+    stats: { tab: "group", group: "target_name" },
+    sql: `SELECT molecule_chembl_id, target_name, p_median, n_measurements
+FROM activity_potency
+WHERE standard_type = 'IC50';` },
+  { title: "Registro delle esclusioni",
+    chart: { type: "bar", x: "rule_id", y: "rows_removed", agg: "none", color: "dataset" },
+    sql: `SELECT dataset, rule_id, kind, rule, rows_before, rows_removed, rows_after, rows_flagged, reason
+FROM cleaning_log
+ORDER BY dataset, step;` },
+  { title: "Perché queste molecole inalatorie sono state escluse?",
+    chart: { type: "bar", x: "rule_id", y: "", agg: "count" },
+    sql: `SELECT e.rule_id, l.rule, m.pref_name
+FROM cleaning_exclusions AS e
+JOIN cleaning_log AS l ON l.rule_id = e.rule_id
+JOIN molecules AS m ON m.chembl_id = e.record_id
+JOIN molecule_routes_clean AS r ON r.chembl_id = e.record_id AND r.route = 'INHALATION'
+WHERE e.dataset = 'molecules'
+ORDER BY e.rule_id, m.pref_name;` },
+  { title: "Potenza PDE4 pulita: mediane per bersaglio",
+    chart: { type: "box", y: "p_median", color: "target_name" },
+    sql: `SELECT molecule_chembl_id, target_name, standard_type,
+       p_median, n_measurements, p_range, inconsistent
+FROM activity_potency;` },
+  { title: "Dati grezzi: inalatori vs orali (prima della pulizia)",
+    chart: { type: "scatter", x: "mw_freebase", y: "psa", color: "route" },
+    sql: `-- Farmaci approvati a piccola molecola: via inalatoria vs orale
+SELECT m.chembl_id, m.pref_name, r.route,
+       m.mw_freebase, m.alogp, m.psa, m.hbd, m.hba, m.rtb, m.qed_weighted
+FROM molecule_routes AS r
+JOIN molecules AS m ON m.chembl_id = r.chembl_id
+WHERE r.route IN ('INHALATION', 'ORAL')
+  AND m.molecule_type = 'Small molecule';` },
+  { title: "Distribuzione del logP per via",
+    chart: { type: "histogram", x: "alogp", color: "route" },
+    sql: `SELECT m.pref_name, r.route, m.alogp
+FROM molecule_routes AS r
+JOIN molecules AS m ON m.chembl_id = r.chembl_id
+WHERE r.route IN ('INHALATION', 'ORAL')
+  AND m.alogp IS NOT NULL;` },
+  { title: "Polar surface area: box plot per via",
+    chart: { type: "box", y: "psa", color: "route" },
+    sql: `SELECT m.pref_name, r.route, m.psa
+FROM molecule_routes AS r
+JOIN molecules AS m ON m.chembl_id = r.chembl_id
+WHERE r.route IN ('INHALATION', 'ORAL', 'TOPICAL', 'INTRAVENOUS')
+  AND m.molecule_type = 'Small molecule';` },
+  { title: "Prodotti FDA per via di somministrazione",
+    chart: { type: "bar", x: "route", y: "n_products", agg: "none" },
+    sql: `SELECT route, COUNT(*) AS n_products
+FROM fda_products
+GROUP BY route
+ORDER BY n_products DESC
+LIMIT 15;` },
+  { title: "Farmaci respiratori (ATC R03)",
+    chart: { type: "scatter", x: "alogp", y: "psa", color: "atc_group" },
+    sql: `-- R03 = farmaci per le malattie ostruttive delle vie aeree
+SELECT DISTINCT m.pref_name, a.level4_description AS atc_group,
+       m.mw_freebase, m.alogp, m.psa, m.hbd
+FROM molecule_atc AS ma
+JOIN atc_classes AS a ON a.level5 = ma.level5
+JOIN molecules AS m ON m.chembl_id = ma.chembl_id
+WHERE a.level2 = 'R03'
+ORDER BY atc_group, m.pref_name;` },
+  { title: "Potenza PDE4 per isoforma (pChEMBL)",
+    chart: { type: "box", y: "pchembl_value", color: "target" },
+    sql: `SELECT REPLACE(t.pref_name, '3'',5''-cyclic-AMP phosphodiesterase ', 'PDE') AS target,
+       a.standard_type, a.pchembl_value
+FROM activities AS a
+JOIN targets AS t ON t.target_chembl_id = a.target_chembl_id
+WHERE a.pchembl_value IS NOT NULL;` },
+  { title: "Composti PDE4: potenza vs peso molecolare",
+    chart: { type: "scatter", x: "mw_freebase", y: "best_pchembl", color: "stage" },
+    sql: `SELECT a.molecule_chembl_id, m.pref_name,
+       CASE WHEN m.max_phase = 4 THEN 'approvato'
+            WHEN m.max_phase > 0 THEN 'clinico'
+            ELSE 'preclinico' END AS stage,
+       MAX(a.pchembl_value) AS best_pchembl,
+       m.mw_freebase, m.alogp, m.psa
+FROM activities AS a
+JOIN molecules AS m ON m.chembl_id = a.molecule_chembl_id
+WHERE a.pchembl_value IS NOT NULL
+GROUP BY a.molecule_chembl_id;` },
+  { title: "Qualità dei dati: relazioni e unità",
+    chart: { type: "bar", x: "standard_relation", y: "n", agg: "sum", color: "standard_units" },
+    sql: `-- Quante misure sono pulite ('=' in nM) e quante vanno trattate?
+SELECT COALESCE(standard_relation, 'NULL') AS standard_relation,
+       COALESCE(standard_units, 'NULL') AS standard_units,
+       COUNT(*) AS n,
+       SUM(pchembl_value IS NULL) AS without_pchembl,
+       SUM(data_validity_comment IS NOT NULL) AS flagged
+FROM activities
+GROUP BY 1, 2
+ORDER BY n DESC;` },
+  { title: "Ricerca PDE4 per anno di pubblicazione",
+    chart: { type: "line", x: "year", y: "n_measurements", agg: "none" },
+    sql: `SELECT document_year AS year,
+       COUNT(*) AS n_measurements,
+       ROUND(AVG(pchembl_value), 2) AS mean_pchembl
+FROM activities
+WHERE document_year IS NOT NULL
+GROUP BY document_year
+ORDER BY year;` },
+  { title: "Audit del collegamento FDA → ChEMBL",
+    chart: { type: "bar", x: "match_method", y: "n_names", agg: "none" },
+    sql: `SELECT match_method, COUNT(*) AS n_names
+FROM fda_ingredient_map
+GROUP BY match_method
+ORDER BY n_names DESC;` },
+];
+
+const state = { SQL: null, db: null, result: null, types: [], sort: { col: -1, dir: 1 }, schema: [], colorSlots: new Map() };
+const $ = (id) => document.getElementById(id);
+const fmtInt = new Intl.NumberFormat("it-IT");
+
+// ---------- loading ----------
+async function gunzipBytes(bytes) {
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function prepareBytes(bytes) {
+  return bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipBytes(bytes) : bytes;
+}
+async function boot() {
+  try {
+    state.SQL = await initSqlJs();
+  } catch (e) {
+    $("loading").textContent = "Il motore SQL non si è caricato: " + e.message;
+    return;
+  }
+  try {
+    const res = await fetch(DB_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status} su ${DB_URL}`);
+    // The database ships as gzip + base64 text (see src/02_build_database.py).
+    const binary = atob((await res.text()).trim());
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    openDb(await prepareBytes(bytes));
+  } catch (e) {
+    $("loading").hidden = true;
+    $("loadError").textContent = "Non riesco a leggere il database incluso (" + e.message + ").";
+    $("loadHelp").hidden = false;
+  }
+}
+async function openFile(file) {
+  if (!file) return;
+  try {
+    openDb(await prepareBytes(new Uint8Array(await file.arrayBuffer())), file.name);
+  } catch (e) {
+    showError("Il file non è un database SQLite leggibile: " + e.message);
+  }
+}
+function openDb(bytes, label) {
+  if (state.db) state.db.close();
+  state.db = new state.SQL.Database(bytes);
+  state.colorSlots.clear();
+  $("loading").hidden = true;
+  $("loadHelp").hidden = true;
+  $("app").hidden = false;
+  renderProvenance(label);
+  renderSchema();
+  if (!label) loadExample(0);
+  else { $("sql").value = "SELECT name, type FROM sqlite_master ORDER BY type, name;"; runQuery(); }
+}
+function q(sql) {
+  const r = state.db.exec(sql);
+  return r.length ? r[0].values : [];
+}
+
+// ---------- header ----------
+function renderProvenance(label) {
+  const chips = [];
+  const has = (t) => q(`SELECT 1 FROM sqlite_master WHERE name = '${t}'`).length > 0;
+  if (has("dataset_info")) {
+    const info = Object.fromEntries(q("SELECT key, value FROM dataset_info"));
+    if (info.chembl_release) chips.push(["ChEMBL", `${info.chembl_release.replace("ChEMBL_", "")} · ${info.chembl_release_date}`]);
+    if (info.openfda_last_updated) chips.push(["openFDA", info.openfda_last_updated]);
+  }
+  if (has("molecules")) chips.push(["Molecole", fmtInt.format(q("SELECT COUNT(*) FROM molecules")[0][0])]);
+  if (has("fda_products")) chips.push(["Prodotti FDA", fmtInt.format(q("SELECT COUNT(*) FROM fda_products")[0][0])]);
+  if (has("activities")) chips.push(["Misure PDE4", fmtInt.format(q("SELECT COUNT(*) FROM activities")[0][0])]);
+  if (label) chips.unshift(["File", label]);
+  $("provenance").replaceChildren(...chips.map(([k, v]) => {
+    const s = document.createElement("span"); s.className = "chip";
+    s.append(k + " "); const b = document.createElement("b"); b.textContent = v; s.append(b); return s;
+  }));
+}
+
+// ---------- schema explorer ----------
+function parseComments(sql) {
+  const notes = {};
+  for (const line of (sql || "").split("\n")) {
+    const m = line.match(/^\s*([A-Za-z_]\w*)\s+[^-]*--\s*(.+)$/);
+    if (m) notes[m[1]] = m[2].trim();
+  }
+  return notes;
+}
+function renderSchema() {
+  const objects = q(`SELECT name, type, sql FROM sqlite_master
+    WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%'
+    ORDER BY CASE type WHEN 'table' THEN 0 ELSE 1 END, name`);
+  state.schema = objects.map(([name, type, sql]) => {
+    const notes = parseComments(sql);
+    const cols = q(`PRAGMA table_info("${name}")`).map(([, col, ctype, , , pk]) => ({ name: col, type: ctype || "", pk: pk > 0, note: notes[col] || "" }));
+    // Views are not counted: they re-run their query and slow the start-up.
+    let count = null;
+    if (type === "table") count = q(`SELECT COUNT(*) FROM "${name}"`)[0][0];
+    return { name, type, cols, count, note: TABLE_NOTES[name] || "" };
+  });
+  drawSchema();
+}
+function highlight(text, term) {
+  const frag = document.createDocumentFragment();
+  if (!term) { frag.append(text); return frag; }
+  const lower = text.toLowerCase(); let i = 0, j;
+  while ((j = lower.indexOf(term, i)) !== -1) {
+    frag.append(text.slice(i, j));
+    const m = document.createElement("mark"); m.textContent = text.slice(j, j + term.length); frag.append(m);
+    i = j + term.length;
+  }
+  frag.append(text.slice(i));
+  return frag;
+}
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function drawSchema() {
+  const term = $("schemaSearch").value.trim().toLowerCase();
+  const list = $("schemaList"); list.replaceChildren();
+  let nTables = 0, nCols = 0;
+  for (const t of state.schema) {
+    const tableHit = !term || t.name.toLowerCase().includes(term) || t.note.toLowerCase().includes(term);
+    const cols = tableHit ? t.cols : t.cols.filter((c) => c.name.toLowerCase().includes(term) || c.note.toLowerCase().includes(term));
+    if (!tableHit && !cols.length) continue;
+    nTables++; nCols += cols.length;
+    const d = el("details", "tbl"); d.open = !!term;
+    const s = el("summary");
+    const nm = el("span", "tbl-name"); nm.append(highlight(t.name, term));
+    s.append(nm, el("span", "pill" + (t.type === "view" ? " view" : ""), t.type === "view" ? "vista" : "tabella"));
+    s.append(el("span", "count", t.count == null ? "" : fmtInt.format(t.count) + " righe"));
+    d.append(s);
+    if (t.note) { const p = el("p", "tbl-note"); p.append(highlight(t.note, term)); d.append(p); }
+    const actions = el("div", "tbl-actions");
+    const prev = el("button", "btn small", "Anteprima"); prev.type = "button";
+    prev.addEventListener("click", () => { $("sql").value = `SELECT *\nFROM ${t.name}\nLIMIT 100;`; runQuery(); });
+    const ins = el("button", "btn small", "Inserisci nome"); ins.type = "button";
+    ins.addEventListener("click", () => insertAtCursor(t.name));
+    actions.append(prev, ins); d.append(actions);
+    const ul = el("ul", "cols");
+    for (const c of cols) {
+      const li = el("li"); const b = el("button", "col-btn"); b.type = "button";
+      b.title = "Inserisci " + c.name + " nella query";
+      const n = el("span", "col-name"); n.append(highlight(c.name, term)); if (c.pk) n.append(el("span", "pk", " PK"));
+      b.append(n, el("span", "col-type", c.type));
+      if (c.note) { const ds = el("span", "col-desc"); ds.append(highlight(c.note, term)); b.append(ds); }
+      b.addEventListener("click", () => insertAtCursor(c.name));
+      li.append(b); ul.append(li);
+    }
+    d.append(ul); list.append(d);
+  }
+  $("schemaMeta").textContent = term
+    ? (nTables ? `${nTables} tabelle, ${nCols} colonne corrispondono a “${term}”` : `Nessuna tabella o colonna contiene “${term}”`)
+    : `${state.schema.length} oggetti · clic su una colonna per inserirla nella query`;
+}
+function insertAtCursor(text) {
+  const ta = $("sql"); const { selectionStart: a, selectionEnd: b, value } = ta;
+  ta.value = value.slice(0, a) + text + value.slice(b);
+  ta.focus(); ta.selectionStart = ta.selectionEnd = a + text.length;
+  ta.dispatchEvent(new Event("input")); // lets live mode pick up inserted names
+}
+
+// ---------- query ----------
+function showError(msg) { $("errorBox").textContent = msg; $("errorBox").hidden = false; $("status").textContent = "Errore nella query."; $("status").classList.add("error"); }
+function clearError() { $("errorBox").hidden = true; $("status").classList.remove("error"); }
+function runQuery(pref, statPref) {
+  if (!state.db) return;
+  const sql = $("sql").value;
+  clearError();
+  const t0 = performance.now();
+  let res;
+  try { res = state.db.exec(sql); } catch (e) { showError(e.message); return; }
+  const ms = Math.round(performance.now() - t0);
+  const last = res[res.length - 1];
+  state.result = last ? { columns: last.columns, rows: last.values } : { columns: [], rows: [] };
+  state.sort = { col: -1, dir: 1 };
+  inferTypes();
+  if (/\b(create|drop|alter|insert|update|delete)\b/i.test(sql)) renderSchema();
+  $("status").textContent = last
+    ? `${fmtInt.format(state.result.rows.length)} righe · ${state.result.columns.length} colonne · ${ms} ms`
+    : `Eseguita in ${ms} ms, nessuna riga restituita (le modifiche restano solo in questa sessione).`;
+  syncChartControls(pref);
+  renderChart();
+  syncStatControls(statPref);
+  renderStats();
+  renderTable();
+}
+function inferTypes() {
+  const { columns, rows } = state.result;
+  state.types = columns.map((_, i) => {
+    let n = 0, num = 0; const distinct = new Set();
+    for (const r of rows) { const v = r[i]; if (v == null) continue; n++; if (typeof v === "number") num++; if (distinct.size <= 1000) distinct.add(v); }
+    return { kind: n === 0 ? "empty" : num === n ? "num" : "text", distinct: distinct.size };
+  });
+}
+
+// ---------- chart controls ----------
+function fillSelect(sel, options, keep, fallback) {
+  const prev = keep ? sel.value : null;
+  sel.replaceChildren(...options.map(([v, label]) => { const o = el("option", null, label); o.value = v; return o; }));
+  const values = options.map((o) => o[0]);
+  sel.value = prev != null && values.includes(prev) ? prev : (values.includes(fallback) ? fallback : (values[0] ?? ""));
+}
+function syncChartControls(pref) {
+  const { columns } = state.result; const types = state.types;
+  const nums = columns.filter((_, i) => types[i].kind === "num");
+  const groupable = columns.filter((_, i) => types[i].kind === "text" || (types[i].kind === "num" && types[i].distinct <= 12));
+  const smallGroups = columns.filter((_, i) => types[i].kind === "text" && types[i].distinct >= 2 && types[i].distinct <= 12);
+  if (pref) { $("chartType").value = pref.type; }
+  const type = $("chartType").value;
+  const keep = !pref;
+  const xIsNum = type === "scatter" || type === "histogram";
+  const xOptions = (xIsNum ? nums : columns).map((c) => [c, c]);
+  const xDefault = type === "bar" ? (groupable.find((c) => types[columns.indexOf(c)].kind === "text") || columns[0]) : nums[0];
+  fillSelect($("xCol"), xOptions, keep, pref?.x ?? xDefault);
+  const yOptions = (type === "bar" || type === "line" ? [["", "(conteggio)"]] : []).concat(nums.map((c) => [c, c]));
+  const yDefault = type === "scatter" ? (nums.find((c) => c !== $("xCol").value) || nums[0]) : nums.find((c) => c !== $("xCol").value) ?? "";
+  fillSelect($("yCol"), yOptions, keep, pref?.y ?? yDefault);
+  fillSelect($("colorCol"), [["", "(nessuno)"]].concat(groupable.map((c) => [c, c])), keep, pref?.color ?? (type === "box" || type === "violin" ? (smallGroups[0] || groupable[0] || "") : (smallGroups[0] || "")));
+  if (pref?.agg) $("agg").value = pref.agg;
+  else if (pref || !keep) $("agg").value = "none";
+  if (pref) { $("logX").checked = false; $("logY").checked = false; }
+  updateControlVisibility();
+}
+function updateControlVisibility() {
+  const type = $("chartType").value;
+  $("binsField").hidden = type !== "histogram";
+  $("aggField").hidden = !(type === "bar" || type === "line");
+  $("yField").hidden = type === "histogram";
+  $("xCol").parentElement.hidden = type === "box" || type === "violin";
+}
+
+// ---------- chart ----------
+function token(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function theme() {
+  return {
+    surface: token("--surface"), fg: token("--fg"), fg2: token("--fg-2"), muted: token("--muted"),
+    grid: token("--grid"), axis: token("--axis"), line: token("--line"),
+    series: [1, 2, 3, 4, 5, 6, 7, 8].map((i) => token("--s" + i)),
+  };
+}
+// Color follows the group value across queries (same route = same color).
+function slotFor(value) {
+  if (!state.colorSlots.has(value)) {
+    if (state.colorSlots.size >= 8) state.colorSlots.clear();
+    const used = new Set(state.colorSlots.values());
+    let slot = 0; while (used.has(slot)) slot++;
+    state.colorSlots.set(value, slot);
+  }
+  return state.colorSlots.get(value);
+}
+function aggregate(values, how) {
+  if (how === "count") return values.length;
+  const v = values.filter((x) => typeof x === "number");
+  if (!v.length) return null;
+  if (how === "sum") return v.reduce((a, b) => a + b, 0);
+  if (how === "mean") return v.reduce((a, b) => a + b, 0) / v.length;
+  if (how === "median") { const s = [...v].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+  return v[0];
+}
+function chartMessage(text) {
+  Plotly.purge("chart"); $("chart").hidden = true;
+  $("chartEmpty").textContent = text; $("chartEmpty").hidden = false; $("chartNote").textContent = "";
+}
+function renderChart() {
+  const r = state.result;
+  if (!r || !r.rows.length) return chartMessage("Nessuna riga da disegnare. Esegui una query che restituisce dati.");
+  const type = $("chartType").value, cols = r.columns;
+  const xi = cols.indexOf($("xCol").value), yi = cols.indexOf($("yCol").value), ci = cols.indexOf($("colorCol").value);
+  const needsX = !(type === "box" || type === "violin"), needsY = type === "scatter" || type === "box" || type === "violin";
+  if (needsX && xi < 0) return chartMessage(type === "scatter" || type === "histogram" ? "Questo grafico richiede una colonna numerica sull'asse X." : "Scegli una colonna per l'asse X.");
+  if (needsY && yi < 0) return chartMessage("Questo grafico richiede una colonna numerica sull'asse Y.");
+  $("chart").hidden = false; $("chartEmpty").hidden = true;
+
+  const th = theme();
+  // Groups: top 7 by size get a color, the rest fold into "Altro".
+  const groups = new Map();
+  for (const row of r.rows) {
+    const key = ci < 0 ? "Tutti" : String(row[ci] ?? "NULL");
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+  let ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
+  if (ordered.length > MAX_GROUPS + 1) {
+    const rest = ordered.slice(MAX_GROUPS).flatMap(([, rows]) => rows);
+    ordered = ordered.slice(0, MAX_GROUPS).concat([["Altro", rest]]);
+  }
+  const colorOf = (name) => ci < 0 ? th.series[0] : name === "Altro" ? th.muted : th.series[slotFor(name)];
+  const labelIdx = cols.findIndex((c, i) => i !== ci && state.types[i].kind === "text");
+  const xName = cols[xi], yName = cols[yi];
+  const agg = $("agg").value;
+  const traces = [];
+  let dropped = 0;
+
+  for (const [name, rows] of ordered) {
+    const color = colorOf(name);
+    if (type === "scatter") {
+      const pts = rows.filter((row) => typeof row[xi] === "number" && typeof row[yi] === "number");
+      dropped += rows.length - pts.length;
+      traces.push({
+        type: r.rows.length > 4000 ? "scattergl" : "scatter", mode: "markers", name,
+        x: pts.map((p) => p[xi]), y: pts.map((p) => p[yi]),
+        text: labelIdx >= 0 ? pts.map((p) => p[labelIdx] ?? "") : undefined,
+        marker: { size: 8, color, opacity: 0.85, line: { width: 1, color: th.surface } },
+        hovertemplate: (labelIdx >= 0 ? "<b>%{text}</b><br>" : "") + `${xName}: %{x}<br>${yName}: %{y}<extra>${name}</extra>`,
+      });
+    } else if (type === "histogram") {
+      const xs = rows.map((row) => row[xi]).filter((v) => typeof v === "number");
+      dropped += rows.length - xs.length;
+      traces.push({ type: "histogram", name, x: xs, nbinsx: Number($("bins").value) || 30,
+        marker: { color, line: { width: 1, color: th.surface } }, opacity: ordered.length > 1 ? 0.65 : 1,
+        hovertemplate: `${xName}: %{x}<br>righe: %{y}<extra>${name}</extra>` });
+    } else if (type === "box" || type === "violin") {
+      const ys = rows.map((row) => row[yi]).filter((v) => typeof v === "number");
+      dropped += rows.length - ys.length;
+      const base = { name, y: ys, marker: { color, size: 5 }, line: { width: 1.5, color } };
+      traces.push(type === "box"
+        ? { ...base, type: "box", boxpoints: ys.length <= 3000 ? "outliers" : false, fillcolor: color + "33" }
+        : { ...base, type: "violin", box: { visible: true }, meanline: { visible: true }, fillcolor: color + "33", points: false });
+    } else {
+      // bar / line: aggregate Y per X value
+      const buckets = new Map();
+      for (const row of rows) {
+        const k = row[xi]; if (!buckets.has(k)) buckets.set(k, []);
+        buckets.get(k).push(yi < 0 ? 1 : row[yi]);
+      }
+      let keys = [...buckets.keys()];
+      const how = yi < 0 ? "count" : agg;
+      if (type === "line" || state.types[xi].kind === "num") keys.sort((a, b) => (a > b) - (a < b));
+      const ys = keys.map((k) => aggregate(buckets.get(k), how));
+      const xs = keys.map((k) => k ?? "NULL");
+      traces.push(type === "bar"
+        ? { type: "bar", name, x: xs, y: ys, marker: { color, line: { width: 2, color: th.surface } },
+            hovertemplate: `${xName}: %{x}<br>${yi < 0 ? "righe" : yName}: %{y}<extra>${name}</extra>` }
+        : { type: "scatter", mode: "lines+markers", name, x: xs, y: ys, line: { width: 2, color }, marker: { size: 8, color, line: { width: 1, color: th.surface } },
+            hovertemplate: `${xName}: %{x}<br>${yi < 0 ? "righe" : yName}: %{y}<extra>${name}</extra>` });
+    }
+  }
+
+  const axis = (title, log) => ({
+    title: { text: title, font: { color: th.fg2 } }, type: log ? "log" : "-", automargin: true,
+    gridcolor: th.grid, zerolinecolor: th.axis, linecolor: th.axis, tickfont: { color: th.muted },
+  });
+  const yTitle = type === "histogram" ? "righe" : (yi < 0 ? "righe" : (type === "bar" || type === "line") && agg !== "none" ? `${agg}(${yName})` : yName);
+  const layout = {
+    paper_bgcolor: th.surface, plot_bgcolor: th.surface,
+    font: { family: getComputedStyle(document.body).fontFamily, color: th.fg2, size: 12 },
+    margin: { l: 56, r: 18, t: ordered.length > 1 ? 40 : 14, b: 50 },
+    xaxis: axis(type === "box" || type === "violin" ? cols[ci] || "" : xName, $("logX").checked),
+    yaxis: axis(yTitle, $("logY").checked),
+    showlegend: ordered.length > 1,
+    legend: { orientation: "h", x: 0, y: 1.02, yanchor: "bottom", font: { color: th.fg } },
+    barmode: type === "histogram" ? "overlay" : "group", bargap: 0.08,
+    hoverlabel: { bgcolor: th.surface, bordercolor: th.line, font: { color: th.fg } },
+  };
+  Plotly.react("chart", traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
+  const groupsNote = ordered.length > 1 ? `${ordered.length} gruppi` : "";
+  $("chartNote").textContent = [groupsNote, dropped ? `${fmtInt.format(dropped)} righe senza valore numerico escluse` : ""].filter(Boolean).join(" · ");
+}
+
+// ---------- results table ----------
+function renderTable() {
+  const { columns, rows } = state.result;
+  const table = $("resultTable"); table.replaceChildren();
+  if (!columns.length) { $("tableNote").textContent = ""; return; }
+  let view = rows;
+  if (state.sort.col >= 0) {
+    const i = state.sort.col, d = state.sort.dir;
+    view = [...rows].sort((a, b) => {
+      const x = a[i], y = b[i];
+      if (x == null) return 1; if (y == null) return -1;
+      return (x > y ? 1 : x < y ? -1 : 0) * d;
+    });
+  }
+  const thead = el("thead"), tr = el("tr");
+  columns.forEach((c, i) => {
+    const th = el("th", null, c); th.scope = "col"; th.tabIndex = 0;
+    if (state.sort.col === i) th.setAttribute("aria-sort", state.sort.dir > 0 ? "ascending" : "descending");
+    const sortBy = () => { state.sort = { col: i, dir: state.sort.col === i ? -state.sort.dir : 1 }; renderTable(); };
+    th.addEventListener("click", sortBy);
+    th.addEventListener("keydown", (e) => { if (e.key === "Enter") sortBy(); });
+    tr.append(th);
+  });
+  thead.append(tr);
+  const tbody = el("tbody");
+  for (const row of view.slice(0, MAX_TABLE_ROWS)) {
+    const r = el("tr");
+    row.forEach((v) => {
+      const td = el("td", v == null ? "null" : typeof v === "number" ? "num" : null, v == null ? "NULL" : String(v));
+      if (typeof v === "string" && v.length > 60) td.title = v;
+      r.append(td);
+    });
+    tbody.append(r);
+  }
+  table.append(thead, tbody);
+  $("tableNote").textContent = rows.length > MAX_TABLE_ROWS
+    ? `Mostrate le prime ${fmtInt.format(MAX_TABLE_ROWS)} di ${fmtInt.format(rows.length)} righe. Il grafico usa tutte le righe. Clic sull'intestazione per ordinare.`
+    : "Clic sull'intestazione di una colonna per ordinare.";
+}
+function toCsv() {
+  const { columns, rows } = state.result;
+  const cell = (v) => v == null ? "" : /[",\n;]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+  return [columns, ...rows].map((r) => r.map(cell).join(",")).join("\n");
+}
+async function copyCsv() {
+  if (!state.result?.columns.length) return;
+  const csv = toCsv();
+  try {
+    await navigator.clipboard.writeText(csv);
+    $("csvFallback").hidden = true;
+    $("tableNote").textContent = `Copiate ${fmtInt.format(state.result.rows.length)} righe come CSV.`;
+  } catch (_) {
+    const ta = $("csvFallback"); ta.value = csv; ta.hidden = false; ta.focus(); ta.select();
+    $("tableNote").textContent = "Copia automatica non disponibile: il CSV è selezionato qui sotto, premi Ctrl+C.";
+  }
+}
+
+// ---------- statistics ----------
+// Calculations live in stats.js (validated against numpy/scipy by tests/validate_stats.py).
+const ID_LIKE = /(^|_)id$|_number$|^activity_id$/i;
+const statState = { tab: "describe", vars: null, pca: null };
+
+function fmt(v, digits = 3) {
+  if (v == null || !Number.isFinite(v)) return "–";
+  if (v === 0) return "0";
+  const a = Math.abs(v);
+  if (a >= 1e5 || a < 1e-3) return v.toExponential(2);
+  if (a >= 1000) return String(Math.round(v)); // no thousands separator: "." is the decimal mark here
+  return String(Number(v.toPrecision(digits + 1)));
+}
+function fmtP(p) {
+  if (p == null || Number.isNaN(p)) return "–";
+  if (p === 0) return "< 1e-300";
+  return p < 1e-4 ? p.toExponential(1) : p.toFixed(4);
+}
+function columnValues(name) { const i = state.result.columns.indexOf(name); return state.result.rows.map((r) => r[i]); }
+function numericCandidates() {
+  return state.result.columns.filter((c, i) => state.types[i].kind === "num" && !ID_LIKE.test(c));
+}
+function selectedVars() { return [...document.querySelectorAll("#varList input:checked")].map((i) => i.value); }
+
+function syncStatControls(pref) {
+  const { columns } = state.result, types = state.types;
+  if (pref?.tab) statState.tab = pref.tab;
+  document.querySelectorAll(".stat-tab").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === statState.tab)));
+  const candidates = numericCandidates();
+  const previous = statState.vars ? statState.vars.filter((v) => candidates.includes(v)) : [];
+  const defaults = candidates.filter((c) => types[columns.indexOf(c)].distinct > 2).slice(0, 12);
+  const chosen = new Set(pref?.vars ?? (previous.length ? previous : defaults));
+  $("varList").replaceChildren(...candidates.map((c) => {
+    const label = el("label", "chip-check"); const input = el("input"); input.type = "checkbox"; input.value = c;
+    input.checked = chosen.has(c); input.addEventListener("change", () => { statState.vars = selectedVars(); renderStats(); });
+    label.append(input, c); return label;
+  }));
+  if (!candidates.length) $("varList").append(el("span", "hint", "La query non restituisce colonne numeriche."));
+  statState.vars = selectedVars();
+  const groupable = columns.filter((c, i) => (types[i].kind === "text" && types[i].distinct >= 2 && types[i].distinct <= 30)
+    || (types[i].kind === "num" && types[i].distinct >= 2 && types[i].distinct <= 12));
+  const fallback = groupable.find((c) => types[columns.indexOf(c)].kind === "text") || "";
+  fillSelect($("statGroup"), [["", "(nessuno)"]].concat(groupable.map((c) => [c, c])), !pref, pref?.group ?? fallback);
+  updateStatVisibility();
+}
+function updateStatVisibility() {
+  const t = statState.tab;
+  $("corrMethodField").hidden = t !== "corr";
+  $("pcxField").hidden = $("pcyField").hidden = $("pcaOptsField").hidden = t !== "pca";
+  $("pcaSaveRow").hidden = t !== "pca" || !statState.pca;
+}
+function statMessage(text) {
+  $("statCharts").hidden = true; $("statMessage").hidden = false; $("statMessage").textContent = text;
+  $("statTable").replaceChildren(); $("statFoot").textContent = ""; $("statsNote").textContent = "";
+  statState.pca = null; updateStatVisibility();
+}
+function statTable(headers, rows) {
+  const thead = el("thead"), tr = el("tr");
+  headers.forEach((h) => { const th = el("th", null, h); th.scope = "col"; th.style.cursor = "default"; tr.append(th); });
+  thead.append(tr);
+  const tbody = el("tbody");
+  for (const row of rows) {
+    const r = el("tr");
+    for (const cell of row) {
+      const c = typeof cell === "object" && cell !== null && !(cell instanceof Node) ? cell : { v: cell };
+      const td = el("td", c.cls || (typeof c.v === "number" ? "num" : null));
+      if (c.v instanceof Node) td.append(c.v); else td.textContent = typeof c.v === "number" ? fmt(c.v) : (c.v ?? "–");
+      if (c.cls) td.classList.add(...(typeof c.v === "number" ? ["num"] : []));
+      r.append(td);
+    }
+    tbody.append(r);
+  }
+  $("statTable").replaceChildren(thead, tbody);
+}
+function plotLayout(th, extra) {
+  return {
+    paper_bgcolor: th.surface, plot_bgcolor: th.surface,
+    font: { family: getComputedStyle(document.body).fontFamily, color: th.fg2, size: 12 },
+    margin: { l: 56, r: 18, t: 40, b: 50 }, hoverlabel: { bgcolor: th.surface, bordercolor: th.line, font: { color: th.fg } },
+    legend: { orientation: "h", x: 0, y: 1.02, yanchor: "bottom", font: { color: th.fg } }, ...extra,
+  };
+}
+const statAxis = (th, title, extra = {}) => ({ title: { text: title, font: { color: th.fg2 } }, automargin: true,
+  gridcolor: th.grid, zerolinecolor: th.axis, linecolor: th.axis, tickfont: { color: th.muted }, ...extra });
+const PLOT_CONFIG = { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] };
+function showCharts(n) {
+  $("statMessage").hidden = true; $("statCharts").hidden = n === 0;
+  $("statCharts").classList.toggle("single", n === 1);
+  // Unused chart slots are only hidden: purging a plot mid-redraw makes Plotly throw.
+  $("statChart2").hidden = n < 2;
+}
+function groupLabels() {
+  const g = $("statGroup").value;
+  return g ? columnValues(g).map((v) => (v == null ? null : String(v))) : null;
+}
+
+function renderStats() {
+  statState.pca = null;
+  const r = state.result;
+  if (!r || !r.rows.length) return statMessage("Nessuna riga: esegui una query che restituisce dati.");
+  const vars = selectedVars();
+  try {
+    if (statState.tab === "describe") renderDescribe(vars);
+    else if (statState.tab === "corr") renderCorrelation(vars);
+    else if (statState.tab === "pca") renderPca(vars);
+    else renderGroupTest(vars);
+  } catch (e) {
+    statMessage("Analisi non possibile: " + e.message);
+  }
+  updateStatVisibility();
+}
+
+function renderDescribe(vars) {
+  if (!vars.length) return statMessage("Seleziona almeno una variabile numerica.");
+  showCharts(0);
+  const labels = groupLabels();
+  const groups = labels ? [...new Set(labels.filter((l) => l != null))].sort() : [null];
+  if (groups.length > 12) return statMessage("Il gruppo scelto ha più di 12 valori: scegline uno con meno categorie.");
+  const rows = [];
+  for (const v of vars) {
+    const values = columnValues(v);
+    for (const g of groups) {
+      const d = Stats.describe(g == null ? values : values.filter((_, i) => labels[i] === g));
+      rows.push([{ v, cls: "strong" }, g ?? "tutti", d.n, d.missing, d.mean, d.sd, d.min, d.q1, d.median, d.q3, d.max]);
+    }
+  }
+  statTable(["Variabile", "Gruppo", "n", "Mancanti", "Media", "Dev. std.", "Min", "Q1", "Mediana", "Q3", "Max"], rows);
+  $("statFoot").textContent = "Deviazione standard campionaria (n − 1); quartili con interpolazione lineare.";
+  $("statsNote").textContent = `${vars.length} variabili${labels ? ` × ${groups.length} gruppi` : ""}`;
+}
+
+function renderCorrelation(vars) {
+  if (vars.length < 2) return statMessage("Seleziona almeno due variabili numeriche.");
+  const method = $("corrMethod").value;
+  const { r, n } = Stats.correlationMatrix(vars.map(columnValues), method);
+  const th = theme();
+  showCharts(1);
+  const colorscale = [[0, th.series[0]], [0.5, token("--surface-2")], [1, th.series[1]]];
+  Plotly.react("statChart1", [{
+    type: "heatmap", z: r, x: vars, y: vars, zmin: -1, zmax: 1, colorscale, customdata: n,
+    texttemplate: vars.length <= 12 ? "%{z:.2f}" : "", textfont: { color: th.fg, size: 11 },
+    hovertemplate: "%{y} × %{x}<br>r = %{z:.3f}<br>n = %{customdata}<extra></extra>",
+    colorbar: { thickness: 12, tickfont: { color: th.muted }, outlinewidth: 0 },
+  }], plotLayout(th, { margin: { l: 120, r: 20, t: 20, b: 110 }, xaxis: { tickfont: { color: th.fg2 }, tickangle: -40 },
+    yaxis: { tickfont: { color: th.fg2 }, autorange: "reversed" } }), PLOT_CONFIG);
+  const pairs = [];
+  for (let i = 0; i < vars.length; i++) for (let j = i + 1; j < vars.length; j++) pairs.push([vars[i], vars[j], r[i][j], n[i][j]]);
+  pairs.sort((a, b) => Math.abs(b[2]) - Math.abs(a[2]));
+  statTable(["Variabile 1", "Variabile 2", method === "pearson" ? "r di Pearson" : "ρ di Spearman", "n coppie"],
+    pairs.map(([a, b, rv, nv]) => [a, b, { v: rv, cls: Math.abs(rv) >= 0.7 ? "strong" : Math.abs(rv) < 0.3 ? "weak" : null }, nv]));
+  $("statFoot").textContent = "Coppie ordinate per |correlazione|. Ogni coppia usa le righe in cui entrambe le variabili hanno un valore. Spearman lavora sui ranghi ed è robusto ad asimmetrie e valori estremi.";
+  $("statsNote").textContent = `${vars.length} variabili · ${method === "pearson" ? "Pearson" : "Spearman"}`;
+}
+
+function renderPca(vars) {
+  if (vars.length < 2) return statMessage("Seleziona almeno due variabili numeriche.");
+  const cols = vars.map(columnValues), labels = groupLabels();
+  const keep = [];
+  for (let i = 0; i < state.result.rows.length; i++) if (cols.every((c) => Stats.isNum(c[i]))) keep.push(i);
+  const data = keep.map((i) => cols.map((c) => c[i]));
+  const constant = vars.filter((_, j) => data.every((row) => row[j] === data[0]?.[j]));
+  if (constant.length) return statMessage(`Variabili costanti in queste righe: ${constant.join(", ")}. Toglile dalla selezione.`);
+  const standardize = $("pcaStd").checked;
+  const res = Stats.pca(data, { standardize });
+  const k = res.p;
+  const pcNames = Array.from({ length: k }, (_, i) => `PC${i + 1}`);
+  fillSelect($("pcX"), pcNames.map((p) => [p, p]), true, "PC1");
+  fillSelect($("pcY"), pcNames.map((p) => [p, p]), true, "PC2");
+  if ($("pcX").value === $("pcY").value) $("pcY").value = $("pcX").value === "PC1" ? "PC2" : "PC1";
+  const cx = pcNames.indexOf($("pcX").value), cy = pcNames.indexOf($("pcY").value);
+  const th = theme();
+  showCharts(2);
+
+  // Scree plot: explained and cumulative variance, both in percent.
+  const pct = res.explained.map((e) => e * 100);
+  let acc = 0; const cum = pct.map((p) => (acc += p));
+  Plotly.react("statChart1", [
+    { type: "bar", name: "varianza spiegata", x: pcNames, y: pct, marker: { color: th.series[0] }, hovertemplate: "%{x}: %{y:.1f}%<extra></extra>" },
+    { type: "scatter", mode: "lines+markers", name: "cumulata", x: pcNames, y: cum, line: { width: 2, color: th.fg2 }, marker: { size: 7, color: th.fg2 }, hovertemplate: "fino a %{x}: %{y:.1f}%<extra></extra>" },
+  ], plotLayout(th, { xaxis: statAxis(th, "componente"), yaxis: statAxis(th, "varianza spiegata (%)", { range: [0, 105] }) }), PLOT_CONFIG);
+
+  // Score plot coloured by group, with loading vectors (biplot).
+  const labelIdx = state.result.columns.findIndex((c, i) => state.types[i].kind === "text" && c !== $("statGroup").value);
+  const groupsMap = new Map();
+  keep.forEach((rowIdx, n) => {
+    const g = labels ? (labels[rowIdx] ?? "NULL") : "Tutti";
+    if (!groupsMap.has(g)) groupsMap.set(g, []);
+    groupsMap.get(g).push(n);
+  });
+  let ordered = [...groupsMap.entries()].sort((a, b) => b[1].length - a[1].length);
+  if (ordered.length > MAX_GROUPS + 1) ordered = ordered.slice(0, MAX_GROUPS).concat([["Altro", ordered.slice(MAX_GROUPS).flatMap(([, v]) => v)]]);
+  const traces = ordered.map(([g, idx]) => ({
+    type: idx.length > 4000 ? "scattergl" : "scatter", mode: "markers", name: `${g} (n=${idx.length})`,
+    x: idx.map((n) => res.scores[n][cx]), y: idx.map((n) => res.scores[n][cy]),
+    text: labelIdx >= 0 ? idx.map((n) => state.result.rows[keep[n]][labelIdx] ?? "") : undefined,
+    marker: { size: 7, opacity: 0.8, color: !labels ? th.series[0] : g === "Altro" ? th.muted : th.series[slotFor(g)], line: { width: 1, color: th.surface } },
+    hovertemplate: (labelIdx >= 0 ? "<b>%{text}</b><br>" : "") + `${pcNames[cx]}: %{x:.2f}<br>${pcNames[cy]}: %{y:.2f}<extra>${g}</extra>`,
+  }));
+  const annotations = [];
+  if ($("pcaBiplot").checked) {
+    const maxScore = Math.max(...res.scores.map((s) => Math.max(Math.abs(s[cx]), Math.abs(s[cy]))));
+    const maxLoad = Math.max(...res.loadings.map((l) => Math.hypot(l[cx], l[cy])));
+    const f = maxLoad > 0 ? 0.85 * maxScore / maxLoad : 1;
+    vars.forEach((v, j) => {
+      const x = res.loadings[j][cx] * f, y = res.loadings[j][cy] * f;
+      // Arrow from the origin to the loading, then the label just beyond the arrow head.
+      annotations.push({ x, y, ax: 0, ay: 0, axref: "x", ayref: "y", text: "", showarrow: true,
+        arrowhead: 2, arrowsize: 1, arrowwidth: 1.5, arrowcolor: th.fg2 });
+      annotations.push({ x: x * 1.12, y: y * 1.12, text: v, showarrow: false,
+        font: { size: 11, color: th.fg }, bgcolor: th.surface, opacity: 0.9 });
+    });
+  }
+  Plotly.react("statChart2", traces, plotLayout(th, {
+    xaxis: statAxis(th, `${pcNames[cx]} (${pct[cx].toFixed(1)}%)`), yaxis: statAxis(th, `${pcNames[cy]} (${pct[cy].toFixed(1)}%)`),
+    showlegend: traces.length > 1, annotations, margin: { l: 56, r: 18, t: traces.length > 1 ? 40 : 14, b: 50 },
+  }), PLOT_CONFIG);
+
+  const shown = Math.min(k, 5);
+  const rows = vars.map((v, j) => [{ v, cls: "strong" }, ...res.loadings[j].slice(0, shown).map((l) =>
+    ({ v: l, cls: Math.abs(l) >= 0.5 ? "strong" : Math.abs(l) < 0.3 ? "weak" : null }))]);
+  rows.push(["Autovalore", ...res.eigenvalues.slice(0, shown)], ["Varianza spiegata %", ...pct.slice(0, shown)], ["Cumulata %", ...cum.slice(0, shown)]);
+  statTable(["Loading", ...pcNames.slice(0, shown)], rows);
+  const dropped = state.result.rows.length - keep.length;
+  $("statFoot").textContent = `${fmtInt.format(keep.length)} righe complete usate${dropped ? `, ${fmtInt.format(dropped)} escluse per valori mancanti` : ""}. `
+    + (standardize ? "Variabili standardizzate (z-score): la PCA usa la matrice di correlazione e il loading è la correlazione tra variabile e componente. Il criterio di Kaiser tiene le componenti con autovalore > 1."
+                   : "Variabili non standardizzate: la PCA usa la covarianza, quindi pesano di più le variabili con valori grandi (es. peso molecolare).");
+  $("statsNote").textContent = `${vars.length} variabili · ${fmtInt.format(keep.length)} righe`;
+  statState.pca = { res, keep, pcNames, vars, labelIdx };
+}
+
+function effectLabel(value, kind) {
+  const a = Math.abs(value);
+  const [small, medium, large] = kind === "r" ? [0.1, 0.3, 0.5] : [0.01, 0.08, 0.26];
+  const text = a >= large ? "grande" : a >= medium ? "medio" : a >= small ? "piccolo" : "trascurabile";
+  return el("span", "effect " + (a >= large ? "large" : a >= medium ? "medium" : ""), text);
+}
+function renderGroupTest(vars) {
+  if (!vars.length) return statMessage("Seleziona almeno una variabile numerica.");
+  const labels = groupLabels();
+  if (!labels) return statMessage("Scegli una colonna Gruppo (es. route_group) per confrontare i gruppi.");
+  const groups = [...new Set(labels.filter((l) => l != null))].sort();
+  if (groups.length < 2) return statMessage("Il gruppo scelto ha un solo valore in queste righe.");
+  if (groups.length > 12) return statMessage("Il gruppo scelto ha più di 12 valori: scegline uno con meno categorie.");
+  const two = groups.length === 2;
+  const results = vars.map((v) => {
+    const values = columnValues(v);
+    const samples = groups.map((g) => values.filter((x, i) => labels[i] === g && Stats.isNum(x)));
+    if (samples.some((s) => s.length < 2)) return { v, samples, skip: true };
+    const test = two ? Stats.mannWhitney(samples[0], samples[1]) : Stats.kruskal(samples);
+    return { v, samples, test, p: test.p, effect: two ? test.rankBiserial : test.epsilon2 };
+  });
+  const valid = results.filter((r) => !r.skip);
+  const adj = Stats.holm(valid.map((r) => r.p));
+  valid.forEach((r, i) => (r.pAdj = adj[i]));
+  valid.sort((a, b) => a.p - b.p || Math.abs(b.effect) - Math.abs(a.effect));
+  const th = theme();
+  showCharts(1);
+  const ordered = [...valid].sort((a, b) => Math.abs(a.effect) - Math.abs(b.effect));
+  Plotly.react("statChart1", [{
+    type: "bar", orientation: "h", y: ordered.map((r) => r.v), x: ordered.map((r) => r.effect),
+    marker: { color: ordered.map((r) => (r.pAdj < 0.05 ? th.series[0] : th.muted)) },
+    hovertemplate: "%{y}: %{x:.3f}<extra></extra>",
+  }], plotLayout(th, {
+    title: { text: two ? `Effect size: r rank-biserial (${groups[0]} vs ${groups[1]})` : "Effect size: ε² (Kruskal-Wallis)", font: { size: 13, color: th.fg } },
+    xaxis: statAxis(th, two ? `r > 0: ${groups[0]} tende a valori più alti` : "ε²", two ? { range: [-1, 1] } : { rangemode: "tozero" }),
+    yaxis: statAxis(th, ""), margin: { l: 130, r: 18, t: 40, b: 50 }, showlegend: false,
+  }), PLOT_CONFIG);
+  const median = (s) => Stats.describe(s).median;
+  statTable(["Variabile", ...groups.map((g) => `Mediana ${g}`), "n", "Test", "Statistica", "p", "p Holm", "Effetto", ""],
+    valid.map((r) => [{ v: r.v, cls: "strong" }, ...r.samples.map(median), r.samples.map((s) => s.length).join(" / "),
+      two ? "Mann-Whitney" : "Kruskal-Wallis", two ? r.test.U : r.test.H,
+      { v: fmtP(r.p), cls: "num" }, { v: fmtP(r.pAdj), cls: r.pAdj < 0.05 ? "num strong" : "num weak" },
+      r.effect, { v: effectLabel(r.effect, two ? "r" : "e") }]));
+  const skipped = results.filter((r) => r.skip).map((r) => r.v);
+  $("statFoot").textContent = (two
+    ? `Mann-Whitney a due code (approssimazione normale, correzione per ties e continuità). r rank-biserial da −1 a 1: soglie 0,1 / 0,3 / 0,5. `
+    : `Kruskal-Wallis con correzione per ties; ε² = H/(n − 1), soglie 0,01 / 0,08 / 0,26. `)
+    + `p Holm corregge per i ${valid.length} test eseguiti. Con gruppi grandi anche differenze minime diventano significative: conta l'effetto.`
+    + (skipped.length ? ` Saltate (meno di 2 valori in un gruppo): ${skipped.join(", ")}.` : "");
+  $("statsNote").textContent = `${groups.length} gruppi · ${valid.length} test`;
+}
+
+function savePcaScores() {
+  const s = statState.pca; if (!s) return;
+  const k = Math.min(s.res.p, 5), key = state.result.columns[0];
+  const pcCols = s.pcNames.slice(0, k);
+  state.db.run("DROP TABLE IF EXISTS pca_scores");
+  state.db.run(`CREATE TABLE pca_scores (${JSON.stringify(key)} TEXT, label TEXT, grp TEXT, ${pcCols.map((c) => `${c} REAL`).join(", ")})`);
+  const stmt = state.db.prepare(`INSERT INTO pca_scores VALUES (${new Array(3 + k).fill("?").join(",")})`);
+  const labels = groupLabels();
+  s.keep.forEach((rowIdx, n) => {
+    const row = state.result.rows[rowIdx];
+    stmt.run([row[0] == null ? null : String(row[0]), s.labelIdx >= 0 ? row[s.labelIdx] : null, labels ? labels[rowIdx] : null,
+      ...s.res.scores[n].slice(0, k)]);
+  });
+  stmt.free();
+  renderSchema();
+  $("pcaSaveStatus").textContent = `Tabella pca_scores creata: ${fmtInt.format(s.keep.length)} righe, colonne ${pcCols.join(", ")}. Esempio: SELECT * FROM pca_scores ORDER BY PC1 DESC;`;
+}
+
+// ---------- wiring ----------
+function loadExample(i) {
+  const ex = EXAMPLES[i]; $("examples").value = String(i);
+  $("sql").value = ex.sql; runQuery(ex.chart, ex.stats);
+}
+$("examples").replaceChildren(...EXAMPLES.map((ex, i) => { const o = el("option", null, ex.title); o.value = String(i); return o; }));
+$("examples").addEventListener("change", (e) => loadExample(Number(e.target.value)));
+$("runBtn").addEventListener("click", () => runQuery());
+$("sql").addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); }
+  else if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); insertAtCursor("  "); }
+});
+// Live mode: re-run read-only queries 0.7 s after typing stops; anything that
+// could change data (CREATE, DROP, UPDATE...) waits for the Run button.
+const READ_ONLY_START = /^(select|with|explain|values)\b/i;
+const WRITE_WORDS = /\b(insert|update|delete|drop|create|alter|replace|attach|detach|vacuum|reindex)\b/i;
+function isReadOnly(sql) {
+  const statements = sql.replace(/--[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "")
+    .split(";").map((s) => s.trim()).filter(Boolean);
+  return statements.length > 0 && statements.every((s) => READ_ONLY_START.test(s) && !WRITE_WORDS.test(s));
+}
+let liveTimer = null, lastLiveSql = "";
+$("sql").addEventListener("input", () => {
+  if (!$("liveRun").checked) return;
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(() => {
+    const sql = $("sql").value;
+    if (sql.trim() === lastLiveSql.trim()) return;
+    if (!isReadOnly(sql)) {
+      $("status").textContent = "Aggiornamento live in pausa: le istruzioni che modificano i dati partono solo con Esegui query.";
+      return;
+    }
+    lastLiveSql = sql;
+    runQuery();
+  }, 700);
+});
+$("chartType").addEventListener("change", () => { if (state.result) { syncChartControls(); renderChart(); } });
+for (const id of ["xCol", "yCol", "colorCol", "agg", "bins", "logX", "logY"]) $(id).addEventListener("change", () => state.result && renderChart());
+$("schemaSearch").addEventListener("input", drawSchema);
+$("fileInput").addEventListener("change", (e) => openFile(e.target.files[0]));
+$("fileInputHelp").addEventListener("change", (e) => openFile(e.target.files[0]));
+$("copyCsv").addEventListener("click", copyCsv);
+document.querySelectorAll(".stat-tab").forEach((b) => b.addEventListener("click", () => {
+  statState.tab = b.dataset.tab;
+  document.querySelectorAll(".stat-tab").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  if (state.result) renderStats();
+}));
+for (const id of ["statGroup", "corrMethod", "pcX", "pcY", "pcaStd", "pcaBiplot"]) $(id).addEventListener("change", () => state.result && renderStats());
+$("varsAll").addEventListener("click", () => { document.querySelectorAll("#varList input").forEach((i) => (i.checked = true)); statState.vars = selectedVars(); renderStats(); });
+$("varsNone").addEventListener("click", () => { document.querySelectorAll("#varList input").forEach((i) => (i.checked = false)); statState.vars = []; renderStats(); });
+$("pcaSave").addEventListener("click", savePcaScores);
+const rerender = () => { if (state.result) { renderChart(); renderStats(); } };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);
+new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+boot();
+</script>

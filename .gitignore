@@ -1,0 +1,4 @@
+data/raw/
+data/processed/
+data_download.log
+__pycache__/
