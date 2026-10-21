@@ -223,36 +223,36 @@ def main() -> None:
     eras = list(f_era.index.astype(str))
     xpos = np.arange(len(eras))
     ax = axes[0, 0]
-    ax.bar(xpos - 0.2, f_era[("mean", "oral")] * 100, 0.4, color=grey, label="orali")
-    ax.bar(xpos + 0.2, f_era[("mean", "inhaled")] * 100, 0.4, color=blue, label="inalatori")
-    ax.set_xticks(xpos, eras); ax.set_ylabel("% con fluoro"); ax.set_title("T1 · Il fluoro non è arrivato agli inalatori")
+    ax.bar(xpos - 0.2, f_era[("mean", "oral")] * 100, 0.4, color=grey, label="oral")
+    ax.bar(xpos + 0.2, f_era[("mean", "inhaled")] * 100, 0.4, color=blue, label="inhaled")
+    ax.set_xticks(xpos, eras); ax.set_ylabel("% fluorinated"); ax.set_title("T1 · Fluorination did not reach inhaled drugs")
     ax.legend(frameon=False)
     ax = axes[0, 1]
     top = panel.sort_values("p").head(6)
     yy = np.arange(len(top))
-    ax.barh(yy - 0.2, top.share_oral * 100, 0.4, color=grey, label="orali")
-    ax.barh(yy + 0.2, top.share_inhaled * 100, 0.4, color=blue, label="inalatori")
-    ax.set_yticks(yy, top.motif.str.replace("_", " ")); ax.invert_yaxis(); ax.set_xlabel("% di molecole")
-    ax.set_title("T2 · Motivi strutturali: inalatori vs orali"); ax.legend(frameon=False)
+    ax.barh(yy - 0.2, top.share_oral * 100, 0.4, color=grey, label="oral")
+    ax.barh(yy + 0.2, top.share_inhaled * 100, 0.4, color=blue, label="inhaled")
+    ax.set_yticks(yy, top.motif.str.replace("_", " ")); ax.invert_yaxis(); ax.set_xlabel("% of molecules")
+    ax.set_title("T2 · Structural motifs: inhaled vs oral"); ax.legend(frameon=False)
     ax = axes[0, 2]
     labels = [f"{int(i.left) + 1}-{int(i.right) if i.right < 2030 else ''}" for i in by_era.index]
     ax.boxplot([paired.loc[paired.era == e, "delta_BD"] for e in by_era.index], tick_labels=labels, patch_artist=True,
                boxprops={"facecolor": "#cde2fb", "color": blue}, medianprops={"color": "#0b0b0b"}, showfliers=False)
     ax.axhline(0, color=grey, linewidth=1); ax.axhline(1, color=orange, linestyle="--", linewidth=1)
-    ax.set_ylabel("pIC50 PDE4B − pIC50 PDE4D"); ax.set_title("T3 · Sempre più selettivi per PDE4B")
+    ax.set_ylabel("pIC50 PDE4B − pIC50 PDE4D"); ax.set_title("T3 · Increasingly PDE4B-selective")
     ax = axes[1, 0]
     ax.bar(labels, cat_era.catechol_papers * 100, color=blue)
-    ax.set_ylabel("% articoli"); ax.set_title("T4 · Articoli PDE4 basati sul catecol-dietere")
+    ax.set_ylabel("% of papers"); ax.set_title("T4 · PDE4 papers built on the catechol diether")
     ax = axes[1, 1]
     bins = np.linspace(150, 900, 31)
-    ax.hist(mol.loc[~mol.inhaled_paper, "mw"], bins=bins, color=grey, alpha=0.7, density=True, label="altri articoli")
-    ax.hist(mol.loc[mol.inhaled_paper, "mw"], bins=bins, color=blue, alpha=0.75, density=True, label="articoli su PDE4 inalatori")
-    ax.set_xlabel("peso molecolare (Da)"); ax.set_ylabel("densità"); ax.set_title("T5 · I PDE4 inalatori sono giganti")
+    ax.hist(mol.loc[~mol.inhaled_paper, "mw"], bins=bins, color=grey, alpha=0.7, density=True, label="other papers")
+    ax.hist(mol.loc[mol.inhaled_paper, "mw"], bins=bins, color=blue, alpha=0.75, density=True, label="inhaled PDE4 papers")
+    ax.set_xlabel("molecular weight (Da)"); ax.set_ylabel("density"); ax.set_title("T5 · Inhaled PDE4 compounds are giants")
     ax.legend(frameon=False)
     ax = axes[1, 2]
-    ax.scatter(mol.loc[~mol.inhaled_paper, "alogp"], mol.loc[~mol.inhaled_paper, "mw"], s=6, color=grey, alpha=0.35, label="altri")
-    ax.scatter(mol.loc[mol.inhaled_paper, "alogp"], mol.loc[mol.inhaled_paper, "mw"], s=14, color=blue, alpha=0.8, label="inalatori")
-    ax.set_xlabel("ALogP"); ax.set_ylabel("peso molecolare (Da)"); ax.set_title("T5 · Più grandi, non solo più lipofili")
+    ax.scatter(mol.loc[~mol.inhaled_paper, "alogp"], mol.loc[~mol.inhaled_paper, "mw"], s=6, color=grey, alpha=0.35, label="other")
+    ax.scatter(mol.loc[mol.inhaled_paper, "alogp"], mol.loc[mol.inhaled_paper, "mw"], s=14, color=blue, alpha=0.8, label="inhaled")
+    ax.set_xlabel("ALogP"); ax.set_ylabel("molecular weight (Da)"); ax.set_title("T5 · Larger, not only more lipophilic")
     ax.legend(frameon=False)
     for a in axes.flat:
         a.spines[["top", "right"]].set_visible(False)

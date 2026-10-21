@@ -33,6 +33,9 @@ NO_ATC_CLASS = {"ARFORMOTEROL": "β2-agonisti", "LEVOSALBUTAMOL": "β2-agonisti"
                 "TRIAMCINOLONE ACETONIDE": "corticosteroidi"}
 CLASS_COLORS = {"β2-agonisti": "#2a78d6", "antimuscarinici": "#eb6834", "corticosteroidi": "#1baf7a",
                 "altri inalatori": "#6250d6"}
+# Figure labels only: the class keys above also order the permutation test, so they stay unchanged.
+CLASS_LABELS = {"β2-agonisti": "inhaled: β2-agonists", "antimuscarinici": "inhaled: antimuscarinics",
+                "corticosteroidi": "inhaled: corticosteroids", "altri inalatori": "other inhaled"}
 
 
 def respiratory_class(row: pd.Series) -> str:
@@ -105,25 +108,24 @@ def main() -> None:
 
     # Figure: logP by year of first approval
     fig, ax = plt.subplots(figsize=(9, 5.2))
-    ax.scatter(oral.first_approval, oral.alogp, s=12, color="#c3c2b7", alpha=0.6, label=f"orali (n={len(oral)})", zorder=1)
+    ax.scatter(oral.first_approval, oral.alogp, s=12, color="#c3c2b7", alpha=0.6, label=f"oral (n={len(oral)})", zorder=1)
     for cls, color in CLASS_COLORS.items():
         g = inhaled[inhaled.cls == cls]
-        label = cls if cls.startswith("altri") else f"inalatori: {cls}"
         ax.scatter(g.first_approval, g.alogp, s=55, color=color, edgecolor="white", linewidth=0.8,
-                   label=f"{label} (n={len(g)})", zorder=3)
-    for df, color, label in [(oral, "#898781", "tendenza orali"), (inhaled, "#0b0b0b", "tendenza inalatori")]:
+                   label=f"{CLASS_LABELS[cls]} (n={len(g)})", zorder=3)
+    for df, color, label in [(oral, "#898781", "oral trend"), (inhaled, "#0b0b0b", "inhaled trend")]:
         slope, intercept = np.polyfit(df.first_approval, df.alogp, 1)
         xs = np.array([df.first_approval.min(), df.first_approval.max()])
         ax.plot(xs, slope * xs + intercept, color=color, linewidth=2, linestyle="--" if df is oral else "-",
-                label=f"{label}: {slope * 10:+.2f} logP/decennio", zorder=2)
+                label=f"{label}: {slope * 10:+.2f} logP/decade", zorder=2)
     offsets = {"ALBUTEROL": (6, -12), "SALMETEROL": (6, 4), "IPRATROPIUM": (-20, 9), "TIOTROPIUM": (6, -12),
                "BUDESONIDE": (6, -12), "UMECLIDINIUM": (-30, 10), "VILANTEROL": (6, -13)}
     for name, offset in offsets.items():
         r = inhaled[inhaled.pref_name == name].iloc[0]
         ax.annotate(name.title(), (r.first_approval, r.alogp), xytext=offset, textcoords="offset points", fontsize=8.5)
-    ax.set_xlabel("Anno di prima approvazione")
-    ax.set_ylabel("logP calcolato (ALogP)")
-    ax.set_title("I farmaci inalatori sono diventati più lipofili più in fretta degli orali")
+    ax.set_xlabel("Year of first approval")
+    ax.set_ylabel("Calculated logP (ALogP)")
+    ax.set_title("Inhaled drugs became more lipophilic faster than oral drugs")
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(color="#e1e0d9", linewidth=0.8)
     ax.set_axisbelow(True)
