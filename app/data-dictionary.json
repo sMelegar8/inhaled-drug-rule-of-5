@@ -1,0 +1,3147 @@
+{
+ "built_at": "2026-10-21T12:01:43+00:00",
+ "chembl_release": "ChEMBL_37",
+ "chembl_release_date": "2026-05-01",
+ "openfda_last_updated": "2026-10-20",
+ "layers": [
+  {
+   "id": "provenance",
+   "title": "Provenance",
+   "text": "Where the data came from and when it was downloaded."
+  },
+  {
+   "id": "raw_chembl",
+   "title": "Raw · ChEMBL",
+   "text": "Loaded unchanged from the ChEMBL 37 web services (step 01-02)."
+  },
+  {
+   "id": "raw_fda",
+   "title": "Raw · FDA",
+   "text": "Loaded unchanged from the openFDA Drugs@FDA export (step 01-02)."
+  },
+  {
+   "id": "integration",
+   "title": "Integration",
+   "text": "Links FDA products to ChEMBL molecules (step 02)."
+  },
+  {
+   "id": "clean",
+   "title": "Clean analysis tables",
+   "text": "Produced by the cleaning rules; use these for analysis (step 03)."
+  },
+  {
+   "id": "ledger",
+   "title": "Cleaning ledger",
+   "text": "Records every cleaning rule and every excluded record (step 03)."
+  }
+ ],
+ "glossary": [
+  {
+   "term": "Table",
+   "text": "A grid of rows and columns about one kind of thing (molecules, products, measurements)."
+  },
+  {
+   "term": "Grain",
+   "text": "What one row represents. Always check it before counting: 'one row = one molecule' and 'one row = one measurement' give very different totals."
+  },
+  {
+   "term": "Primary key",
+   "text": "The column (or columns) that identify a row uniquely, like chembl_id in molecules. No two rows share it."
+  },
+  {
+   "term": "Join key",
+   "text": "A column that points to the primary key of another table, so the two tables can be combined with JOIN."
+  },
+  {
+   "term": "View",
+   "text": "A saved query that looks like a table but is recalculated each time. Here v_molecule_routes."
+  },
+  {
+   "term": "Materialised table",
+   "text": "The stored result of a view, so it does not have to be recalculated. Here molecule_routes."
+  },
+  {
+   "term": "NULL",
+   "text": "An empty cell: the value is unknown or does not apply. NULL is not zero, and COUNT(column) skips it."
+  },
+  {
+   "term": "ChEMBL ID",
+   "text": "Identifier given by the ChEMBL database to molecules (CHEMBL714), targets, assays and documents."
+  },
+  {
+   "term": "Parent and salt",
+   "text": "Many drugs are sold as salts (albuterol sulfate). The parent is the active molecule without the counter-ion; properties are compared on the parent."
+  },
+  {
+   "term": "SMILES",
+   "text": "A one-line text code for a chemical structure, readable by chemistry software."
+  },
+  {
+   "term": "IC50",
+   "text": "The concentration of a compound that reduces the enzyme activity by half. Lower IC50 = more potent."
+  },
+  {
+   "term": "Ki",
+   "text": "The inhibition constant, a measure of how tightly a compound binds its target. Lower Ki = tighter binding."
+  },
+  {
+   "term": "pIC50 / pKi",
+   "text": "The same values on a log scale: 9 - log10(value in nM). Higher = more potent; +1 = 10 times more potent."
+  },
+  {
+   "term": "Censored value",
+   "text": "A result reported only as a limit, like '> 10,000 nM'. It is not an exact measurement, so it is excluded from potency estimates."
+  },
+  {
+   "term": "logP",
+   "text": "How much a molecule prefers an oily phase to water. Lipophilic drugs (high logP) tend to stay longer in membranes and tissues."
+  },
+  {
+   "term": "PSA",
+   "text": "Polar surface area: the part of the molecular surface made by oxygen, nitrogen and their hydrogens. High PSA = more polar, crosses membranes less easily."
+  },
+  {
+   "term": "Rule of five",
+   "text": "Lipinski's guideline for oral absorption: MW ≤ 500, logP ≤ 5, at most 5 H-bond donors and 10 acceptors."
+  },
+  {
+   "term": "ATC code",
+   "text": "WHO classification of drugs by organ system and therapeutic use, in five levels (R → R03 → R03A → R03AC → R03AC02)."
+  },
+  {
+   "term": "NDA / ANDA / BLA",
+   "text": "Types of FDA application: new drug, abbreviated (generic) new drug, biologics license."
+  },
+  {
+   "term": "Route of administration",
+   "text": "How a product enters the body: inhalation, oral, intravenous..."
+  }
+ ],
+ "tables": [
+  {
+   "name": "dataset_info",
+   "kind": "table",
+   "rows": 16,
+   "layer": "provenance",
+   "built_by": "src/02_build_database.py",
+   "purpose": "Key-value list that records the source releases, the download time of every raw file and its SHA-256 fingerprint.",
+   "grain": "one fact about the build",
+   "key": "key",
+   "use_for": "Citing the data version in a report, or checking that two people analysed the same input files.",
+   "watch_out": "Values are stored as text, including dates.",
+   "example": "SELECT key, value\nFROM dataset_info\nWHERE key NOT LIKE 'sha256:%';",
+   "columns": [
+    {
+     "name": "key",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "Name of the fact, e.g. chembl_release, built_at, sha256:<file>, retrieved_at:<file>.",
+     "unit": "",
+     "filled": 16,
+     "distinct": 16,
+     "total": 16,
+     "examples": [
+      "chembl_release",
+      "chembl_release_date",
+      "openfda_last_updated"
+     ]
+    },
+    {
+     "name": "value",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Value of the fact, stored as text.",
+     "unit": "",
+     "filled": 16,
+     "distinct": 15,
+     "total": 16,
+     "examples": [
+      "ChEMBL_37",
+      "2026-05-01",
+      "2026-10-20"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "molecules",
+   "kind": "table",
+   "rows": 11551,
+   "layer": "raw_chembl",
+   "built_by": "src/02_build_database.py",
+   "purpose": "Every ChEMBL molecule in the project: the 4,225 approved drugs plus the 7,326 compounds tested on PDE4, with structure and computed physicochemical properties.",
+   "grain": "one ChEMBL molecule (a salt and its parent are separate rows)",
+   "key": "chembl_id",
+   "use_for": "Looking up names, structures and properties; most other tables join here through a ChEMBL ID.",
+   "watch_out": "Salt forms (e.g. albuterol sulfate) are separate rows that point to their parent through parent_chembl_id: compare properties on the parent. 95 research compounds point to a parent that was not downloaded. The ChemAxon columns (cx_*, molecular_species) are empty because the ChEMBL 37 API does not return them.",
+   "example": "SELECT chembl_id, pref_name, mw_freebase, alogp, psa, hbd, hba\nFROM molecules\nWHERE max_phase = 4 AND molecule_type = 'Small molecule'\nORDER BY mw_freebase DESC\nLIMIT 20;",
+   "columns": [
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the molecule, e.g. CHEMBL714 for albuterol. Stable across ChEMBL releases.",
+     "unit": "",
+     "filled": 11551,
+     "distinct": 11551,
+     "total": 11551,
+     "examples": [
+      "CHEMBL2",
+      "CHEMBL3",
+      "CHEMBL4"
+     ]
+    },
+    {
+     "name": "pref_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Preferred name in ChEMBL, usually the international non-proprietary name (INN) in capitals. Empty for most research compounds.",
+     "unit": "",
+     "filled": 4328,
+     "distinct": 4328,
+     "total": 11551,
+     "examples": [
+      "PRAZOSIN",
+      "NICOTINE",
+      "OFLOXACIN"
+     ]
+    },
+    {
+     "name": "molecule_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Kind of molecule: Small molecule, Protein, Antibody, Oligonucleotide, Unknown... Empty for many research compounds, where ChEMBL does not set it.",
+     "unit": "",
+     "filled": 9128,
+     "distinct": 11,
+     "total": 11551,
+     "top": [
+      [
+       "Small molecule",
+       7706
+      ],
+      [
+       "Unknown",
+       811
+      ],
+      [
+       "Protein",
+       271
+      ],
+      [
+       "Antibody",
+       150
+      ],
+      [
+       "Vaccine component",
+       54
+      ],
+      [
+       "Enzyme",
+       51
+      ]
+     ]
+    },
+    {
+     "name": "max_phase",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Highest clinical phase reached: 4 = approved, 1-3 = clinical trials, empty = research only.",
+     "unit": "phase",
+     "filled": 4289,
+     "distinct": 5,
+     "total": 11551,
+     "min": -1.0,
+     "median": 4.0,
+     "max": 4.0
+    },
+    {
+     "name": "first_approval",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Year of the first approval of the molecule, by any route and in any country recorded by ChEMBL.",
+     "unit": "year",
+     "filled": 3776,
+     "distinct": 87,
+     "total": 11551,
+     "min": 1934,
+     "median": 1995.0,
+     "max": 2024
+    },
+    {
+     "name": "oral",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "ChEMBL flag: 1 if the drug has an oral product. ChEMBL has no inhalation flag, which is why FDA routes are used.",
+     "unit": "0/1",
+     "filled": 11551,
+     "distinct": 2,
+     "total": 11551,
+     "top": [
+      [
+       0,
+       9572
+      ],
+      [
+       1,
+       1979
+      ]
+     ]
+    },
+    {
+     "name": "parenteral",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "ChEMBL flag: 1 if the drug has an injectable (parenteral) product.",
+     "unit": "0/1",
+     "filled": 11551,
+     "distinct": 2,
+     "total": 11551,
+     "top": [
+      [
+       0,
+       9978
+      ],
+      [
+       1,
+       1573
+      ]
+     ]
+    },
+    {
+     "name": "topical",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "ChEMBL flag: 1 if the drug has a topical product (skin, eye...).",
+     "unit": "0/1",
+     "filled": 11551,
+     "distinct": 2,
+     "total": 11551,
+     "top": [
+      [
+       0,
+       10950
+      ],
+      [
+       1,
+       601
+      ]
+     ]
+    },
+    {
+     "name": "prodrug",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "1 if the molecule is a prodrug: inactive until the body converts it (e.g. ciclesonide).",
+     "unit": "0/1",
+     "filled": 11551,
+     "distinct": 2,
+     "total": 11551,
+     "top": [
+      [
+       1,
+       7570
+      ],
+      [
+       0,
+       3981
+      ]
+     ]
+    },
+    {
+     "name": "natural_product",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "1 if the molecule is a natural product or derived from one.",
+     "unit": "0/1",
+     "filled": 11551,
+     "distinct": 2,
+     "total": 11551,
+     "top": [
+      [
+       0,
+       9485
+      ],
+      [
+       1,
+       2066
+      ]
+     ]
+    },
+    {
+     "name": "parent_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL ID of the parent molecule. For a salt it points to the free base or acid; for a parent it points to itself.",
+     "unit": "",
+     "filled": 11551,
+     "distinct": 10309,
+     "total": 11551,
+     "examples": [
+      "CHEMBL2",
+      "CHEMBL3",
+      "CHEMBL4"
+     ]
+    },
+    {
+     "name": "canonical_smiles",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Chemical structure written as a SMILES string, one line of text that a program like RDKit can turn back into the molecule.",
+     "unit": "",
+     "filled": 10733,
+     "distinct": 10733,
+     "total": 11551,
+     "examples": [
+      "COc1cc2nc(N3CCN(C(=O)c4ccco4)CC3)nc(N)c2cc1OC",
+      "CN1CCC[C@H]1c1cccnc1",
+      "CC1COc2c(N3CCN(C)CC3)c(F)cc3c(=O)c(C(=O)O)cn1c23"
+     ]
+    },
+    {
+     "name": "standard_inchi_key",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "InChIKey: a 27-character fingerprint of the structure, useful to match the same molecule across databases.",
+     "unit": "",
+     "filled": 10733,
+     "distinct": 10733,
+     "total": 11551,
+     "examples": [
+      "IENZQIKPVFGBNW-UHFFFAOYSA-N",
+      "SNICXCGAKADSCV-JTQLQIEISA-N",
+      "GSDSWSVVBLHKDQ-UHFFFAOYSA-N"
+     ]
+    },
+    {
+     "name": "full_molformula",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Molecular formula including any salt, e.g. C13H21NO3.",
+     "unit": "",
+     "filled": 10871,
+     "distinct": 7507,
+     "total": 11551,
+     "examples": [
+      "C19H21N5O4",
+      "C10H14N2",
+      "C18H20FN3O4"
+     ]
+    },
+    {
+     "name": "mw_freebase",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Molecular weight of the parent molecule without its salt.",
+     "unit": "Da (g/mol)",
+     "filled": 10871,
+     "distinct": 5207,
+     "total": 11551,
+     "min": 4.0,
+     "median": 394.47,
+     "max": 7177.25
+    },
+    {
+     "name": "full_mwt",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Molecular weight including the salt or counter-ion.",
+     "unit": "Da (g/mol)",
+     "filled": 10871,
+     "distinct": 6202,
+     "total": 11551,
+     "min": 4.0,
+     "median": 402.5,
+     "max": 7594.91
+    },
+    {
+     "name": "alogp",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Calculated octanol-water partition coefficient (Crippen ALogP): how much the molecule prefers fat to water. Higher = more lipophilic.",
+     "unit": "log units",
+     "filled": 10403,
+     "distinct": 975,
+     "total": 11551,
+     "min": -8.88,
+     "median": 3.43,
+     "max": 12.61
+    },
+    {
+     "name": "cx_logp",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "ChemAxon logP. Always empty: the ChEMBL 37 API does not return ChemAxon descriptors.",
+     "unit": "log units",
+     "filled": 0,
+     "distinct": 0,
+     "total": 11551
+    },
+    {
+     "name": "cx_logd",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "ChemAxon logD at pH 7.4. Always empty for the same reason.",
+     "unit": "log units",
+     "filled": 0,
+     "distinct": 0,
+     "total": 11551
+    },
+    {
+     "name": "psa",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Polar surface area: the surface belonging to oxygen, nitrogen and their hydrogens. A proxy for polarity and for how easily a molecule crosses membranes.",
+     "unit": "Å²",
+     "filled": 10403,
+     "distinct": 2688,
+     "total": 11551,
+     "min": 0.0,
+     "median": 77.76,
+     "max": 404.45
+    },
+    {
+     "name": "hba",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of hydrogen-bond acceptors (mainly O and N atoms). Lipinski's rule of five expects at most 10.",
+     "unit": "count",
+     "filled": 10403,
+     "distinct": 20,
+     "total": 11551,
+     "min": 0,
+     "median": 5,
+     "max": 21
+    },
+    {
+     "name": "hbd",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of hydrogen-bond donors (OH and NH groups). Lipinski's rule of five expects at most 5.",
+     "unit": "count",
+     "filled": 10403,
+     "distinct": 16,
+     "total": 11551,
+     "min": 0,
+     "median": 1,
+     "max": 15
+    },
+    {
+     "name": "rtb",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of rotatable bonds: single bonds the molecule can twist around. A measure of flexibility.",
+     "unit": "count",
+     "filled": 10403,
+     "distinct": 31,
+     "total": 11551,
+     "min": 0,
+     "median": 5,
+     "max": 38
+    },
+    {
+     "name": "aromatic_rings",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of aromatic rings, such as benzene or pyridine rings.",
+     "unit": "count",
+     "filled": 10403,
+     "distinct": 8,
+     "total": 11551,
+     "min": 0,
+     "median": 2,
+     "max": 7
+    },
+    {
+     "name": "heavy_atoms",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of non-hydrogen atoms. A size measure used for ligand efficiency.",
+     "unit": "count",
+     "filled": 10403,
+     "distinct": 69,
+     "total": 11551,
+     "min": 1,
+     "median": 28,
+     "max": 69
+    },
+    {
+     "name": "num_ro5_violations",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "How many of Lipinski's four rules the molecule breaks (MW ≤ 500, logP ≤ 5, HBD ≤ 5, HBA ≤ 10).",
+     "unit": "0-4",
+     "filled": 10403,
+     "distinct": 5,
+     "total": 11551,
+     "min": 0,
+     "median": 0,
+     "max": 4
+    },
+    {
+     "name": "qed_weighted",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Quantitative estimate of drug-likeness: one score that combines eight properties. 1 = very typical oral drug, 0 = very unusual.",
+     "unit": "0-1",
+     "filled": 10403,
+     "distinct": 93,
+     "total": 11551,
+     "min": 0.03,
+     "median": 0.59,
+     "max": 0.95
+    },
+    {
+     "name": "cx_most_apka",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "ChemAxon most acidic pKa. Always empty for the same reason.",
+     "unit": "",
+     "filled": 0,
+     "distinct": 0,
+     "total": 11551
+    },
+    {
+     "name": "cx_most_bpka",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "ChemAxon most basic pKa. Always empty for the same reason.",
+     "unit": "",
+     "filled": 0,
+     "distinct": 0,
+     "total": 11551
+    },
+    {
+     "name": "molecular_species",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChemAxon charge class (ACID, BASE, NEUTRAL, ZWITTERION). Always empty for the same reason.",
+     "unit": "",
+     "filled": 0,
+     "distinct": 0,
+     "total": 11551
+    },
+    {
+     "name": "np_likeness_score",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "How much the structure resembles natural products. Positive = natural-product-like.",
+     "unit": "score",
+     "filled": 10403,
+     "distinct": 529,
+     "total": 11551,
+     "min": -2.95,
+     "median": -0.8,
+     "max": 3.88
+    },
+    {
+     "name": "source_set",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Why the molecule is in the project: 'approved', 'pde4_tested', or 'approved+pde4_tested'.",
+     "unit": "",
+     "filled": 11551,
+     "distinct": 3,
+     "total": 11551,
+     "top": [
+      [
+       "pde4_tested",
+       7326
+      ],
+      [
+       "approved",
+       4199
+      ],
+      [
+       "approved+pde4_tested",
+       26
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "molecule_synonyms",
+   "kind": "table",
+   "rows": 57694,
+   "layer": "raw_chembl",
+   "built_by": "src/02_build_database.py",
+   "purpose": "Alternative names of the approved drugs: international (INN), US (USAN) and British (BAN) names, trade names and research codes.",
+   "grain": "one name of one molecule",
+   "key": "none (a molecule has many names)",
+   "use_for": "Finding a drug by any of its names, and matching FDA ingredient names to ChEMBL.",
+   "watch_out": "Only approved drugs have synonyms here. The same name can appear with several syn_type values.",
+   "example": "SELECT m.pref_name, s.synonym, s.syn_type\nFROM molecule_synonyms AS s\nJOIN molecules AS m ON m.chembl_id = s.chembl_id\nWHERE s.synonym LIKE 'ALBUTEROL%';",
+   "columns": [
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the molecule, e.g. CHEMBL714 for albuterol. Stable across ChEMBL releases.",
+     "unit": "",
+     "filled": 57694,
+     "distinct": 4165,
+     "total": 57694,
+     "examples": [
+      "CHEMBL2",
+      "CHEMBL3",
+      "CHEMBL4"
+     ]
+    },
+    {
+     "name": "synonym",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "One alternative name of the molecule.",
+     "unit": "",
+     "filled": 57694,
+     "distinct": 39439,
+     "total": 57694,
+     "examples": [
+      "CP-122991",
+      "Prazosin",
+      "Prazosina"
+     ]
+    },
+    {
+     "name": "syn_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Source or kind of name: INN (international), USAN (US), BAN (British), JAN (Japanese), FDA, TRADE_NAME, RESEARCH_CODE, OTHER...",
+     "unit": "",
+     "filled": 57694,
+     "distinct": 19,
+     "total": 57694,
+     "examples": [
+      "RESEARCH_CODE",
+      "ATC",
+      "BAN"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "atc_classes",
+   "kind": "table",
+   "rows": 5579,
+   "layer": "raw_chembl",
+   "built_by": "src/02_build_database.py",
+   "purpose": "The WHO Anatomical Therapeutic Chemical (ATC) classification: a five-level tree from the organ system down to the single substance.",
+   "grain": "one ATC level-5 code (one substance in one therapeutic use)",
+   "key": "level5",
+   "use_for": "Grouping drugs by therapeutic area, e.g. R03 = drugs for obstructive airway diseases.",
+   "watch_out": "A molecule can have several ATC codes (one per use), so joining through molecule_atc can multiply rows.",
+   "example": "SELECT level2, level2_description, COUNT(*) AS substances\nFROM atc_classes\nWHERE level1 = 'R'\nGROUP BY level2, level2_description;",
+   "columns": [
+    {
+     "name": "level5",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ATC level-5 code: one chemical substance in one therapeutic use, e.g. R03AC02 = salbutamol as a selective beta-2 agonist.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 5579,
+     "total": 5579,
+     "examples": [
+      "A01AA01",
+      "A01AA02",
+      "A01AA03"
+     ]
+    },
+    {
+     "name": "who_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "WHO name of the substance for this code.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 4841,
+     "total": 5579,
+     "examples": [
+      "sodium fluoride",
+      "sodium monofluorophosphate",
+      "olaflur"
+     ]
+    },
+    {
+     "name": "level1",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ATC level 1 (one letter): anatomical main group, e.g. R = respiratory system.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 14,
+     "total": 5579,
+     "examples": [
+      "A",
+      "B",
+      "C"
+     ]
+    },
+    {
+     "name": "level1_description",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Name of the level-1 group.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 14,
+     "total": 5579,
+     "examples": [
+      "ALIMENTARY TRACT AND METABOLISM",
+      "BLOOD AND BLOOD FORMING ORGANS",
+      "CARDIOVASCULAR SYSTEM"
+     ]
+    },
+    {
+     "name": "level2",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ATC level 2 (letter + 2 digits): therapeutic subgroup, e.g. R03 = drugs for obstructive airway diseases.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 90,
+     "total": 5579,
+     "examples": [
+      "A01",
+      "A02",
+      "A03"
+     ]
+    },
+    {
+     "name": "level2_description",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Name of the level-2 group.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 90,
+     "total": 5579,
+     "examples": [
+      "STOMATOLOGICAL PREPARATIONS",
+      "DRUGS FOR ACID RELATED DISORDERS",
+      "DRUGS FOR FUNCTIONAL GASTROINTESTINAL DISORDERS"
+     ]
+    },
+    {
+     "name": "level3",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ATC level 3: pharmacological subgroup, e.g. R03A = adrenergics, inhalants.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 248,
+     "total": 5579,
+     "examples": [
+      "A01A",
+      "A02A",
+      "A02B"
+     ]
+    },
+    {
+     "name": "level3_description",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Name of the level-3 group.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 243,
+     "total": 5579,
+     "examples": [
+      "STOMATOLOGICAL PREPARATIONS",
+      "ANTACIDS",
+      "DRUGS FOR PEPTIC ULCER AND GASTRO-OESOPHAGEAL REFLUX DISEASE (GORD)"
+     ]
+    },
+    {
+     "name": "level4",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ATC level 4: chemical subgroup, e.g. R03AC = selective beta-2-adrenoreceptor agonists.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 841,
+     "total": 5579,
+     "examples": [
+      "A01AA",
+      "A01AB",
+      "A01AC"
+     ]
+    },
+    {
+     "name": "level4_description",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Name of the level-4 group.",
+     "unit": "",
+     "filled": 5579,
+     "distinct": 772,
+     "total": 5579,
+     "examples": [
+      "Caries prophylactic agents",
+      "Antiinfectives and antiseptics for local oral treatment",
+      "Corticosteroids for local oral treatment"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "molecule_atc",
+   "kind": "table",
+   "rows": 3168,
+   "layer": "raw_chembl",
+   "built_by": "src/02_build_database.py",
+   "purpose": "Bridge table that assigns ATC codes to approved molecules.",
+   "grain": "one ATC code of one molecule",
+   "key": "chembl_id + level5",
+   "use_for": "Answering 'which drugs belong to this class?' or 'which classes does this drug belong to?'.",
+   "watch_out": "Codes are often stored on the salt form, not on the parent. The cleaned inhalation_dataset.atc_codes already combines both.",
+   "example": "SELECT m.pref_name, a.level5, a.who_name, a.level4_description\nFROM molecule_atc AS ma\nJOIN atc_classes AS a ON a.level5 = ma.level5\nJOIN molecules AS m ON m.chembl_id = ma.chembl_id\nWHERE a.level3 = 'R03A';",
+   "columns": [
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ChEMBL ID of the molecule (often the salt form) that carries the code.",
+     "unit": "",
+     "filled": 3168,
+     "distinct": 2409,
+     "total": 3168,
+     "examples": [
+      "CHEMBL2",
+      "CHEMBL3",
+      "CHEMBL4"
+     ]
+    },
+    {
+     "name": "level5",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "The ATC level-5 code. Joins to atc_classes.level5.",
+     "unit": "",
+     "filled": 3168,
+     "distinct": 3168,
+     "total": 3168,
+     "examples": [
+      "C02CA01",
+      "N07BA01",
+      "J01MA01"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "targets",
+   "kind": "table",
+   "rows": 5,
+   "layer": "raw_chembl",
+   "built_by": "src/02_build_database.py",
+   "purpose": "The biological targets of the PDE4 activity data: the four human isoforms PDE4A-D and the PDE4 family record.",
+   "grain": "one ChEMBL target",
+   "key": "target_chembl_id",
+   "use_for": "Giving readable names to the target IDs in activities.",
+   "watch_out": "The PROTEIN FAMILY record collects assays that did not specify the isoform.",
+   "example": "SELECT * FROM targets;",
+   "columns": [
+    {
+     "name": "target_chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the biological target. Joins to targets.target_chembl_id.",
+     "unit": "",
+     "filled": 5,
+     "distinct": 5,
+     "total": 5,
+     "top": [
+      [
+       "CHEMBL2093863",
+       1
+      ],
+      [
+       "CHEMBL254",
+       1
+      ],
+      [
+       "CHEMBL275",
+       1
+      ],
+      [
+       "CHEMBL288",
+       1
+      ],
+      [
+       "CHEMBL291",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "pref_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Full target name, e.g. 3',5'-cyclic-AMP phosphodiesterase 4B.",
+     "unit": "",
+     "filled": 5,
+     "distinct": 5,
+     "total": 5,
+     "top": [
+      [
+       "3',5'-cyclic-AMP phosphodiesterase 4A",
+       1
+      ],
+      [
+       "3',5'-cyclic-AMP phosphodiesterase 4B",
+       1
+      ],
+      [
+       "3',5'-cyclic-AMP phosphodiesterase 4C",
+       1
+      ],
+      [
+       "3',5'-cyclic-AMP phosphodiesterase 4D",
+       1
+      ],
+      [
+       "Phosphodiesterase 4",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "target_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "SINGLE PROTEIN or PROTEIN FAMILY.",
+     "unit": "",
+     "filled": 5,
+     "distinct": 2,
+     "total": 5,
+     "top": [
+      [
+       "SINGLE PROTEIN",
+       4
+      ],
+      [
+       "PROTEIN FAMILY",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "organism",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Species of the target: Homo sapiens for all rows.",
+     "unit": "",
+     "filled": 5,
+     "distinct": 1,
+     "total": 5,
+     "top": [
+      [
+       "Homo sapiens",
+       5
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "activities",
+   "kind": "table",
+   "rows": 11954,
+   "layer": "raw_chembl",
+   "built_by": "src/02_build_database.py",
+   "purpose": "Raw bioactivity measurements (IC50 and Ki) of compounds on PDE4, both as written in the paper and as standardised by ChEMBL.",
+   "grain": "one measurement reported in one paper",
+   "key": "activity_id",
+   "use_for": "Auditing the raw data and understanding what the cleaning removed. For analysis, use activities_clean.",
+   "watch_out": "Contains censored values ('>' or '<'), mixed published units and measurements flagged by ChEMBL curators. A lower IC50 means a more potent compound.",
+   "example": "SELECT standard_relation, standard_units, COUNT(*) AS n\nFROM activities\nGROUP BY standard_relation, standard_units\nORDER BY n DESC;",
+   "columns": [
+    {
+     "name": "activity_id",
+     "type": "INTEGER",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the single measurement.",
+     "unit": "",
+     "filled": 11954,
+     "distinct": 11954,
+     "total": 11954,
+     "min": 32208,
+     "median": 18172400.5,
+     "max": 29311623
+    },
+    {
+     "name": "molecule_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the tested molecule. Joins to molecules.chembl_id.",
+     "unit": "",
+     "filled": 11954,
+     "distinct": 7352,
+     "total": 11954,
+     "examples": [
+      "CHEMBL79902",
+      "CHEMBL421343",
+      "CHEMBL82934"
+     ]
+    },
+    {
+     "name": "target_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the biological target. Joins to targets.target_chembl_id.",
+     "unit": "",
+     "filled": 11954,
+     "distinct": 5,
+     "total": 11954,
+     "top": [
+      [
+       "CHEMBL275",
+       3859
+      ],
+      [
+       "CHEMBL288",
+       3840
+      ],
+      [
+       "CHEMBL2093863",
+       2625
+      ],
+      [
+       "CHEMBL254",
+       1253
+      ],
+      [
+       "CHEMBL291",
+       377
+      ]
+     ]
+    },
+    {
+     "name": "assay_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the experiment (assay) in which the value was measured.",
+     "unit": "",
+     "filled": 11954,
+     "distinct": 979,
+     "total": 11954,
+     "examples": [
+      "CHEMBL765688",
+      "CHEMBL768609",
+      "CHEMBL765483"
+     ]
+    },
+    {
+     "name": "assay_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Kind of experiment: B = binding (does it bind the target?), F = functional (does it change the target's activity in a cell or tissue?).",
+     "unit": "",
+     "filled": 11954,
+     "distinct": 4,
+     "total": 11954,
+     "top": [
+      [
+       "B",
+       11583
+      ],
+      [
+       "A",
+       217
+      ],
+      [
+       "F",
+       147
+      ],
+      [
+       "T",
+       7
+      ]
+     ]
+    },
+    {
+     "name": "document_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the publication or patent that reported the value.",
+     "unit": "",
+     "filled": 11954,
+     "distinct": 480,
+     "total": 11954,
+     "examples": [
+      "CHEMBL1136125",
+      "CHEMBL1135122",
+      "CHEMBL1131515"
+     ]
+    },
+    {
+     "name": "document_year",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Year of the publication or patent.",
+     "unit": "year",
+     "filled": 11954,
+     "distinct": 41,
+     "total": 11954,
+     "min": 1980,
+     "median": 2016.0,
+     "max": 2025
+    },
+    {
+     "name": "standard_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Type of measurement: IC50 (concentration that halves the enzyme activity) or Ki (inhibition constant, a measure of binding strength).",
+     "unit": "",
+     "filled": 11954,
+     "distinct": 2,
+     "total": 11954,
+     "top": [
+      [
+       "IC50",
+       11183
+      ],
+      [
+       "Ki",
+       771
+      ]
+     ]
+    },
+    {
+     "name": "standard_relation",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Relation of the value: '=' exact, '<' or '>' only a limit (a censored value), empty if not given.",
+     "unit": "",
+     "filled": 11640,
+     "distinct": 5,
+     "total": 11954,
+     "top": [
+      [
+       "=",
+       8979
+      ],
+      [
+       "<",
+       1442
+      ],
+      [
+       ">",
+       1213
+      ],
+      [
+       ">=",
+       5
+      ],
+      [
+       "<=",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "standard_value",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Measured value after ChEMBL standardisation. For IC50 and Ki a lower value means a more potent compound.",
+     "unit": "nM",
+     "filled": 11640,
+     "distinct": 2490,
+     "total": 11954,
+     "min": 0.0,
+     "median": 242.5,
+     "max": 20000000.0
+    },
+    {
+     "name": "standard_units",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Units after ChEMBL standardisation: nM for almost all rows.",
+     "unit": "",
+     "filled": 11662,
+     "distinct": 2,
+     "total": 11954,
+     "top": [
+      [
+       "nM",
+       11652
+      ],
+      [
+       "%",
+       10
+      ]
+     ]
+    },
+    {
+     "name": "pchembl_value",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "ChEMBL's potency on a log scale: -log10 of the molar value. 9 = 1 nM, 6 = 1 µM. Only given for clean '=' values.",
+     "unit": "log units",
+     "filled": 8793,
+     "distinct": 594,
+     "total": 11954,
+     "min": 4.0,
+     "median": 6.75,
+     "max": 11.0
+    },
+    {
+     "name": "published_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Measurement type as written in the paper, before standardisation.",
+     "unit": "",
+     "filled": 11954,
+     "distinct": 7,
+     "total": 11954,
+     "top": [
+      [
+       "IC50",
+       10499
+      ],
+      [
+       "Ki",
+       648
+      ],
+      [
+       "pIC50",
+       383
+      ],
+      [
+       "Log IC50",
+       171
+      ],
+      [
+       "I50",
+       130
+      ],
+      [
+       "pKi",
+       85
+      ]
+     ]
+    },
+    {
+     "name": "published_relation",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Relation as written in the paper.",
+     "unit": "",
+     "filled": 11640,
+     "distinct": 5,
+     "total": 11954,
+     "top": [
+      [
+       "=",
+       8979
+      ],
+      [
+       "<",
+       1450
+      ],
+      [
+       ">",
+       1205
+      ],
+      [
+       ">=",
+       5
+      ],
+      [
+       "<=",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "published_value",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Value as written in the paper, in the paper's own unit.",
+     "unit": "published unit",
+     "filled": 11640,
+     "distinct": 2485,
+     "total": 11954,
+     "min": -9.4,
+     "median": 30.0,
+     "max": 100000.0
+    },
+    {
+     "name": "published_units",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Unit as written in the paper: nM, uM, mM, %... This mix is why the standardised columns are used.",
+     "unit": "",
+     "filled": 10985,
+     "distinct": 10,
+     "total": 11954,
+     "top": [
+      [
+       "nM",
+       7551
+      ],
+      [
+       "uM",
+       3304
+      ],
+      [
+       "mM",
+       86
+      ],
+      [
+       "10'3nM",
+       12
+      ],
+      [
+       "%",
+       10
+      ],
+      [
+       "pM",
+       10
+      ]
+     ]
+    },
+    {
+     "name": "data_validity_comment",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Warning added by ChEMBL curators, e.g. 'Outside typical range' or 'Potential transcription error'. Empty = no warning.",
+     "unit": "",
+     "filled": 259,
+     "distinct": 2,
+     "total": 11954,
+     "top": [
+      [
+       "Outside typical range",
+       246
+      ],
+      [
+       "Potential transcription error",
+       13
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "fda_applications",
+   "kind": "table",
+   "rows": 29404,
+   "layer": "raw_fda",
+   "built_by": "src/02_build_database.py",
+   "purpose": "FDA marketing applications: new drugs (NDA), generics (ANDA) and biologics (BLA), with the company that filed them.",
+   "grain": "one FDA application",
+   "key": "application_number",
+   "use_for": "Counting products by sponsor or by application type (the prefix of the number).",
+   "watch_out": "One application can contain many products (strengths, forms).",
+   "example": "SELECT CASE WHEN application_number LIKE 'ANDA%' THEN 'ANDA (generic)'\n            WHEN application_number LIKE 'NDA%' THEN 'NDA (new drug)'\n            ELSE 'BLA (biologic)' END AS type,\n       COUNT(*) AS applications\nFROM fda_applications\nGROUP BY type;",
+   "columns": [
+    {
+     "name": "application_number",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "FDA application number. The prefix gives the type: NDA (new drug), ANDA (generic), BLA (biologic).",
+     "unit": "",
+     "filled": 29404,
+     "distinct": 29404,
+     "total": 29404,
+     "examples": [
+      "ANDA076194",
+      "ANDA076219",
+      "ANDA076220"
+     ]
+    },
+    {
+     "name": "sponsor_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Company that filed the application.",
+     "unit": "",
+     "filled": 29404,
+     "distinct": 2253,
+     "total": 29404,
+     "examples": [
+      "WATSON LABS",
+      "CHARTWELL RX",
+      "RANBAXY LABS LTD"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "fda_products",
+   "kind": "table",
+   "rows": 51886,
+   "layer": "raw_fda",
+   "built_by": "src/02_build_database.py",
+   "purpose": "Individual FDA products with brand name, dosage form, route of administration and marketing status. This is where 'inhaled' comes from.",
+   "grain": "one product inside one application",
+   "key": "application_number + product_number",
+   "use_for": "Finding inhaled, oral or injectable products.",
+   "watch_out": "The route field is free text: 'INHALATION, ORAL' and 'Inhalation, Oral' mean two routes. Use molecule_routes_clean for a normalised version.",
+   "example": "SELECT route, COUNT(*) AS products\nFROM fda_products\nWHERE UPPER(route) LIKE '%INHAL%'\nGROUP BY route;",
+   "columns": [
+    {
+     "name": "application_number",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "FDA application number. The prefix gives the type: NDA (new drug), ANDA (generic), BLA (biologic).",
+     "unit": "",
+     "filled": 51886,
+     "distinct": 29048,
+     "total": 51886,
+     "examples": [
+      "ANDA076194",
+      "ANDA076219",
+      "ANDA076220"
+     ]
+    },
+    {
+     "name": "product_number",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "Number of the product inside its application (one per strength or form).",
+     "unit": "",
+     "filled": 51886,
+     "distinct": 54,
+     "total": 51886,
+     "examples": [
+      "003",
+      "001",
+      "002"
+     ]
+    },
+    {
+     "name": "brand_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Brand (trade) name of the product, e.g. VENTOLIN HFA.",
+     "unit": "",
+     "filled": 51886,
+     "distinct": 8394,
+     "total": 51886,
+     "examples": [
+      "LISINOPRIL AND HYDROCHLOROTHIAZIDE",
+      "MIRTAZAPINE",
+      "OFLOXACIN"
+     ]
+    },
+    {
+     "name": "dosage_form",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Physical form of the product, e.g. AEROSOL, METERED; POWDER; TABLET.",
+     "unit": "",
+     "filled": 51886,
+     "distinct": 141,
+     "total": 51886,
+     "examples": [
+      "TABLET",
+      "SOLUTION",
+      "CAPSULE"
+     ]
+    },
+    {
+     "name": "route",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Route of administration as free text. May contain several routes separated by commas.",
+     "unit": "",
+     "filled": 51504,
+     "distinct": 105,
+     "total": 51886,
+     "examples": [
+      "ORAL",
+      "INJECTION",
+      "N/A"
+     ]
+    },
+    {
+     "name": "marketing_status",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Prescription, Over-the-counter, Discontinued, None (tentative approval)...",
+     "unit": "",
+     "filled": 51886,
+     "distinct": 4,
+     "total": 51886,
+     "top": [
+      [
+       "Prescription",
+       26058
+      ],
+      [
+       "Discontinued",
+       23602
+      ],
+      [
+       "None (Tentative Approval)",
+       1417
+      ],
+      [
+       "Over-the-counter",
+       809
+      ]
+     ]
+    },
+    {
+     "name": "reference_drug",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Yes if the product is a reference listed drug, the one generics are compared with.",
+     "unit": "",
+     "filled": 51886,
+     "distinct": 3,
+     "total": 51886,
+     "top": [
+      [
+       "No",
+       43920
+      ],
+      [
+       "Yes",
+       7867
+      ],
+      [
+       "TBD",
+       99
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "fda_product_ingredients",
+   "kind": "table",
+   "rows": 60448,
+   "layer": "raw_fda",
+   "built_by": "src/02_build_database.py",
+   "purpose": "Active ingredients of each FDA product, with the name as written by FDA and the strength.",
+   "grain": "one active ingredient of one product",
+   "key": "none (join on application_number + product_number)",
+   "use_for": "Linking products to molecules through fda_ingredient_map.",
+   "watch_out": "Ingredient names are often salts (ALBUTEROL SULFATE) and some combinations are written in a single field.",
+   "example": "SELECT p.brand_name, i.ingredient_name, i.strength\nFROM fda_product_ingredients AS i\nJOIN fda_products AS p\n  ON p.application_number = i.application_number AND p.product_number = i.product_number\nWHERE p.route = 'INHALATION'\nLIMIT 20;",
+   "columns": [
+    {
+     "name": "application_number",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "FDA application number. The prefix gives the type: NDA (new drug), ANDA (generic), BLA (biologic).",
+     "unit": "",
+     "filled": 60448,
+     "distinct": 29047,
+     "total": 60448,
+     "examples": [
+      "ANDA076194",
+      "ANDA076219",
+      "ANDA076220"
+     ]
+    },
+    {
+     "name": "product_number",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Number of the product inside its application (one per strength or form).",
+     "unit": "",
+     "filled": 60448,
+     "distinct": 54,
+     "total": 60448,
+     "examples": [
+      "003",
+      "001",
+      "002"
+     ]
+    },
+    {
+     "name": "ingredient_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Active ingredient name as written by FDA, in capitals, often including the salt (e.g. ALBUTEROL SULFATE).",
+     "unit": "",
+     "filled": 60448,
+     "distinct": 2910,
+     "total": 60448,
+     "examples": [
+      "HYDROCHLOROTHIAZIDE",
+      "LISINOPRIL",
+      "MIRTAZAPINE"
+     ]
+    },
+    {
+     "name": "strength",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Amount of the ingredient as written by FDA, e.g. 0.09MG/INH (per inhalation).",
+     "unit": "",
+     "filled": 60324,
+     "distinct": 4336,
+     "total": 60448,
+     "examples": [
+      "12.5MG",
+      "10MG",
+      "20MG"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "fda_ingredient_map",
+   "kind": "table",
+   "rows": 2910,
+   "layer": "integration",
+   "built_by": "src/02_build_database.py",
+   "purpose": "The bridge between FDA ingredient names and ChEMBL molecules. FDA and ChEMBL share no identifier, so the link is made by name.",
+   "grain": "one distinct FDA ingredient name",
+   "key": "ingredient_name",
+   "use_for": "Checking how an FDA name was matched, and how reliable the match is.",
+   "watch_out": "7.4% of names stay unmatched (mostly combinations written in one field and recent biologics). match_method tells you how each match was made.",
+   "example": "SELECT match_method, COUNT(*) AS names\nFROM fda_ingredient_map\nGROUP BY match_method;",
+   "columns": [
+    {
+     "name": "ingredient_name",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "Active ingredient name as written by FDA, in capitals, often including the salt (e.g. ALBUTEROL SULFATE).",
+     "unit": "",
+     "filled": 2910,
+     "distinct": 2910,
+     "total": 2910,
+     "examples": [
+      "ABACAVIR",
+      "ABACAVIR SULFATE",
+      "ABACAVIR || DOLUTEGRAVIR || LAMIVUDINE"
+     ]
+    },
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL molecule whose name or synonym matched (may be a salt). Empty if unmatched.",
+     "unit": "",
+     "filled": 2695,
+     "distinct": 2591,
+     "total": 2910,
+     "examples": [
+      "CHEMBL1380",
+      "CHEMBL4303288",
+      "CHEMBL3301581"
+     ]
+    },
+    {
+     "name": "parent_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Parent of the matched molecule: the ID used to compare properties.",
+     "unit": "",
+     "filled": 2695,
+     "distinct": 2332,
+     "total": 2910,
+     "examples": [
+      "CHEMBL1380",
+      "CHEMBL3301581",
+      "CHEMBL2205807"
+     ]
+    },
+    {
+     "name": "match_method",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "How the match was made: exact (same name), salt_stripped (matched after removing salt words), unmatched.",
+     "unit": "",
+     "filled": 2910,
+     "distinct": 3,
+     "total": 2910,
+     "top": [
+      [
+       "exact",
+       2687
+      ],
+      [
+       "unmatched",
+       215
+      ],
+      [
+       "salt_stripped",
+       8
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "v_molecule_routes",
+   "kind": "view",
+   "rows": 3433,
+   "layer": "integration",
+   "built_by": "sql/schema.sql (view)",
+   "purpose": "A view: a saved query that joins products, ingredients and the name map to count products per molecule and route. It is recalculated every time you query it.",
+   "grain": "one parent molecule and one raw route text",
+   "key": "chembl_id + route",
+   "use_for": "Reading the join logic. For speed, query molecule_routes instead, which stores the same result.",
+   "watch_out": "Slow in the browser workbench, because it recomputes a join over 60,000 ingredient rows.",
+   "example": "SELECT * FROM v_molecule_routes WHERE route = 'INHALATION' LIMIT 20;",
+   "columns": [
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Parent molecule.",
+     "unit": "",
+     "filled": 3433,
+     "distinct": 2332,
+     "total": 3433,
+     "examples": [
+      "CHEMBL1000",
+      "CHEMBL100116",
+      "CHEMBL1002"
+     ]
+    },
+    {
+     "name": "route",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Raw FDA route text.",
+     "unit": "",
+     "filled": 3343,
+     "distinct": 103,
+     "total": 3433,
+     "examples": [
+      "INTRAVENOUS",
+      "OPHTHALMIC",
+      "ORAL"
+     ]
+    },
+    {
+     "name": "n_products",
+     "type": "",
+     "pk": false,
+     "meaning": "Number of FDA products with this molecule and this route.",
+     "unit": "count",
+     "filled": 3433,
+     "distinct": 178,
+     "total": 3433,
+     "examples": [
+      "1",
+      "161",
+      "9"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "molecule_routes",
+   "kind": "table",
+   "rows": 3433,
+   "layer": "integration",
+   "built_by": "src/02_build_database.py",
+   "purpose": "Stored (materialised) copy of v_molecule_routes, with an index, so the browser can query it fast.",
+   "grain": "one parent molecule and one raw route text",
+   "key": "chembl_id + route",
+   "use_for": "Quick route lookups on the raw route text.",
+   "watch_out": "Uses the raw route text, so 'INHALATION, ORAL' is its own route here. Prefer molecule_routes_clean.",
+   "example": "SELECT m.pref_name, r.route, r.n_products\nFROM molecule_routes AS r\nJOIN molecules AS m ON m.chembl_id = r.chembl_id\nWHERE r.route = 'INHALATION'\nORDER BY r.n_products DESC;",
+   "columns": [
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "Parent molecule.",
+     "unit": "",
+     "filled": 3433,
+     "distinct": 2332,
+     "total": 3433,
+     "examples": [
+      "CHEMBL1000",
+      "CHEMBL100116",
+      "CHEMBL1002"
+     ]
+    },
+    {
+     "name": "route",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "Raw FDA route text.",
+     "unit": "",
+     "filled": 3343,
+     "distinct": 103,
+     "total": 3433,
+     "examples": [
+      "INTRAVENOUS",
+      "OPHTHALMIC",
+      "ORAL"
+     ]
+    },
+    {
+     "name": "n_products",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of FDA products with this molecule and this route.",
+     "unit": "count",
+     "filled": 3433,
+     "distinct": 178,
+     "total": 3433,
+     "min": 1,
+     "median": 4,
+     "max": 945
+    }
+   ]
+  },
+  {
+   "name": "molecule_routes_clean",
+   "kind": "table",
+   "rows": 3275,
+   "layer": "clean",
+   "built_by": "src/cleaning.py",
+   "purpose": "Routes of administration after cleaning: combined values are split ('INHALATION, ORAL' becomes two rows) and written in upper case.",
+   "grain": "one parent molecule and one single route",
+   "key": "chembl_id + route",
+   "use_for": "Any question about which molecules are given by which route.",
+   "watch_out": "A molecule with both inhaled and oral products has two rows here.",
+   "example": "SELECT route, COUNT(*) AS molecules\nFROM molecule_routes_clean\nGROUP BY route\nORDER BY molecules DESC\nLIMIT 10;",
+   "columns": [
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "Parent molecule.",
+     "unit": "",
+     "filled": 3275,
+     "distinct": 2313,
+     "total": 3275,
+     "examples": [
+      "CHEMBL1000",
+      "CHEMBL100116",
+      "CHEMBL1002"
+     ]
+    },
+    {
+     "name": "route",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "One single route in upper case.",
+     "unit": "",
+     "filled": 3275,
+     "distinct": 74,
+     "total": 3275,
+     "examples": [
+      "INTRAVENOUS",
+      "OPHTHALMIC",
+      "ORAL"
+     ]
+    },
+    {
+     "name": "n_products",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of FDA products with this molecule and this route.",
+     "unit": "count",
+     "filled": 3275,
+     "distinct": 179,
+     "total": 3275,
+     "min": 1,
+     "median": 4,
+     "max": 945
+    }
+   ]
+  },
+  {
+   "name": "inhalation_dataset",
+   "kind": "table",
+   "rows": 1154,
+   "layer": "clean",
+   "built_by": "src/cleaning.py",
+   "purpose": "The analysis set of the project: approved small molecules split into lung-targeted inhaled drugs and oral drugs, with their properties.",
+   "grain": "one parent molecule",
+   "key": "chembl_id",
+   "use_for": "Comparing inhaled and oral drugs: statistics, PCA, trends over time.",
+   "watch_out": "The groups are exclusive: a molecule with inhaled products is 'inhaled' even if it also exists orally (also_oral = 1). Gases, diagnostics, CNS-acting inhaled drugs and gut-local oral drugs were removed; see cleaning_log.",
+   "example": "SELECT route_group, COUNT(*) AS molecules,\n       ROUND(AVG(alogp), 2) AS mean_logp,\n       ROUND(AVG(psa), 1) AS mean_psa\nFROM inhalation_dataset\nGROUP BY route_group;",
+   "columns": [
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the molecule, e.g. CHEMBL714 for albuterol. Stable across ChEMBL releases.",
+     "unit": "",
+     "filled": 1154,
+     "distinct": 1154,
+     "total": 1154,
+     "examples": [
+      "CHEMBL600",
+      "CHEMBL1194325",
+      "CHEMBL714"
+     ]
+    },
+    {
+     "name": "pref_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Preferred name in ChEMBL, usually the international non-proprietary name (INN) in capitals. Empty for most research compounds.",
+     "unit": "",
+     "filled": 1154,
+     "distinct": 1154,
+     "total": 1154,
+     "examples": [
+      "ACETYLCYSTEINE",
+      "ACLIDINIUM",
+      "ALBUTEROL"
+     ]
+    },
+    {
+     "name": "route_group",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Analysis group: 'inhaled' (has at least one inhaled product) or 'oral' (oral products only).",
+     "unit": "",
+     "filled": 1154,
+     "distinct": 2,
+     "total": 1154,
+     "top": [
+      [
+       "oral",
+       1108
+      ],
+      [
+       "inhaled",
+       46
+      ]
+     ]
+    },
+    {
+     "name": "also_oral",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "1 if an inhaled molecule also has oral products. Useful to repeat an analysis without them.",
+     "unit": "0/1",
+     "filled": 1154,
+     "distinct": 2,
+     "total": 1154,
+     "top": [
+      [
+       0,
+       1143
+      ],
+      [
+       1,
+       11
+      ]
+     ]
+    },
+    {
+     "name": "n_inhaled_products",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of FDA inhaled products containing the molecule.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 22,
+     "total": 1154,
+     "min": 0,
+     "median": 0.0,
+     "max": 72
+    },
+    {
+     "name": "n_oral_products",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of FDA oral products containing the molecule.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 167,
+     "total": 1154,
+     "min": 0,
+     "median": 9.0,
+     "max": 945
+    },
+    {
+     "name": "atc_codes",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Comma-separated ATC codes of the molecule and of its salt forms.",
+     "unit": "",
+     "filled": 1154,
+     "distinct": 1039,
+     "total": 1154,
+     "examples": [
+      "R05CB01,S01XA08,V03AB23",
+      "R03BB05",
+      "R03AC02,R03CC02"
+     ]
+    },
+    {
+     "name": "first_approval",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Year of the first approval of the molecule, by any route and in any country recorded by ChEMBL.",
+     "unit": "year",
+     "filled": 1150,
+     "distinct": 84,
+     "total": 1154,
+     "min": 1939,
+     "median": 1992.0,
+     "max": 2024
+    },
+    {
+     "name": "mw_freebase",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Molecular weight of the parent molecule without its salt.",
+     "unit": "Da (g/mol)",
+     "filled": 1154,
+     "distinct": 1043,
+     "total": 1154,
+     "min": 102.09,
+     "median": 350.41999999999996,
+     "max": 968.3
+    },
+    {
+     "name": "alogp",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Calculated octanol-water partition coefficient (Crippen ALogP): how much the molecule prefers fat to water. Higher = more lipophilic.",
+     "unit": "log units",
+     "filled": 1154,
+     "distinct": 589,
+     "total": 1154,
+     "min": -8.42,
+     "median": 2.85,
+     "max": 12.61
+    },
+    {
+     "name": "psa",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Polar surface area: the surface belonging to oxygen, nitrogen and their hydrogens. A proxy for polarity and for how easily a molecule crosses membranes.",
+     "unit": "Å²",
+     "filled": 1154,
+     "distinct": 760,
+     "total": 1154,
+     "min": 0.0,
+     "median": 76.9,
+     "max": 331.94
+    },
+    {
+     "name": "hbd",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of hydrogen-bond donors (OH and NH groups). Lipinski's rule of five expects at most 5.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 13,
+     "total": 1154,
+     "min": 0,
+     "median": 2.0,
+     "max": 13
+    },
+    {
+     "name": "hba",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of hydrogen-bond acceptors (mainly O and N atoms). Lipinski's rule of five expects at most 10.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 18,
+     "total": 1154,
+     "min": 0,
+     "median": 4.0,
+     "max": 17
+    },
+    {
+     "name": "rtb",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of rotatable bonds: single bonds the molecule can twist around. A measure of flexibility.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 25,
+     "total": 1154,
+     "min": 0,
+     "median": 5.0,
+     "max": 32
+    },
+    {
+     "name": "aromatic_rings",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of aromatic rings, such as benzene or pyridine rings.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 7,
+     "total": 1154,
+     "min": 0,
+     "median": 2.0,
+     "max": 6
+    },
+    {
+     "name": "heavy_atoms",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of non-hydrogen atoms. A size measure used for ligand efficiency.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 57,
+     "total": 1154,
+     "min": 7,
+     "median": 25.0,
+     "max": 68
+    },
+    {
+     "name": "num_ro5_violations",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "How many of Lipinski's four rules the molecule breaks (MW ≤ 500, logP ≤ 5, HBD ≤ 5, HBA ≤ 10).",
+     "unit": "0-4",
+     "filled": 1154,
+     "distinct": 5,
+     "total": 1154,
+     "min": 0,
+     "median": 0.0,
+     "max": 4
+    },
+    {
+     "name": "qed_weighted",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Quantitative estimate of drug-likeness: one score that combines eight properties. 1 = very typical oral drug, 0 = very unusual.",
+     "unit": "0-1",
+     "filled": 1154,
+     "distinct": 87,
+     "total": 1154,
+     "min": 0.06,
+     "median": 0.6,
+     "max": 0.93
+    }
+   ]
+  },
+  {
+   "name": "activities_clean",
+   "kind": "table",
+   "rows": 8793,
+   "layer": "clean",
+   "built_by": "src/cleaning.py",
+   "purpose": "PDE4 measurements that passed every cleaning rule, with the potency converted to a logarithmic scale (pIC50 or pKi).",
+   "grain": "one clean measurement",
+   "key": "activity_id",
+   "use_for": "Potency analysis at the level of single measurements.",
+   "watch_out": "The same molecule can be measured many times; use activity_potency for one value per molecule and target.",
+   "example": "SELECT target_name, standard_type, COUNT(*) AS n,\n       ROUND(AVG(p_activity), 2) AS mean_p\nFROM activities_clean\nGROUP BY target_name, standard_type;",
+   "columns": [
+    {
+     "name": "activity_id",
+     "type": "INTEGER",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the measurement. Joins to activities.activity_id to see the raw row.",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 8793,
+     "total": 8793,
+     "min": 32208,
+     "median": 14536801,
+     "max": 29311623
+    },
+    {
+     "name": "molecule_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the tested molecule. Joins to molecules.chembl_id.",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 5220,
+     "total": 8793,
+     "examples": [
+      "CHEMBL79902",
+      "CHEMBL421343",
+      "CHEMBL82934"
+     ]
+    },
+    {
+     "name": "target_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the biological target. Joins to targets.target_chembl_id.",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 5,
+     "total": 8793,
+     "top": [
+      [
+       "CHEMBL275",
+       2970
+      ],
+      [
+       "CHEMBL2093863",
+       2255
+      ],
+      [
+       "CHEMBL288",
+       2143
+      ],
+      [
+       "CHEMBL254",
+       1078
+      ],
+      [
+       "CHEMBL291",
+       347
+      ]
+     ]
+    },
+    {
+     "name": "target_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Short target name: PDE4A, PDE4B, PDE4C, PDE4D, or 'PDE4 family' when the isoform was not specified.",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 5,
+     "total": 8793,
+     "top": [
+      [
+       "PDE4B",
+       2970
+      ],
+      [
+       "PDE4 family",
+       2255
+      ],
+      [
+       "PDE4D",
+       2143
+      ],
+      [
+       "PDE4A",
+       1078
+      ],
+      [
+       "PDE4C",
+       347
+      ]
+     ]
+    },
+    {
+     "name": "target_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "SINGLE PROTEIN for one isoform, PROTEIN FAMILY for assays on the family as a whole.",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 2,
+     "total": 8793,
+     "top": [
+      [
+       "SINGLE PROTEIN",
+       6538
+      ],
+      [
+       "PROTEIN FAMILY",
+       2255
+      ]
+     ]
+    },
+    {
+     "name": "assay_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the experiment (assay) in which the value was measured.",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 879,
+     "total": 8793,
+     "examples": [
+      "CHEMBL765688",
+      "CHEMBL768609",
+      "CHEMBL765482"
+     ]
+    },
+    {
+     "name": "assay_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Kind of experiment: B = binding (does it bind the target?), F = functional (does it change the target's activity in a cell or tissue?).",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 4,
+     "total": 8793,
+     "top": [
+      [
+       "B",
+       8467
+      ],
+      [
+       "A",
+       181
+      ],
+      [
+       "F",
+       139
+      ],
+      [
+       "T",
+       6
+      ]
+     ]
+    },
+    {
+     "name": "document_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL identifier of the publication or patent that reported the value.",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 430,
+     "total": 8793,
+     "examples": [
+      "CHEMBL1136125",
+      "CHEMBL1135122",
+      "CHEMBL1131515"
+     ]
+    },
+    {
+     "name": "document_year",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Year of the publication or patent.",
+     "unit": "year",
+     "filled": 8793,
+     "distinct": 40,
+     "total": 8793,
+     "min": 1980,
+     "median": 2014,
+     "max": 2025
+    },
+    {
+     "name": "standard_type",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Type of measurement: IC50 (concentration that halves the enzyme activity) or Ki (inhibition constant, a measure of binding strength).",
+     "unit": "",
+     "filled": 8793,
+     "distinct": 2,
+     "total": 8793,
+     "top": [
+      [
+       "IC50",
+       8101
+      ],
+      [
+       "Ki",
+       692
+      ]
+     ]
+    },
+    {
+     "name": "standard_value",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Measured value after ChEMBL standardisation. For IC50 and Ki a lower value means a more potent compound.",
+     "unit": "nM",
+     "filled": 8793,
+     "distinct": 2329,
+     "total": 8793,
+     "min": 0.01,
+     "median": 178.0,
+     "max": 100000.0
+    },
+    {
+     "name": "p_activity",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Potency on a log scale computed by the project: 9 - log10(value in nM). pIC50 for IC50 rows, pKi for Ki rows.",
+     "unit": "log units",
+     "filled": 8793,
+     "distinct": 2329,
+     "total": 8793,
+     "min": 4.0,
+     "median": 6.7495799976911055,
+     "max": 11.0
+    },
+    {
+     "name": "pchembl_value",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "ChEMBL's own log potency, kept to check the project's calculation.",
+     "unit": "log units",
+     "filled": 8793,
+     "distinct": 594,
+     "total": 8793,
+     "min": 4.0,
+     "median": 6.75,
+     "max": 11.0
+    },
+    {
+     "name": "pchembl_mismatch",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "1 if p_activity and pchembl_value differ by more than 0.05: a calculation check. 0 for every row in this build.",
+     "unit": "0/1",
+     "filled": 8793,
+     "distinct": 1,
+     "total": 8793,
+     "top": [
+      [
+       0,
+       8793
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "activity_potency",
+   "kind": "table",
+   "rows": 6887,
+   "layer": "clean",
+   "built_by": "src/cleaning.py",
+   "purpose": "Repeated measurements collapsed into one median potency per molecule, target and measurement type, with a consistency check.",
+   "grain": "one molecule on one target with one measurement type",
+   "key": "molecule_chembl_id + target_chembl_id + standard_type",
+   "use_for": "Ranking compounds by potency and comparing isoforms.",
+   "watch_out": "inconsistent = 1 marks pairs whose measurements differ more than 10-fold: treat their median with caution.",
+   "example": "SELECT m.pref_name, p.target_name, p.p_median, p.n_measurements\nFROM activity_potency AS p\nJOIN molecules AS m ON m.chembl_id = p.molecule_chembl_id\nWHERE m.pref_name IS NOT NULL\nORDER BY p.p_median DESC\nLIMIT 20;",
+   "columns": [
+    {
+     "name": "molecule_chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the tested molecule. Joins to molecules.chembl_id.",
+     "unit": "",
+     "filled": 6887,
+     "distinct": 5220,
+     "total": 6887,
+     "examples": [
+      "CHEMBL100011",
+      "CHEMBL101301",
+      "CHEMBL101368"
+     ]
+    },
+    {
+     "name": "target_chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the biological target. Joins to targets.target_chembl_id.",
+     "unit": "",
+     "filled": 6887,
+     "distinct": 5,
+     "total": 6887,
+     "top": [
+      [
+       "CHEMBL275",
+       2393
+      ],
+      [
+       "CHEMBL2093863",
+       1791
+      ],
+      [
+       "CHEMBL288",
+       1567
+      ],
+      [
+       "CHEMBL254",
+       874
+      ],
+      [
+       "CHEMBL291",
+       262
+      ]
+     ]
+    },
+    {
+     "name": "target_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Short target name: PDE4A, PDE4B, PDE4C, PDE4D, or 'PDE4 family' when the isoform was not specified.",
+     "unit": "",
+     "filled": 6887,
+     "distinct": 5,
+     "total": 6887,
+     "top": [
+      [
+       "PDE4B",
+       2393
+      ],
+      [
+       "PDE4 family",
+       1791
+      ],
+      [
+       "PDE4D",
+       1567
+      ],
+      [
+       "PDE4A",
+       874
+      ],
+      [
+       "PDE4C",
+       262
+      ]
+     ]
+    },
+    {
+     "name": "standard_type",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "Type of measurement: IC50 (concentration that halves the enzyme activity) or Ki (inhibition constant, a measure of binding strength).",
+     "unit": "",
+     "filled": 6887,
+     "distinct": 2,
+     "total": 6887,
+     "top": [
+      [
+       "IC50",
+       6298
+      ],
+      [
+       "Ki",
+       589
+      ]
+     ]
+    },
+    {
+     "name": "p_median",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median of the log potencies: the summary value to use.",
+     "unit": "log units",
+     "filled": 6887,
+     "distinct": 2544,
+     "total": 6887,
+     "min": 4.0,
+     "median": 6.675717544702307,
+     "max": 11.0
+    },
+    {
+     "name": "p_min",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Lowest log potency among the repeated measurements.",
+     "unit": "log units",
+     "filled": 6887,
+     "distinct": 2211,
+     "total": 6887,
+     "min": 4.0,
+     "median": 6.619788758288394,
+     "max": 11.0
+    },
+    {
+     "name": "p_max",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Highest log potency among the repeated measurements.",
+     "unit": "log units",
+     "filled": 6887,
+     "distinct": 2163,
+     "total": 6887,
+     "min": 4.0,
+     "median": 6.721246399047171,
+     "max": 11.0
+    },
+    {
+     "name": "p_range",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "p_max - p_min: how much the repeated measurements disagree. 1 = a 10-fold difference.",
+     "unit": "log units",
+     "filled": 6887,
+     "distinct": 587,
+     "total": 6887,
+     "min": 0.0,
+     "median": 0.0,
+     "max": 4.383699569557427
+    },
+    {
+     "name": "n_measurements",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of clean measurements combined.",
+     "unit": "count",
+     "filled": 6887,
+     "distinct": 19,
+     "total": 6887,
+     "min": 1,
+     "median": 1,
+     "max": 72
+    },
+    {
+     "name": "n_documents",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of different publications behind those measurements.",
+     "unit": "count",
+     "filled": 6887,
+     "distinct": 17,
+     "total": 6887,
+     "min": 1,
+     "median": 1,
+     "max": 50
+    },
+    {
+     "name": "inconsistent",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "1 if p_range > 1, i.e. measurements more than 10-fold apart.",
+     "unit": "0/1",
+     "filled": 6887,
+     "distinct": 2,
+     "total": 6887,
+     "top": [
+      [
+       0,
+       6679
+      ],
+      [
+       1,
+       208
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "cleaning_log",
+   "kind": "table",
+   "rows": 21,
+   "layer": "ledger",
+   "built_by": "src/cleaning.py",
+   "purpose": "The cleaning ledger: every rule applied, in order, with how many rows it removed or flagged and why.",
+   "grain": "one cleaning rule (or check) applied to one dataset",
+   "key": "rule_id",
+   "use_for": "Explaining the data preparation to a reviewer: from the starting rows to the analysed rows, rule by rule.",
+   "watch_out": "rows_removed counts only the rows removed by that rule; earlier rules already removed others.",
+   "example": "SELECT dataset, rule_id, kind, rule, rows_before, rows_removed, rows_after\nFROM cleaning_log\nORDER BY dataset, step;",
+   "columns": [
+    {
+     "name": "dataset",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Which cleaned dataset the row belongs to: 'activities' (PDE4 measurements) or 'molecules' (inhaled vs oral analysis set).",
+     "unit": "",
+     "filled": 21,
+     "distinct": 2,
+     "total": 21,
+     "top": [
+      [
+       "molecules",
+       12
+      ],
+      [
+       "activities",
+       9
+      ]
+     ]
+    },
+    {
+     "name": "step",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Order in which the rules were applied within the dataset.",
+     "unit": "",
+     "filled": 21,
+     "distinct": 12,
+     "total": 21,
+     "min": 0,
+     "median": 5,
+     "max": 11
+    },
+    {
+     "name": "rule_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Identifier of the cleaning rule: A = activities rules, M = molecules rules, followed by the order. Joins cleaning_log to cleaning_exclusions.",
+     "unit": "",
+     "filled": 21,
+     "distinct": 21,
+     "total": 21,
+     "examples": [
+      "A0",
+      "A1",
+      "A2"
+     ]
+    },
+    {
+     "name": "kind",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Type of step: input (starting rows), exclude (removes rows), transform (changes values), check (flags rows), aggregate (combines rows).",
+     "unit": "",
+     "filled": 21,
+     "distinct": 5,
+     "total": 21,
+     "top": [
+      [
+       "exclude",
+       11
+      ],
+      [
+       "check",
+       4
+      ],
+      [
+       "transform",
+       3
+      ],
+      [
+       "input",
+       2
+      ],
+      [
+       "aggregate",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "rule",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Short description of what the rule does.",
+     "unit": "",
+     "filled": 21,
+     "distinct": 21,
+     "total": 21,
+     "examples": [
+      "IC50 and Ki measurements on human PDE4 downloaded from ChEMBL",
+      "Measurements flagged by ChEMBL curators",
+      "Relation other than '='"
+     ]
+    },
+    {
+     "name": "reason",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Why the rule is needed.",
+     "unit": "",
+     "filled": 21,
+     "distinct": 19,
+     "total": 21,
+     "examples": [
+      "Starting data",
+      "The data_validity_comment field marks a suspect value (units, transcription, out",
+      "Censored values (<, >) only say that potency is above or below a threshold: they"
+     ]
+    },
+    {
+     "name": "unit",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "What one row counts at this step: measurements, molecules or molecule-target pairs.",
+     "unit": "",
+     "filled": 21,
+     "distinct": 3,
+     "total": 21,
+     "top": [
+      [
+       "molecules",
+       12
+      ],
+      [
+       "measurements",
+       7
+      ],
+      [
+       "molecule-target pairs",
+       2
+      ]
+     ]
+    },
+    {
+     "name": "rows_before",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Rows before the rule.",
+     "unit": "count",
+     "filled": 21,
+     "distinct": 13,
+     "total": 21,
+     "min": 46,
+     "median": 1305,
+     "max": 11954
+    },
+    {
+     "name": "rows_removed",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Rows removed by this rule only.",
+     "unit": "count",
+     "filled": 21,
+     "distinct": 9,
+     "total": 21,
+     "min": 0,
+     "median": 0,
+     "max": 2892
+    },
+    {
+     "name": "rows_after",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Rows left after the rule.",
+     "unit": "count",
+     "filled": 21,
+     "distinct": 14,
+     "total": 21,
+     "min": 46,
+     "median": 1305,
+     "max": 11954
+    },
+    {
+     "name": "rows_flagged",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Rows marked by a check but kept.",
+     "unit": "count",
+     "filled": 21,
+     "distinct": 3,
+     "total": 21,
+     "min": 0,
+     "median": 0,
+     "max": 208
+    }
+   ]
+  },
+  {
+   "name": "cleaning_exclusions",
+   "kind": "table",
+   "rows": 3312,
+   "layer": "ledger",
+   "built_by": "src/cleaning.py",
+   "purpose": "Every excluded record with the rule that excluded it: the evidence behind the counts in cleaning_log.",
+   "grain": "one excluded record",
+   "key": "dataset + record_id",
+   "use_for": "Answering 'why is this molecule not in my analysis?'.",
+   "watch_out": "record_id holds an activity_id for dataset 'activities' and a chembl_id for dataset 'molecules'.",
+   "example": "SELECT e.rule_id, l.rule, m.pref_name\nFROM cleaning_exclusions AS e\nJOIN cleaning_log AS l ON l.rule_id = e.rule_id\nJOIN molecules AS m ON m.chembl_id = e.record_id\nWHERE e.dataset = 'molecules'\nORDER BY e.rule_id;",
+   "columns": [
+    {
+     "name": "dataset",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Which cleaned dataset the row belongs to: 'activities' (PDE4 measurements) or 'molecules' (inhaled vs oral analysis set).",
+     "unit": "",
+     "filled": 3312,
+     "distinct": 2,
+     "total": 3312,
+     "top": [
+      [
+       "activities",
+       3161
+      ],
+      [
+       "molecules",
+       151
+      ]
+     ]
+    },
+    {
+     "name": "record_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ID of the excluded record: an activity_id for 'activities', a chembl_id for 'molecules'.",
+     "unit": "",
+     "filled": 3312,
+     "distinct": 3312,
+     "total": 3312,
+     "examples": [
+      "75338",
+      "108347",
+      "115006"
+     ]
+    },
+    {
+     "name": "rule_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Identifier of the cleaning rule: A = activities rules, M = molecules rules, followed by the order. Joins cleaning_log to cleaning_exclusions.",
+     "unit": "",
+     "filled": 3312,
+     "distinct": 9,
+     "total": 3312,
+     "top": [
+      [
+       "A2",
+       2892
+      ],
+      [
+       "A1",
+       259
+      ],
+      [
+       "M2",
+       63
+      ],
+      [
+       "M1",
+       37
+      ],
+      [
+       "M6",
+       20
+      ],
+      [
+       "M4",
+       12
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "joins": [
+  {
+   "from": "molecules",
+   "from_col": "parent_chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 11551,
+   "matched": 11456
+  },
+  {
+   "from": "molecule_synonyms",
+   "from_col": "chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 57694,
+   "matched": 57694
+  },
+  {
+   "from": "molecule_atc",
+   "from_col": "chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 3168,
+   "matched": 3168
+  },
+  {
+   "from": "molecule_atc",
+   "from_col": "level5",
+   "to": "atc_classes",
+   "to_col": "level5",
+   "filled": 3168,
+   "matched": 3168
+  },
+  {
+   "from": "activities",
+   "from_col": "molecule_chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 11954,
+   "matched": 11954
+  },
+  {
+   "from": "activities",
+   "from_col": "target_chembl_id",
+   "to": "targets",
+   "to_col": "target_chembl_id",
+   "filled": 11954,
+   "matched": 11954
+  },
+  {
+   "from": "fda_products",
+   "from_col": "application_number",
+   "to": "fda_applications",
+   "to_col": "application_number",
+   "filled": 51886,
+   "matched": 51886
+  },
+  {
+   "from": "fda_product_ingredients",
+   "from_col": "application_number",
+   "to": "fda_applications",
+   "to_col": "application_number",
+   "filled": 60448,
+   "matched": 60448
+  },
+  {
+   "from": "fda_product_ingredients",
+   "from_col": "ingredient_name",
+   "to": "fda_ingredient_map",
+   "to_col": "ingredient_name",
+   "filled": 60448,
+   "matched": 60448
+  },
+  {
+   "from": "fda_ingredient_map",
+   "from_col": "parent_chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 2695,
+   "matched": 2695
+  },
+  {
+   "from": "molecule_routes",
+   "from_col": "chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 3433,
+   "matched": 3433
+  },
+  {
+   "from": "molecule_routes_clean",
+   "from_col": "chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 3275,
+   "matched": 3275
+  },
+  {
+   "from": "inhalation_dataset",
+   "from_col": "chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 1154,
+   "matched": 1154
+  },
+  {
+   "from": "activities_clean",
+   "from_col": "activity_id",
+   "to": "activities",
+   "to_col": "activity_id",
+   "filled": 8793,
+   "matched": 8793
+  },
+  {
+   "from": "activities_clean",
+   "from_col": "molecule_chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 8793,
+   "matched": 8793
+  },
+  {
+   "from": "activities_clean",
+   "from_col": "target_chembl_id",
+   "to": "targets",
+   "to_col": "target_chembl_id",
+   "filled": 8793,
+   "matched": 8793
+  },
+  {
+   "from": "activity_potency",
+   "from_col": "molecule_chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 6887,
+   "matched": 6887
+  },
+  {
+   "from": "activity_potency",
+   "from_col": "target_chembl_id",
+   "to": "targets",
+   "to_col": "target_chembl_id",
+   "filled": 6887,
+   "matched": 6887
+  },
+  {
+   "from": "cleaning_exclusions",
+   "from_col": "rule_id",
+   "to": "cleaning_log",
+   "to_col": "rule_id",
+   "filled": 3312,
+   "matched": 3312
+  }
+ ]
+}

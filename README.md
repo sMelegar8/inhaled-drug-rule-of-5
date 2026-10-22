@@ -68,6 +68,11 @@ Plotly. It runs fully in the browser:
 - descriptive statistics, Pearson and Spearman correlations, PCA (scree plot, biplot,
   loadings, scores), Mann-Whitney and Kruskal-Wallis tests with Holm correction
 
+The [data dictionary](https://smelegar8.github.io/inhaled-drug-rule-of-5/data-dictionary.html)
+explains every table and column (what one row is, keys, joins and their match rate, fill
+rates, value ranges) and opens each example query in the workbench. It is generated from
+the database by `src/build_data_dictionary.py`, which fails if a column has no explanation.
+
 The site also has a step-by-step explanation of the pipeline
 ([How it works](https://smelegar8.github.io/inhaled-drug-rule-of-5/how-it-works.html)) and the
 [backlog](https://smelegar8.github.io/inhaled-drug-rule-of-5/backlog.html) of planned work.
@@ -81,6 +86,7 @@ pip install -r requirements.txt
 python src/01_download_data.py      # raw files -> data/raw/ (about 63 MB)
 python src/02_build_database.py     # SQLite -> data/processed/ + app copy
 python src/cleaning.py              # cleaned tables + exclusion ledger
+python src/build_data_dictionary.py # app/data-dictionary.json from the database
 python src/explore_trends.py        # time trends -> reports/
 python src/explore_chemistry.py     # structural trends (RDKit) -> reports/
 python tests/validate_stats.py      # app statistics vs numpy/pandas/scipy

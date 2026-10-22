@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inhalation Workbench Data Dictionary</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: reference manual. Sticky contents rail with search on the left, one card per table on the right, lineage map and glossary first. */
+:root {
+  --bg: #f3f5f4; --surface: #fcfcfb; --surface-2: #e9edeb; --fg: #111614; --fg-2: #4a524e; --muted: #7b837f;
+  --line: #d9dfdc; --accent: #0b6a72; --accent-soft: #d6ebec; --warn: #8a5a00; --warn-soft: #fbefd2; --mark: #fde9a8;
+  --raw: #2a78d6; --integ: #6250d6; --clean: #1baf7a; --ledger: #eb6834; --prov: #7b837f;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+    --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14; --mark: #5a4a12;
+    --raw: #3987e5; --integ: #9085e9; --clean: #199e70; --ledger: #d95926; --prov: #8a928e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+  --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14; --mark: #5a4a12;
+  --raw: #3987e5; --integ: #9085e9; --clean: #199e70; --ledger: #d95926; --prov: #8a928e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-padding-top: 16px; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.6 var(--font-body); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--font-mono); font-size: 0.9em; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+mark { background: var(--mark); color: inherit; border-radius: 2px; }
+
+/* Shared navigation between the project pages */
+.sitenav { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line); background: var(--surface); font-size: 13.5px; }
+.sitenav-brand { font: 600 12.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-right: 6px; }
+.sitenav a { color: var(--fg-2); text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; }
+.sitenav a:hover { color: var(--fg); }
+.sitenav a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+
+.layout {
+  max-width: 1440px; margin: 0 auto; padding-block: 24px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 28px; align-items: start;
+}
+.rail { position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); max-height: calc(100vh - 24px); overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+.search { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font: inherit; color: inherit; }
+.search-meta { font-size: 12px; color: var(--muted); margin: 6px 0 10px; min-height: 1.2em; }
+.toc-group { margin: 10px 0 2px; font: 600 11px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.toc a { display: flex; justify-content: space-between; gap: 8px; padding: 2px 6px; border-radius: 4px; text-decoration: none; color: var(--fg-2); font: 12.5px var(--font-mono); }
+.toc a:hover { background: var(--surface-2); color: var(--fg); }
+.toc a span:last-child { color: var(--muted); font-family: var(--font-body); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+
+.content { min-width: 0; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2rem; font-weight: 600; }
+h2 { font-size: 1.35rem; font-weight: 600; }
+h3 { font-size: 1rem; font-weight: 600; }
+.eyebrow { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 6px; }
+.lede { color: var(--fg-2); max-width: 72ch; margin: 8px 0 0; }
+.guide { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 16px; }
+.guide div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; font-size: 14px; color: var(--fg-2); }
+.guide b { display: block; color: var(--fg); font-family: var(--font-display); font-size: 15px; margin-bottom: 2px; }
+
+/* lineage map */
+.map { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 12px; }
+.lane { background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--lane); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lane h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-2); }
+.lane p { margin: 0 0 4px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.lane a { display: flex; justify-content: space-between; gap: 6px; padding: 4px 7px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line);
+  text-decoration: none; color: var(--fg); font: 12px var(--font-mono); overflow-wrap: anywhere; }
+.lane a:hover { border-color: var(--lane); }
+.lane a span:last-child { color: var(--muted); font-family: var(--font-body); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.map-note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
+/* glossary */
+.glossary { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 18px; margin: 12px 0 0; }
+.glossary div { border-left: 2px solid var(--line); padding: 2px 0 2px 10px; }
+.glossary dt { font-weight: 600; font-size: 14px; }
+.glossary dd { margin: 0; font-size: 13.5px; color: var(--fg-2); }
+
+/* table cards */
+.tcard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; scroll-margin-top: 12px; }
+.thead { padding: 14px 18px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 6px; }
+.tname { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: baseline; }
+.tname h2 { font: 600 1.2rem var(--font-mono); overflow-wrap: anywhere; }
+.pill { font: 600 10.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.06em; padding: 1px 7px; border-radius: 4px; background: var(--surface-2); color: var(--fg-2); }
+.pill.layer { color: var(--surface); background: var(--lane); }
+.rows { margin-left: auto; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.purpose { margin: 0; max-width: 80ch; }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.facts dt { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 2px; }
+.facts dd { margin: 0; min-width: 0; }
+.facts dd.warn { color: var(--warn); }
+.joins { display: flex; flex-wrap: wrap; gap: 6px; }
+.join { font: 12px var(--font-mono); padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); text-decoration: none; }
+.join.partial { background: var(--warn-soft); color: var(--warn); }
+.cols-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th { text-align: left; font: 600 11px var(--font-display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.cname { font: 500 13px var(--font-mono); white-space: nowrap; }
+td.cname small { display: block; font: 11px var(--font-body); color: var(--muted); }
+td.meaning { min-width: 260px; max-width: 520px; }
+td.meaning .unit { display: inline-block; margin-left: 4px; font-size: 11.5px; color: var(--muted); }
+.badge { font: 600 10px var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; padding: 0 5px; border-radius: 3px; margin-left: 4px; vertical-align: 1px; }
+.badge.pk { background: var(--accent); color: var(--surface); }
+.badge.fk { background: var(--accent-soft); color: var(--accent); text-decoration: none; }
+.badge.empty { background: var(--warn-soft); color: var(--warn); }
+td.fill { white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 92px; }
+.bar { display: block; height: 4px; background: var(--surface-2); border-radius: 2px; margin-top: 4px; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.vals { min-width: 200px; }
+.chip { display: inline-block; font: 11.5px var(--font-mono); background: var(--surface-2); border-radius: 4px; padding: 0 6px; margin: 0 4px 3px 0; overflow-wrap: anywhere; }
+.chip em { font-style: normal; color: var(--muted); }
+.range { font: 12px var(--font-mono); color: var(--fg-2); white-space: nowrap; }
+.tryit { padding: 12px 18px 16px; border-top: 1px solid var(--line); background: var(--bg); }
+.tryit-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.tryit-head span { font: 600 11px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+pre { margin: 0; font: 12.5px/1.55 var(--font-mono); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 3px 10px; border-radius: 6px; cursor: pointer; font: 12.5px var(--font-body); }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+.foot { color: var(--muted); font-size: 13px; }
+.loading { color: var(--fg-2); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; max-height: none; }
+  .toc { columns: 2; column-gap: 12px; }
+  .facts { grid-template-columns: minmax(0, 1fr); }
+  .facts dt { padding-top: 6px; }
+}
+@media (max-width: 520px) { .toc { columns: 1; } }
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Project pages">
+  <span class="sitenav-brand">Inhalation Workbench</span>
+  <a href="index.html">SQL workbench</a>
+  <a href="data-dictionary.html" aria-current="page">Data dictionary</a>
+  <a href="how-it-works.html">How it works</a>
+  <a href="backlog.html">Backlog</a>
+</nav>
+
+<div class="layout">
+  <aside class="rail" aria-label="Tables">
+    <label for="q" class="toc-group" style="margin-top:0">Search tables and columns</label>
+    <input id="q" class="search" type="search" placeholder="e.g. potency, route, psa, salt" autocomplete="off">
+    <div class="search-meta" id="qmeta"></div>
+    <nav class="toc" id="toc"></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <header>
+      <div class="eyebrow">Reference · pharma_inhalation.sqlite</div>
+      <h1>Data dictionary</h1>
+      <p class="lede" id="lede">Every table and every column of the project database: what one row represents, what each column means and how the tables connect.</p>
+      <div class="guide">
+        <div><b>Find the table</b>The map shows where each table sits: raw source data, integration, clean analysis tables or the cleaning ledger.</div>
+        <div><b>Read "one row =" first</b>It tells you what you are counting. Most mistakes in SQL come from counting the wrong thing.</div>
+        <div><b>Follow the keys</b>Key columns link tables. The match rate tells you how complete each link is before you rely on a JOIN.</div>
+      </div>
+    </header>
+
+    <section aria-labelledby="mapTitle">
+      <h2 id="mapTitle">Map of the database</h2>
+      <div class="map" id="map"></div>
+      <p class="map-note">Data flows left to right: the download and build scripts fill the raw layers, the name matching builds the integration layer, and the cleaning rules produce the clean tables and the ledger.</p>
+    </section>
+
+    <section aria-labelledby="glossTitle">
+      <h2 id="glossTitle">Words you will meet</h2>
+      <dl class="glossary" id="glossary"></dl>
+    </section>
+
+    <div id="tables"><p class="loading">Loading the dictionary…</p></div>
+
+    <p class="foot" id="foot"></p>
+  </main>
+</div>
+
+<script>
+const LANE = { provenance: "--prov", raw_chembl: "--raw", raw_fda: "--raw", integration: "--integ", clean: "--clean", ledger: "--ledger" };
+const nf = new Intl.NumberFormat("en-US");
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const fmt = (v) => {
+  if (typeof v !== "number") return String(v);
+  if (Number.isInteger(v)) return nf.format(v);
+  const a = Math.abs(v);
+  return a >= 100 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : v.toPrecision(2);
+};
+let DATA = null;
+
+function highlight(text, term) {
+  const frag = document.createDocumentFragment();
+  if (!term) { frag.append(text); return frag; }
+  const low = text.toLowerCase(); let i = 0, j;
+  while ((j = low.indexOf(term, i)) !== -1) {
+    frag.append(text.slice(i, j));
+    const m = el("mark", null, text.slice(j, j + term.length)); frag.append(m);
+    i = j + term.length;
+  }
+  frag.append(text.slice(i));
+  return frag;
+}
+
+function laneStyle(node, layer) { node.style.setProperty("--lane", `var(${LANE[layer]})`); }
+
+function renderMap() {
+  const map = document.getElementById("map");
+  for (const layer of DATA.layers) {
+    const lane = el("div", "lane"); laneStyle(lane, layer.id);
+    lane.append(el("h3", null, layer.title), el("p", null, layer.text));
+    for (const t of DATA.tables.filter((x) => x.layer === layer.id)) {
+      const a = el("a"); a.href = `#${t.name}`;
+      a.append(el("span", null, t.name), el("span", null, t.kind === "view" ? "view" : nf.format(t.rows)));
+      lane.append(a);
+    }
+    map.append(lane);
+  }
+}
+
+function renderGlossary() {
+  const dl = document.getElementById("glossary");
+  for (const g of DATA.glossary) {
+    const d = el("div"); d.append(el("dt", null, g.term), el("dd", null, g.text)); dl.append(d);
+  }
+}
+
+function joinLabel(j, outgoing) {
+  const pct = j.filled ? j.matched / j.filled : 1;
+  const a = el("a", "join" + (pct < 0.999 ? " partial" : ""));
+  a.href = `#${outgoing ? j.to : j.from}`;
+  a.textContent = outgoing ? `${j.from_col} → ${j.to}.${j.to_col}` : `${j.from}.${j.from_col} → ${j.to_col}`;
+  a.title = pct < 0.999
+    ? `${nf.format(j.matched)} of ${nf.format(j.filled)} filled values (${(pct * 100).toFixed(1)}%) find a match`
+    : "every filled value finds a match";
+  if (pct < 0.999) a.textContent += ` · ${(pct * 100).toFixed(1)}% matched`;
+  return a;
+}
+
+function valuesCell(c) {
+  const td = el("td", "vals");
+  if (!c.filled) { td.append(el("span", "badge empty", "always empty")); return td; }
+  if (c.min != null) {
+    td.append(el("span", "range", `${fmt(c.min)} · median ${fmt(c.median)} · ${fmt(c.max)}`));
+  } else if (c.top) {
+    for (const [v, n] of c.top) {
+      const chip = el("span", "chip"); chip.append(String(v) + " ");
+      chip.append(el("em", null, `×${nf.format(n)}`)); td.append(chip);
+    }
+  } else if (c.examples) {
+    for (const v of c.examples) td.append(el("span", "chip", v.length > 46 ? v.slice(0, 45) + "…" : v));
+  }
+  return td;
+}
+
+function renderTables() {
+  const host = document.getElementById("tables"); host.replaceChildren();
+  host.style.display = "grid"; host.style.gap = "22px";
+  const outgoing = (t) => DATA.joins.filter((j) => j.from === t);
+  const incoming = (t) => DATA.joins.filter((j) => j.to === t && j.from !== t);
+  for (const t of DATA.tables) {
+    const card = el("article", "tcard"); card.id = t.name; card.dataset.table = t.name; laneStyle(card, t.layer);
+    const head = el("div", "thead");
+    const name = el("div", "tname");
+    const h = el("h2"); h.dataset.text = t.name; h.append(t.name);
+    const layer = DATA.layers.find((l) => l.id === t.layer);
+    const pill = el("span", "pill layer", layer.title); laneStyle(pill, t.layer);
+    name.append(h, el("span", "pill", t.kind === "view" ? "view" : "table"), pill,
+      el("span", "rows", t.kind === "view" ? `${nf.format(t.rows)} rows when queried` : `${nf.format(t.rows)} rows · ${t.columns.length} columns`));
+    const purpose = el("p", "purpose"); purpose.dataset.text = t.purpose; purpose.append(t.purpose);
+    head.append(name, purpose);
+
+    const facts = el("dl", "facts");
+    const fact = (label, value, cls) => { facts.append(el("dt", null, label)); const dd = el("dd", cls); if (value instanceof Node) dd.append(value); else dd.textContent = value; facts.append(dd); };
+    fact("One row =", t.grain);
+    fact("Key", t.key);
+    fact("Built by", t.built_by);
+    fact("Use it for", t.use_for);
+    fact("Watch out", t.watch_out, "warn");
+    const out = outgoing(t.name), inc = incoming(t.name);
+    if (out.length || inc.length) {
+      const box = el("div", "joins");
+      out.forEach((j) => box.append(joinLabel(j, true)));
+      inc.forEach((j) => box.append(joinLabel(j, false)));
+      fact("Joins", box);
+    }
+
+    const wrap = el("div", "cols-wrap");
+    const table = el("table");
+    const hr = el("tr");
+    ["Column", "Type", "What it means", "Filled", "Distinct", "Values"].forEach((x) => { const th = el("th", null, x); th.scope = "col"; hr.append(th); });
+    const thead = el("thead"); thead.append(hr);
+    const tbody = el("tbody");
+    for (const c of t.columns) {
+      const tr = el("tr"); tr.dataset.text = `${c.name} ${c.meaning}`;
+      const cn = el("td", "cname"); cn.append(highlightable(c.name));
+      if (c.pk) cn.append(el("span", "badge pk", "key"));
+      const fk = DATA.joins.find((j) => j.from === t.name && j.from_col === c.name);
+      if (fk) { const a = el("a", "badge fk", `→ ${fk.to}`); a.href = `#${fk.to}`; cn.append(a); }
+      const meaning = el("td", "meaning"); meaning.append(highlightable(c.meaning));
+      if (c.unit) meaning.append(el("span", "unit", `[${c.unit}]`));
+      const pct = c.total ? c.filled / c.total : 0;
+      const fill = el("td", "fill", `${(pct * 100).toFixed(pct > 0 && pct < 0.01 ? 2 : pct === 1 ? 0 : 1)}%`);
+      const bar = el("span", "bar"); const i = el("i"); i.style.width = `${(pct * 100).toFixed(1)}%`; bar.append(i); fill.append(bar);
+      fill.title = `${nf.format(c.filled)} of ${nf.format(c.total)} rows have a value`;
+      tr.append(cn, el("td", "mono", c.type || "–"), meaning, fill, el("td", "num", nf.format(c.distinct)), valuesCell(c));
+      tbody.append(tr);
+    }
+    table.append(thead, tbody); wrap.append(table);
+
+    const tryit = el("div", "tryit");
+    const th = el("div", "tryit-head"); th.append(el("span", null, "Try it"));
+    const btns = el("div");
+    const copy = el("button", "btn", "Copy"); copy.type = "button";
+    copy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(t.example); copy.textContent = "Copied"; }
+      catch (_) { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copy.textContent = "Selected: press Ctrl+C"; }
+      setTimeout(() => (copy.textContent = "Copy"), 2500);
+    });
+    const run = el("button", "btn primary", "Run in workbench"); run.type = "button";
+    run.addEventListener("click", () => {
+      try { localStorage.setItem("workbench:pendingQuery", t.example); } catch (_) { /* storage blocked: the workbench opens normally */ }
+      location.href = "index.html";
+    });
+    btns.append(copy, document.createTextNode(" "), run); th.append(btns);
+    const pre = el("pre", null, t.example);
+    tryit.append(th, pre);
+
+    card.append(head, facts, wrap, tryit);
+    host.append(card);
+  }
+}
+
+// Text nodes that the search can highlight later.
+function highlightable(text) { const s = el("span", "hl"); s.dataset.text = text; s.textContent = text; return s; }
+
+function renderToc() {
+  const toc = document.getElementById("toc"); toc.replaceChildren();
+  for (const layer of DATA.layers) {
+    const group = el("div", "toc-group"); const dot = el("span", "dot"); dot.style.background = `var(${LANE[layer.id]})`;
+    group.append(dot, layer.title); toc.append(group);
+    for (const t of DATA.tables.filter((x) => x.layer === layer.id)) {
+      const a = el("a"); a.href = `#${t.name}`; a.dataset.table = t.name;
+      a.append(el("span", null, t.name), el("span", null, t.kind === "view" ? "view" : nf.format(t.rows)));
+      toc.append(a);
+    }
+  }
+}
+
+function applySearch() {
+  const term = document.getElementById("q").value.trim().toLowerCase();
+  let nTables = 0, nCols = 0;
+  for (const card of document.querySelectorAll(".tcard")) {
+    const t = DATA.tables.find((x) => x.name === card.dataset.table);
+    const tableHit = !term || t.name.includes(term) || t.purpose.toLowerCase().includes(term);
+    let colHits = 0;
+    for (const tr of card.querySelectorAll("tbody tr")) {
+      const hit = !term || tr.dataset.text.toLowerCase().includes(term);
+      tr.hidden = !(tableHit || hit);
+      if (term && hit) colHits++;
+    }
+    card.hidden = !(tableHit || colHits);
+    if (!card.hidden) { nTables++; nCols += colHits; }
+    document.querySelector(`.toc a[data-table="${t.name}"]`).hidden = card.hidden;
+    for (const node of card.querySelectorAll(".hl, h2, .purpose")) {
+      node.replaceChildren(highlight(node.dataset.text, term));
+    }
+  }
+  document.getElementById("qmeta").textContent = term
+    ? (nTables ? `${nTables} tables, ${nCols} matching columns` : `Nothing matches “${term}”`)
+    : `${DATA.tables.length} tables and views · ${DATA.tables.reduce((s, t) => s + t.columns.length, 0)} columns`;
+}
+
+async function boot() {
+  try {
+    const res = await fetch("data-dictionary.json");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    DATA = await res.json();
+  } catch (e) {
+    document.getElementById("tables").replaceChildren(el("p", "loading",
+      `The dictionary file could not be loaded (${e.message}). Serve the app folder over HTTP, e.g. py -3.13 -m http.server 8000 -d app.`));
+    return;
+  }
+  const nCols = DATA.tables.reduce((s, t) => s + t.columns.length, 0);
+  document.getElementById("lede").textContent =
+    `Every table and every column of the project database: what one row represents, what each column means and how the tables connect. ` +
+    `${DATA.tables.length} tables and views, ${nCols} columns. Counts and example values are read from the database itself ` +
+    `(ChEMBL ${DATA.chembl_release.replace("ChEMBL_", "")} of ${DATA.chembl_release_date}, openFDA export of ${DATA.openfda_last_updated}).`;
+  renderMap(); renderGlossary(); renderToc(); renderTables(); applySearch();
+  document.getElementById("foot").textContent =
+    `Generated by src/build_data_dictionary.py from the database built on ${DATA.built_at}. The script stops if any column lacks an explanation.`;
+  document.getElementById("q").addEventListener("input", applySearch);
+  if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+}
+boot();
+</script>
+</body>
+</html>
