@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inhaled Rule of 5 Case Study</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: portfolio case study. One reading column, numbered sections in the order of the analysis, figures and query cards inline. */
+:root {
+  --bg: #f3f5f4; --surface: #fcfcfb; --surface-2: #e9edeb; --fg: #111614; --fg-2: #4a524e; --muted: #7b837f;
+  --line: #d9dfdc; --accent: #0b6a72; --accent-soft: #d6ebec; --warn: #8a5a00; --warn-soft: #fbefd2;
+  --pos: #2a78d6; --neg: #eb6834; --figure-bg: #ffffff;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+    --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14;
+    --pos: #3987e5; --neg: #d95926; --figure-bg: #f4f4f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+  --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14;
+  --pos: #3987e5; --neg: #d95926; --figure-bg: #f4f4f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.65 var(--font-body); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+/* Shared navigation between the project pages */
+.sitenav { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line); background: var(--surface); font-size: 13.5px; }
+.sitenav-brand { font: 600 12.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-right: 6px; }
+.sitenav a { color: var(--fg-2); text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; }
+.sitenav a:hover { color: var(--fg); }
+.sitenav a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+
+.wrap { max-width: 920px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; font-weight: 600; }
+h3 { font-size: 1.08rem; font-weight: 600; margin: 26px 0 8px; }
+p { margin: 0 0 12px; max-width: 70ch; }
+ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 70ch; }
+li { margin-bottom: 5px; }
+.eyebrow { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 10px; }
+.lede { font-size: 1.15rem; color: var(--fg-2); margin-top: 14px; max-width: 64ch; }
+.byline { font-size: 13.5px; color: var(--muted); margin-top: 14px; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 30px 0 6px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.tile b { display: block; font: 600 1.7rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+.tile span { display: block; font-size: 13.5px; color: var(--fg-2); margin-top: 4px; line-height: 1.4; }
+
+section.part { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 30px; scroll-margin-top: 12px; }
+.part-head { display: flex; gap: 14px; align-items: baseline; margin-bottom: 14px; }
+.num { font: 600 1.4rem var(--font-mono); color: var(--accent); min-width: 2ch; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 22px; font-size: 14px; }
+.toc a { text-decoration: none; color: var(--fg-2); border-bottom: 1px solid var(--line); }
+.toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+.questions { counter-reset: q; list-style: none; padding: 0; display: grid; gap: 8px; }
+.questions li { counter-increment: q; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px 10px 48px; position: relative; margin: 0; }
+.questions li::before { content: "Q" counter(q); position: absolute; left: 14px; top: 10px; font: 600 14px var(--font-mono); color: var(--accent); }
+
+.callout { border-radius: 8px; padding: 12px 16px; margin: 16px 0; max-width: 72ch; }
+.callout .label { display: block; font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 2px; }
+.callout p { margin: 0; }
+.callout.key { background: var(--accent-soft); } .callout.key .label { color: var(--accent); }
+.callout.caveat { background: var(--warn-soft); } .callout.caveat .label { color: var(--warn); }
+
+.pipeline { list-style: none; padding: 0; display: grid; gap: 0; max-width: none; }
+.pipeline li { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 4px 14px; padding: 10px 0; border-bottom: 1px solid var(--line); margin: 0; }
+.pipeline li:last-child { border-bottom: 0; }
+.pipeline .step { font: 600 12px var(--font-mono); color: var(--accent); padding-top: 2px; }
+.pipeline .count { font: 13px var(--font-mono); color: var(--fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pipeline small { display: block; color: var(--muted); font-size: 13px; }
+
+figure { margin: 18px 0; }
+figure .frame { background: var(--figure-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; overflow-x: auto; }
+figure img { display: block; width: 100%; max-width: 100%; height: auto; min-width: 560px; }
+figcaption { font-size: 13.5px; color: var(--fg-2); margin-top: 8px; max-width: 72ch; }
+
+.table-wrap { overflow-x: auto; margin: 10px 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+td.weak { color: var(--muted); }
+.effect { position: relative; height: 14px; min-width: 150px; background: linear-gradient(to right, transparent calc(50% - 0.5px), var(--line) calc(50% - 0.5px), var(--line) calc(50% + 0.5px), transparent calc(50% + 0.5px)); }
+.effect i { position: absolute; top: 2px; height: 10px; border-radius: 2px; }
+.legend { font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 10px; vertical-align: -1px; }
+
+.query { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 14px 0; overflow: hidden; }
+.query-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.query-head h3 { margin: 0; font-size: 1rem; }
+.query-head p { margin: 2px 0 0; font-size: 13.5px; color: var(--fg-2); }
+.query pre { margin: 0; padding: 12px 14px; font: 12.5px/1.55 var(--font-mono); overflow-x: auto; background: var(--bg); }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 4px 11px; border-radius: 6px; cursor: pointer; font: 13px var(--font-body); white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+
+.findings { display: grid; gap: 10px; counter-reset: f; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+.finding h3 { margin: 0 0 4px; }
+.finding p { margin: 0; font-size: 15px; }
+.finding .stat { display: block; margin-top: 6px; font: 12.5px var(--font-mono); color: var(--muted); }
+.answer { font: 500 1.25rem/1.45 var(--font-display); max-width: 60ch; border-left: 3px solid var(--accent); padding-left: 16px; margin: 6px 0 18px; }
+.foot { margin-top: 48px; font-size: 13px; color: var(--muted); }
+@media (max-width: 640px) {
+  .pipeline li { grid-template-columns: minmax(0, 1fr); }
+  .pipeline .count { white-space: normal; }
+}
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Project pages">
+  <span class="sitenav-brand">Inhalation Workbench</span>
+  <a href="index.html">SQL workbench</a>
+  <a href="case-study.html" aria-current="page">Case study</a>
+  <a href="data-dictionary.html">Data dictionary</a>
+  <a href="how-it-works.html">How it works</a>
+  <a href="backlog.html">Backlog</a>
+</nav>
+
+<main class="wrap">
+  <header>
+    <div class="eyebrow">Portfolio case study · Pharma data analysis</div>
+    <h1>Is there a Rule of 5 for inhaled drugs?</h1>
+    <p class="lede">Lipinski's rule of five tells chemists what an oral drug usually looks like. Inhaled drugs have the opposite job: they should stay in the lung, not reach the blood. This study uses public ChEMBL and FDA data, SQL and Python to describe what approved inhaled drugs look like, and how their chemistry has changed.</p>
+    <p class="byline">Matteo Melegari · Data: ChEMBL 37 (May 2026) and openFDA Drugs@FDA (October 2026) · Tools: Python, pandas, RDKit, SciPy, SQLite, sql.js</p>
+    <div class="tiles" aria-label="Key numbers">
+      <div class="tile"><b>46 vs 1,108</b><span>approved inhaled and oral small molecules compared after cleaning</span></div>
+      <div class="tile"><b>26% vs 23%</b><span>break Lipinski's rule of five: the classic filter does not separate the two groups</span></div>
+      <div class="tile"><b>3.5 vs 2</b><span>median hydrogen-bond donors, the largest single difference (r = +0.48)</span></div>
+      <div class="tile"><b>+0.43 logP</b><span>per decade among inhaled drugs, within each respiratory class</span></div>
+    </div>
+    <nav class="toc" aria-label="Sections">
+      <a href="#problem">Problem</a><a href="#questions">Questions</a><a href="#data">Data</a><a href="#methods">Methods</a>
+      <a href="#queries">Queries</a><a href="#results">Results</a><a href="#conclusion">Conclusion</a><a href="#limits">Limitations</a><a href="#next">Next steps</a>
+    </nav>
+  </header>
+
+  <section class="part" id="problem">
+    <div class="part-head"><span class="num">01</span><h2>Problem statement</h2></div>
+    <p>Drug discovery teams filter candidate molecules with property rules. The best known, Lipinski's rule of five, describes drugs that are absorbed from the gut: molecular weight up to 500 Da, logP up to 5, at most 5 hydrogen-bond donors and 10 acceptors.</p>
+    <p>An inhaled drug for asthma or COPD works under different constraints. It is delivered straight to the lung, should act there for many hours, and the part that reaches the blood or is swallowed should do as little as possible. A filter built for oral absorption may reject good inhaled candidates or let through poor ones. There is no widely agreed public equivalent for inhalation.</p>
+    <div class="callout key"><span class="label">Why it matters</span><p>For a respiratory R&amp;D team, a property profile of successful inhaled drugs is a practical screening tool: it helps decide which chemical series to pursue for inhalation, and it makes design choices explainable to project teams.</p></div>
+  </section>
+
+  <section class="part" id="questions">
+    <div class="part-head"><span class="num">02</span><h2>Questions</h2></div>
+    <ol class="questions">
+      <li>Do approved inhaled drugs differ from oral drugs in their physicochemical properties, and does the rule of five capture the difference?</li>
+      <li>Has the chemistry of inhaled drugs changed over time, and differently from oral drugs?</li>
+      <li>Which structural features are typical of inhaled drugs?</li>
+      <li>What do compounds designed for inhalation look like in a current target class, the PDE4 inhibitors used in COPD research?</li>
+    </ol>
+  </section>
+
+  <section class="part" id="data">
+    <div class="part-head"><span class="num">03</span><h2>Data</h2></div>
+    <ul>
+      <li><strong>ChEMBL 37</strong> (EMBL-EBI): 4,225 approved drugs with calculated properties, names and ATC codes, plus 11,954 IC50/Ki measurements on human PDE4 for 7,352 compounds. Downloaded through the official API because the full dump (25 GB) did not fit on the machine.</li>
+      <li><strong>openFDA Drugs@FDA</strong>: 51,886 FDA products with dosage form and route of administration. ChEMBL has no "inhaled" flag, so the route comes from here.</li>
+      <li>Every raw file is stored unchanged with its download time and SHA-256 hash, and the whole database rebuilds from two scripts.</li>
+    </ul>
+    <p>FDA and ChEMBL share no identifier. Ingredient names were matched to ChEMBL names and synonyms (92.3% exact, 0.3% after removing salt words, 7.4% unmatched), and salts were mapped to their parent molecule so that properties are compared on the active molecule. The <a href="data-dictionary.html">data dictionary</a> documents every table and column.</p>
+  </section>
+
+  <section class="part" id="methods">
+    <div class="part-head"><span class="num">04</span><h2>Methods</h2></div>
+    <h3>From raw data to the analysis set</h3>
+    <ol class="pipeline">
+      <li><span class="step">Start</span><span>Parent molecules with at least one oral or inhaled FDA product</span><span class="count">1,305</span></li>
+      <li><span class="step">Transform</span><span>Split combined routes ("INHALATION, ORAL") and normalise case; inherit ATC codes from salts; make groups exclusive (inhaled takes precedence, 15 molecules flagged as also oral)<small>The route fix alone adds an inhaled molecule that exact text matching missed.</small></span><span class="count">1,305</span></li>
+      <li><span class="step">M1-M2</span><span>Remove non-small molecules and molecules without core properties</span><span class="count">−37 · −63</span></li>
+      <li><span class="step">M3-M4</span><span>Remove medical gases (&lt; 100 Da or ATC V03AN) and diagnostic-only agents</span><span class="count">−10 · −12</span></li>
+      <li><span class="step">M5</span><span>Remove inhaled drugs acting on the nervous system (anaesthetics, loxapine, levodopa): they are inhaled to reach the blood<small>The mirror rule M6 removes oral drugs acting only in the gut, designed not to be absorbed.</small></span><span class="count">−9</span></li>
+      <li><span class="step">M6</span><span>Remove gut-local oral drugs (ATC A06/A07 only)</span><span class="count">−20</span></li>
+      <li><span class="step">Result</span><span>Lung-targeted inhaled drugs and systemic oral drugs</span><span class="count">46 + 1,108</span></li>
+    </ol>
+    <figure>
+      <div class="frame"><img src="figures/exclusion_flow.png" alt="Bar charts of rows removed by each cleaning rule: PDE4 measurements from 11,954 to 8,793, molecules from 1,305 to 1,154." loading="lazy"></div>
+      <figcaption>Every rule is recorded in a cleaning ledger with the rows it removed; every excluded record can be listed with its reason. The same approach cleaned the PDE4 measurements (censored values, curator flags and non-nM units removed, repeated measurements summarised by their median).</figcaption>
+    </figure>
+    <h3>Statistics</h3>
+    <ul>
+      <li><strong>Group comparison:</strong> Mann-Whitney U tests (the properties are not normally distributed) with Holm correction for multiple testing, and the rank-biserial correlation r as effect size. With 46 inhaled drugs, effect sizes matter more than p-values.</li>
+      <li><strong>Sensitivity analysis:</strong> the comparison repeated without the 15 inhaled molecules that also have oral products.</li>
+      <li><strong>Multivariate view:</strong> principal component analysis on eight standardised descriptors.</li>
+      <li><strong>Time trends:</strong> Spearman correlation with year of first approval, bootstrap 95% confidence intervals, and a model with one intercept per respiratory class tested by shuffling years within class (permutation test).</li>
+      <li><strong>Structural motifs:</strong> RDKit substructure searches with Fisher exact tests, and a logistic model with a year × route interaction for fluorination.</li>
+      <li><strong>Verification:</strong> the browser statistics are checked against numpy, pandas and SciPy (40 automated checks), and the cleaning stops if a reference inhaled drug (albuterol, budesonide, fluticasone, formoterol, ipratropium, salmeterol, tiotropium) disappears.</li>
+    </ul>
+  </section>
+
+  <section class="part" id="queries">
+    <div class="part-head"><span class="num">05</span><h2>Key queries</h2></div>
+    <p>The analysis set lives in a SQLite database. These are the queries behind the main numbers; each one opens in the <a href="index.html">SQL workbench</a>, where the chart and the statistics panel update with the result.</p>
+    <div id="queryList"></div>
+  </section>
+
+  <section class="part" id="results">
+    <div class="part-head"><span class="num">06</span><h2>Results</h2></div>
+
+    <h3>Q1 · The rule of five does not separate inhaled from oral drugs; polarity and donors do</h3>
+    <p>26.1% of inhaled and 22.8% of oral drugs break at least one of Lipinski's rules, and the number of violations does not differ (p = 0.77). The differences lie in specific properties:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Property</th><th>Median inhaled</th><th>Median oral</th><th>Effect size r</th><th></th><th>p (Holm)</th></tr></thead>
+        <tbody id="effectRows"></tbody>
+      </table>
+    </div>
+    <p class="legend">Rank-biserial r from −1 to 1: bar to the right<i style="background:var(--pos)"></i>higher in inhaled drugs, to the left<i style="background:var(--neg)"></i>lower. Grey rows are not significant after correction.</p>
+    <p>Without the 15 molecules that also exist orally, the pattern holds or strengthens: H-bond donors r = +0.46, QED r = −0.42, PSA r = +0.32, aromatic rings r = −0.23. The lower logP of inhaled drugs does not survive (r = −0.10, p = 0.30).</p>
+    <figure>
+      <div class="frame"><img src="figures/inhaled_vs_oral_after_cleaning.png" alt="Scatter plot of polar surface area against molecular weight for 1,108 oral and 46 inhaled drugs." loading="lazy" style="min-width:420px"></div>
+      <figcaption>Inhaled drugs are spread across the oral property space rather than in a separate corner, which is why single cut-offs fail.</figcaption>
+    </figure>
+    <p>A principal component analysis on eight descriptors (1,143 molecules, without the also-oral group) needs two components for 72.5% of the variance. PC1 (46.8%) is a size and polarity axis (molecular weight, PSA, H-bond acceptors and donors load positively, QED negatively); PC2 (25.7%) opposes lipophilicity and aromaticity to polarity. Inhaled drugs sit higher on PC1 (mean +1.26 vs −0.04, r = +0.44, p = 1.1 × 10⁻⁵) and lower on PC2 (−1.05 vs +0.03, r = −0.26, p = 0.009): larger and more polar, and less lipophilic for their size.</p>
+
+    <h3>Q2 · Inhaled drugs became more lipophilic and flexible over time</h3>
+    <figure>
+      <div class="frame"><img src="figures/trend_logp_year.png" alt="Scatter of calculated logP against year of first approval; inhaled drugs rise from about 0 in the 1950s to about 3.5 today, faster than oral drugs." loading="lazy"></div>
+      <figcaption>Calculated logP by year of first approval. The inhaled trend line rises twice as fast as the oral one and has almost closed the gap.</figcaption>
+    </figure>
+    <ul>
+      <li>Year vs logP among inhaled drugs: Spearman ρ = +0.51 (95% CI 0.28 to 0.68); oral drugs ρ = +0.25.</li>
+      <li>The trend holds inside each class: β2-agonists ρ = +0.66, antimuscarinics +0.77, corticosteroids +0.67. Adjusted for class: +0.43 logP and +1.1 rotatable bonds per decade (permutation p = 0.002 for both).</li>
+      <li>From albuterol (1981, logP 1.3) to vilanterol and umeclidinium (2013, logP 4.6 and 5.1): the move from inhalers taken several times a day to once-daily products coincides with more lipophilic, more flexible molecules.</li>
+      <li>Molecular weight grows for both routes at a similar rate, so size alone is a general trend in drug discovery, not an inhaled one.</li>
+    </ul>
+
+    <h3>Q3 · Structural signatures: permanent charge, no fluorine</h3>
+    <ul>
+      <li><strong>Permanent positive charge:</strong> quaternary ammonium groups are found in 10.9% of inhaled drugs vs 1.7% of oral drugs (odds ratio 7.0, Holm p = 0.017): ipratropium, tiotropium, aclidinium, umeclidinium, glycopyrronium. A permanent charge limits absorption into the blood.</li>
+      <li><strong>Fluorine:</strong> among drugs approved since 2000, 33% of oral drugs contain fluorine (136 of 411) but only 7% of inhaled drugs (1 of 15). The opposite time trends are significant (year × route interaction, p = 0.005). Fluorine is often added to slow metabolism; for an inhaled drug, fast clearance of the systemic fraction is an advantage.</li>
+    </ul>
+
+    <h3>Q4 · PDE4 inhibitors designed for inhalation are much larger</h3>
+    <figure>
+      <div class="frame"><img src="figures/chemistry_trends.png" alt="Six panels: fluorine share by era, structural motifs, PDE4B minus PDE4D selectivity by era, catechol diether papers by era, molecular weight of inhaled PDE4 programmes, ALogP against molecular weight." loading="lazy"></div>
+      <figcaption>Structural trends in approved drugs (T1, T2) and in 430 PDE4 papers (T3 to T5).</figcaption>
+    </figure>
+    <ul>
+      <li>Compounds from the seven PDE4 papers about inhaled administration have a median weight of 571 Da vs 393 Da in all other PDE4 papers, with 9 rotatable bonds vs 5 (r = +0.63; one median per paper, p = 0.002). Tanimilast (CHF6001), an inhaled PDE4 inhibitor in development for COPD, weighs 688 Da with ALogP 6.3, against 403 Da and 5.0 for oral roflumilast.</li>
+      <li>Over the same years, PDE4 chemistry moved towards PDE4B over PDE4D selectivity (the PDE4D isoform is linked to nausea): median pIC50 difference from −0.20 (2001-2008) to +0.94 (from 2015). This is strong per compound but borderline per paper (p = 0.051).</li>
+      <li>The classic catechol diether scaffold of rolipram and roflumilast fell from 48% to 28% of PDE4 papers (p = 0.003).</li>
+    </ul>
+  </section>
+
+  <section class="part" id="conclusion">
+    <div class="part-head"><span class="num">07</span><h2>Conclusion</h2></div>
+    <p class="answer">There is no simple rule of five for inhaled drugs, but there is a recognisable inhaled profile, and it is not the oral one.</p>
+    <div class="findings">
+      <div class="finding"><h3>Lipinski is the wrong filter for inhalation</h3><p>Inhaled and oral drugs break the rule of five equally often. A screen built on it neither selects nor rejects inhaled candidates for the right reasons.</p><span class="stat">26.1% vs 22.8% with at least one violation, p = 0.77</span></div>
+      <div class="finding"><h3>Approved inhaled drugs are more polar and less "drug-like"</h3><p>More H-bond donors, higher polar surface area, fewer aromatic rings and lower QED, robust to removing drugs that also exist orally.</p><span class="stat">HBD r = +0.48, QED r = −0.33, PSA r = +0.26, aromatic rings r = −0.27 (all Holm p &lt; 0.05)</span></div>
+      <div class="finding"><h3>Modern inhaled design trades polarity for lipophilicity and size</h3><p>Within each respiratory class, newer drugs are more lipophilic and flexible, and inhaled PDE4 programmes produce much larger molecules than oral ones. This fits a design goal of lung retention and long duration.</p><span class="stat">+0.43 logP per decade (p = 0.002); PDE4 inhaled papers 571 vs 393 Da</span></div>
+      <div class="finding"><h3>Systemic safety is built into the structure</h3><p>Permanent positive charges are seven times more common, and the fluorination wave that reshaped oral drugs did not reach inhaled ones.</p><span class="stat">Quaternary ammonium OR 7.0; fluorine 7% vs 33% since 2000</span></div>
+    </div>
+    <h3>What this means for a respiratory R&amp;D team</h3>
+    <ul>
+      <li>Do not use oral property filters for inhaled projects; describe the target profile on inhaled reference drugs instead.</li>
+      <li>Treat lipophilicity, flexibility, permanent charge and metabolic lability as levers for lung retention and systemic clearance, to be tested against measured lung residence time.</li>
+      <li>The open data and code make the profile easy to extend to new targets and to update with each ChEMBL release.</li>
+    </ul>
+  </section>
+
+  <section class="part" id="limits">
+    <div class="part-head"><span class="num">08</span><h2>Limitations</h2></div>
+    <ul>
+      <li>Small inhaled group: 46 drugs (35 without the also-oral group), so confidence intervals are wide. Results describe approved drugs, not a validated design rule.</li>
+      <li>Calculated descriptors (ALogP, PSA) from ChEMBL, not measured values. The ChEMBL 37 API returns no ionisation descriptors, so charge is only captured by substructure searches.</li>
+      <li>Routes come from US FDA products only. The year is the first approval of the molecule by any route.</li>
+      <li>Some exclusion rules use ATC codes as a proxy for therapeutic intent; seven inhaled molecules have no ATC code and are kept without that filter.</li>
+      <li>Associations, not causes: the link between lipophilicity and duration of action is a hypothesis here. The PDE4 selectivity trend is borderline at paper level, and inhaled PDE4 papers were identified from titles only.</li>
+    </ul>
+  </section>
+
+  <section class="part" id="next">
+    <div class="part-head"><span class="num">09</span><h2>Next steps</h2></div>
+    <ol>
+      <li>Add dosing frequency from FDA labels to test whether lipophilicity predicts once-daily dosing.</li>
+      <li>Build a simple, explainable inhalability score, check that reference inhaled drugs score high, and apply it to potent PDE4 inhibitors.</li>
+      <li>Compute charge and ionisable groups with RDKit, and add EU (EMA) inhaled products.</li>
+      <li>Audit a random sample of the FDA-ChEMBL name matching and split combination products.</li>
+    </ol>
+    <p>The full list is on the <a href="backlog.html">backlog</a> page; the pipeline is explained step by step in <a href="how-it-works.html">How it works</a>.</p>
+  </section>
+
+  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/explore_trends.py</code> and <code>src/explore_chemistry.py</code>.</p>
+</main>
+
+<script>
+// Inhaled vs oral comparison (Mann-Whitney, rank-biserial r, Holm over 10 properties), computed on inhalation_dataset.
+const EFFECTS = [
+  ["H-bond donors", 3.5, 2, 0.476, 1.62e-7],
+  ["QED drug-likeness", 0.495, 0.62, -0.327, 1.49e-3],
+  ["Aromatic rings", 1, 2, -0.265, 1.34e-2],
+  ["Polar surface area (Å²)", 90.8, 75.7, 0.255, 2.36e-2],
+  ["H-bond acceptors", 6, 4, 0.230, 4.50e-2],
+  ["Rotatable bonds", 5, 5, 0.209, 7.85e-2],
+  ["ALogP", 2.31, 2.88, -0.185, 0.132],
+  ["Heavy atoms", 27.5, 25, 0.097, 0.795],
+  ["Molecular weight (Da)", 392, 349, 0.086, 0.795],
+  ["Rule-of-five violations", 0, 0, 0.019, 0.795],
+];
+const QUERIES = [
+  { title: "Which drugs are inhaled?", note: "Joins FDA products, their ingredients, the name map and ChEMBL molecules.",
+    sql: `SELECT m.pref_name, COUNT(*) AS inhaled_products
+FROM fda_products AS p
+JOIN fda_product_ingredients AS i
+  ON i.application_number = p.application_number AND i.product_number = p.product_number
+JOIN fda_ingredient_map AS map ON map.ingredient_name = i.ingredient_name
+JOIN molecules AS m ON m.chembl_id = map.parent_chembl_id
+WHERE UPPER(p.route) LIKE '%INHALATION%'
+GROUP BY m.pref_name
+ORDER BY inhaled_products DESC
+LIMIT 15;` },
+  { title: "How the analysis set was built", note: "The cleaning ledger: every rule, in order, with the molecules it removed.",
+    sql: `SELECT rule_id, rule, rows_removed, rows_after
+FROM cleaning_log
+WHERE dataset = 'molecules'
+ORDER BY step;` },
+  { title: "Which inhaled drugs were excluded, and why", note: "Each exclusion traced back to its rule.",
+    sql: `SELECT e.rule_id, l.rule, m.pref_name
+FROM cleaning_exclusions AS e
+JOIN cleaning_log AS l ON l.rule_id = e.rule_id
+JOIN molecules AS m ON m.chembl_id = e.record_id
+JOIN molecule_routes_clean AS r ON r.chembl_id = e.record_id AND r.route = 'INHALATION'
+WHERE e.dataset = 'molecules'
+ORDER BY e.rule_id, m.pref_name;` },
+  { title: "Property profile of the two groups", note: "Group means and the share of drugs breaking the rule of five. Open the statistics panel for medians and tests.",
+    sql: `SELECT route_group,
+       COUNT(*) AS molecules,
+       ROUND(AVG(hbd), 2) AS mean_hbd,
+       ROUND(AVG(psa), 1) AS mean_psa,
+       ROUND(AVG(aromatic_rings), 2) AS mean_aromatic_rings,
+       ROUND(AVG(qed_weighted), 2) AS mean_qed,
+       ROUND(100.0 * AVG(num_ro5_violations > 0), 1) AS pct_breaking_ro5
+FROM inhalation_dataset
+GROUP BY route_group;` },
+  { title: "Lipophilicity by decade", note: "The time trend in plain SQL: average logP and flexibility per decade and route.",
+    sql: `SELECT (first_approval / 10) * 10 AS decade, route_group,
+       COUNT(*) AS molecules,
+       ROUND(AVG(alogp), 2) AS mean_logp,
+       ROUND(AVG(rtb), 1) AS mean_rotatable_bonds
+FROM inhalation_dataset
+WHERE first_approval IS NOT NULL
+GROUP BY decade, route_group
+ORDER BY decade, route_group;` },
+  { title: "Inhaled antimuscarinics over time", note: "The permanently charged class: from glycopyrronium (1961) to revefenacin (2018).",
+    sql: `SELECT pref_name, first_approval, ROUND(alogp, 2) AS alogp, atc_codes
+FROM inhalation_dataset
+WHERE route_group = 'inhaled' AND atc_codes LIKE '%R03BB%'
+ORDER BY first_approval;` },
+];
+
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const fmtP = (p) => (p < 0.001 ? p.toExponential(1).replace("e-", " × 10⁻").replace(/(\d+)$/, (d) => [...d].map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")) : p.toFixed(3));
+
+const tbody = document.getElementById("effectRows");
+for (const [name, inh, oral, r, p] of EFFECTS) {
+  const tr = el("tr");
+  const weak = p >= 0.05;
+  tr.append(el("td", weak ? "weak" : null, name), el("td", "n", String(inh)), el("td", "n", String(oral)));
+  const bar = el("td"); const track = el("div", "effect"); const i = el("i");
+  const w = Math.abs(r) * 50;
+  i.style.width = `${w}%`; i.style.left = r >= 0 ? "50%" : `${50 - w}%`;
+  i.style.background = weak ? "var(--line)" : r >= 0 ? "var(--pos)" : "var(--neg)";
+  track.append(i); bar.append(track);
+  tr.append(el("td", "n" + (weak ? " weak" : ""), (r > 0 ? "+" : "") + r.toFixed(2)), bar, el("td", "n" + (weak ? " weak" : ""), fmtP(p)));
+  tbody.append(tr);
+}
+
+const list = document.getElementById("queryList");
+for (const q of QUERIES) {
+  const card = el("div", "query");
+  const head = el("div", "query-head");
+  const text = el("div"); text.append(el("h3", null, q.title), el("p", null, q.note));
+  const btns = el("div", "btns");
+  const pre = el("pre", null, q.sql);
+  const copy = el("button", "btn", "Copy"); copy.type = "button";
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(q.sql); copy.textContent = "Copied"; }
+    catch (_) { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copy.textContent = "Selected: press Ctrl+C"; }
+    setTimeout(() => (copy.textContent = "Copy"), 2500);
+  });
+  const run = el("button", "btn primary", "Run in workbench"); run.type = "button";
+  run.addEventListener("click", () => {
+    try { localStorage.setItem("workbench:pendingQuery", q.sql); } catch (_) { /* storage blocked: the workbench opens with its default example */ }
+    location.href = "index.html";
+  });
+  btns.append(copy, run);
+  head.append(text, btns);
+  card.append(head, pre);
+  list.append(card);
+}
+</script>
+</body>
+</html>

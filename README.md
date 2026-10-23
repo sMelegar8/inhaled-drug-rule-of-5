@@ -68,6 +68,10 @@ Plotly. It runs fully in the browser:
 - descriptive statistics, Pearson and Spearman correlations, PCA (scree plot, biplot,
   loadings, scores), Mann-Whitney and Kruskal-Wallis tests with Holm correction
 
+The [case study](https://smelegar8.github.io/inhaled-drug-rule-of-5/case-study.html) presents
+the analysis as a portfolio project: problem, questions, data, methods, key queries,
+results, conclusion and limitations.
+
 The [data dictionary](https://smelegar8.github.io/inhaled-drug-rule-of-5/data-dictionary.html)
 explains every table and column (what one row is, keys, joins and their match rate, fill
 rates, value ranges) and opens each example query in the workbench. It is generated from
