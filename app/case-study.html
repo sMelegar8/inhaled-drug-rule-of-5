@@ -402,7 +402,7 @@ for (const q of QUERIES) {
   });
   const run = el("button", "btn primary", "Run in workbench"); run.type = "button";
   run.addEventListener("click", () => {
-    try { localStorage.setItem("workbench:pendingQuery", q.sql); } catch (_) { /* storage blocked: the workbench opens with its default example */ }
+    try { localStorage.setItem("workbench:pendingQuery", JSON.stringify({ title: `Case study: ${q.title}`, sql: q.sql })); } catch (_) { /* storage blocked: the workbench opens with its default example */ }
     location.href = "index.html";
   });
   btns.append(copy, run);

@@ -155,6 +155,28 @@ tbody tr:hover td { background: var(--surface-2); }
 .editor-panel #sql { flex: 1 1 auto; min-height: 260px; resize: none; }
 @media (max-width: 1250px) { .work-row { grid-template-columns: minmax(0, 1fr); } .editor-panel #sql { resize: vertical; } }
 
+/* Molecule card shown when hovering a chart point */
+.mol-card { position: fixed; z-index: 60; width: 266px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); padding: 10px 12px; pointer-events: none; }
+.mol-head b { display: block; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.mol-head span { display: block; font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
+.mol-draw svg { display: block; width: 240px; height: 180px; margin: 6px auto 4px; }
+.mol-missing { margin: 8px 0; font-size: 12.5px; color: var(--muted); }
+.mol-values { font: 12px var(--font-mono); color: var(--fg-2); overflow-wrap: anywhere; }
+
+/* Working cases: saved SQL, notes and chart/statistics settings */
+.casebar { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.casebar select { flex: 1 1 180px; min-width: 0; max-width: 320px; }
+.case-name { flex: 1 1 180px; min-width: 0; max-width: 320px; padding: 5px 8px; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--surface); }
+.case-confirm { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--danger); }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: var(--accent-fg); }
+.save-state { margin-left: auto; font-size: 12px; color: var(--muted); }
+.save-state.warn { color: var(--danger); }
+.notes { border-bottom: 1px solid var(--line); }
+.notes summary { cursor: pointer; padding: 7px 14px; font-size: 12.5px; color: var(--fg-2); }
+.notes summary span { color: var(--muted); margin-left: 4px; }
+.notes textarea { display: block; width: 100%; min-height: 110px; border: 0; border-top: 1px solid var(--line); padding: 10px 14px; background: var(--surface); font: 12.5px/1.55 var(--font-mono); resize: vertical; }
+
 /* Shared navigation between the project pages */
 .sitenav { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; padding-block: 10px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -253,7 +275,23 @@ code { font-family: var(--font-mono); font-size: 0.92em; background: var(--surfa
           <select id="examples"></select>
         </div>
       </div>
+      <div class="casebar">
+        <label for="caseSelect" class="check">Working case</label>
+        <select id="caseSelect"></select>
+        <input id="caseName" class="case-name" maxlength="60" aria-label="New name for the working case" hidden>
+        <button class="btn small" type="button" id="caseNew">New</button>
+        <button class="btn small" type="button" id="caseRename">Rename</button>
+        <button class="btn small" type="button" id="caseDelete">Delete</button>
+        <span class="case-confirm" id="caseConfirm" hidden>Delete this case?
+          <button class="btn small danger" type="button" id="caseDeleteYes">Delete</button>
+          <button class="btn small" type="button" id="caseDeleteNo">Cancel</button></span>
+        <span class="save-state" id="saveState" role="status">Loading your working cases…</span>
+      </div>
       <textarea id="sql" spellcheck="false" aria-label="SQL editor"></textarea>
+      <details class="notes" id="notesBox">
+        <summary>Notes and code <span>saved with this case, not executed</span></summary>
+        <textarea id="caseNotes" spellcheck="false" aria-label="Notes for this working case" placeholder="Findings, ideas, a Python snippet to try later…"></textarea>
+      </details>
       <div id="errorBox" class="error-box" hidden></div>
       <div class="editor-foot">
         <div class="status" id="status" role="status">Ready.</div>
@@ -352,6 +390,13 @@ code { font-family: var(--font-mono); font-size: 0.92em; background: var(--surfa
 <script src="stats.js"></script>
 <!-- "strict" bundle: same API, no eval/new Function, so it runs under a strict CSP -->
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-strict-dist-min@2.35.2/plotly-strict.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/smiles-drawer@2.4.1/dist/smiles-drawer.min.js"></script>
+<div id="molCard" class="mol-card" hidden>
+  <div class="mol-head"><b id="molName"></b><span id="molGroup"></span></div>
+  <div id="molDraw" class="mol-draw"></div>
+  <p id="molMissing" class="mol-missing" hidden></p>
+  <div id="molValues" class="mol-values"></div>
+</div>
 <script>
 const DB_URL = "pharma_inhalation.sqlite.gz.b64.txt";
 const MAX_TABLE_ROWS = 1000;
@@ -558,17 +603,14 @@ function openDb(bytes, label) {
   if (state.db) state.db.close();
   state.db = new state.SQL.Database(bytes);
   state.colorSlots.clear();
+  smilesById = null; // structures come from the newly opened database
   $("loading").hidden = true;
   $("loadHelp").hidden = true;
   $("app").hidden = false;
   renderProvenance(label);
   renderSchema();
-  // A query sent from the data dictionary ("Run in workbench") takes priority over the default example.
-  let pending = null;
-  try { pending = localStorage.getItem("workbench:pendingQuery"); localStorage.removeItem("workbench:pendingQuery"); } catch (_) { /* storage blocked */ }
-  if (pending && !label) { $("sql").value = pending; runQuery(); }
-  else if (!label) loadExample(0);
-  else { $("sql").value = "SELECT name, type FROM sqlite_master ORDER BY type, name;"; runQuery(); }
+  const ready = cases.ready ? Promise.resolve() : initCases();
+  if (label) ready.then(() => openNewCase({ name: `File: ${label}`.slice(0, 60), sql: "SELECT name, type FROM sqlite_master ORDER BY type, name;" }));
 }
 function q(sql) {
   const r = state.db.exec(sql);
@@ -699,6 +741,7 @@ function runQuery(pref, statPref) {
   syncStatControls(statPref);
   renderStats();
   renderTable();
+  scheduleSave();
 }
 function inferTypes() {
   const { columns, rows } = state.result;
@@ -734,7 +777,8 @@ function syncChartControls(pref) {
   fillSelect($("colorCol"), [["", "(none)"]].concat(groupable.map((c) => [c, c])), keep, pref?.color ?? (type === "box" || type === "violin" ? (smallGroups[0] || groupable[0] || "") : (smallGroups[0] || "")));
   if (pref?.agg) $("agg").value = pref.agg;
   else if (pref || !keep) $("agg").value = "none";
-  if (pref) { $("logX").checked = false; $("logY").checked = false; }
+  if (pref) { $("logX").checked = !!pref.logX; $("logY").checked = !!pref.logY; }
+  if (pref?.bins) $("bins").value = pref.bins;
   updateControlVisibility();
 }
 function updateControlVisibility() {
@@ -773,8 +817,119 @@ function aggregate(values, how) {
   if (how === "median") { const s = [...v].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
   return v[0];
 }
+// ---------- molecule structure on hover ----------
+// Scatter points that belong to a molecule show its 2D structure, drawn from the
+// SMILES with SmilesDrawer: from a SMILES column in the result, or looked up in
+// the molecules table through a ChEMBL ID column.
+const ID_COLUMNS = ["chembl_id", "molecule_chembl_id", "parent_chembl_id", "record_id"];
+const molCache = new Map();
+let smilesById = null;
+function smilesLookup() {
+  if (!smilesById) {
+    smilesById = new Map();
+    try { for (const [id, s] of q("SELECT chembl_id, canonical_smiles FROM molecules WHERE canonical_smiles IS NOT NULL")) smilesById.set(id, s); }
+    catch (_) { /* a database without a molecules table */ }
+  }
+  return smilesById;
+}
+// Returns row -> [smiles, chembl id], or null when the result holds no molecules.
+function structureSource(columns) {
+  const si = columns.findIndex((c) => /smiles/i.test(c));
+  const ii = columns.findIndex((c) => ID_COLUMNS.includes(c.toLowerCase()));
+  if (si < 0 && ii < 0) return null;
+  const map = si < 0 ? smilesLookup() : null;
+  if (map && !map.size) return null;
+  return (row) => [si >= 0 ? row[si] ?? null : map.get(row[ii]) ?? null, ii >= 0 ? row[ii] : null];
+}
+// Point label for hovers: a name column if there is one (pref_name, brand_name...), else the first text column.
+function labelColumn(columns, allowed) {
+  const ok = (c, i) => state.types[i].kind === "text" && allowed(c, i);
+  const named = columns.findIndex((c, i) => ok(c, i) && /(^|_)name$|synonym/i.test(c));
+  return named >= 0 ? named : columns.findIndex(ok);
+}
+function isDarkTheme() {
+  const t = document.documentElement.dataset.theme;
+  return t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+}
+function moleculeSvg(smiles) {
+  const theme = isDarkTheme() ? "dark" : "light";
+  const key = theme + "|" + smiles;
+  if (!molCache.has(key)) {
+    let drawn = null;
+    if (window.SmilesDrawer) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      try {
+        SmilesDrawer.parse(smiles, (tree) => {
+          new SmilesDrawer.SvgDrawer({ width: 240, height: 180, padding: 8 }).draw(tree, svg, theme);
+          drawn = svg;
+        }, () => {});
+      } catch (_) { drawn = null; }
+    }
+    molCache.set(key, drawn);
+  }
+  return molCache.get(key);
+}
+const fmtVal = (v) => (typeof v === "number" ? fmt(v) : String(v));
+function showMolecule(ev, div) {
+  const pt = ev.points?.[0];
+  if (!pt || !Array.isArray(pt.customdata)) return hideMolecule();
+  const [smiles, id] = pt.customdata;
+  const card = $("molCard");
+  $("molName").textContent = pt.text || id || "Molecule";
+  $("molGroup").textContent = [id && id !== pt.text ? id : "", pt.data.name && pt.data.name !== "All" ? pt.data.name : ""].filter(Boolean).join(" · ");
+  const svg = smiles ? moleculeSvg(smiles) : null;
+  $("molDraw").replaceChildren(...(svg ? [svg.cloneNode(true)] : []));
+  $("molDraw").hidden = !svg;
+  $("molMissing").hidden = !!svg;
+  $("molMissing").textContent = smiles ? "The structure could not be drawn from this SMILES." : "No SMILES in ChEMBL for this record (e.g. a protein or a mixture).";
+  const [xName, yName] = pt.data.meta || ["x", "y"];
+  $("molValues").textContent = `${xName}: ${fmtVal(pt.x)} · ${yName}: ${fmtVal(pt.y)}`;
+  card.hidden = false;
+  // Next to the pointer, flipped to stay inside the window.
+  const rect = div.getBoundingClientRect();
+  const x = ev.event?.clientX ?? rect.right - card.offsetWidth - 12, y = ev.event?.clientY ?? rect.top + 12;
+  let left = x + 18, top = y + 18;
+  if (left + card.offsetWidth > innerWidth - 8) left = x - card.offsetWidth - 18;
+  if (top + card.offsetHeight > innerHeight - 8) top = y - card.offsetHeight - 18;
+  card.style.left = `${Math.max(8, left)}px`;
+  card.style.top = `${Math.max(8, top)}px`;
+}
+function hideMolecule() { $("molCard").hidden = true; }
+// Point closest to a screen position (within 24 px), for taps on touch screens
+// where Plotly fires no hover events.
+function nearestPoint(div, clientX, clientY) {
+  const fl = div._fullLayout;
+  if (!fl?.xaxis || !Array.isArray(div.data)) return null;
+  const rect = div.getBoundingClientRect(), xa = fl.xaxis, ya = fl.yaxis;
+  let best = null, bestDist = 24 * 24;
+  for (const tr of div.data) {
+    if (!Array.isArray(tr.customdata) || tr.visible === "legendonly") continue;
+    for (let i = 0; i < tr.x.length; i++) {
+      const px = rect.left + xa._offset + xa.l2p(xa.d2l(tr.x[i]));
+      const py = rect.top + ya._offset + ya.l2p(ya.d2l(tr.y[i]));
+      const dist = (px - clientX) ** 2 + (py - clientY) ** 2;
+      if (dist < bestDist) { bestDist = dist; best = { data: tr, x: tr.x[i], y: tr.y[i], text: tr.text?.[i], customdata: tr.customdata[i] }; }
+    }
+  }
+  return best;
+}
+function attachStructureHover(div) {
+  if (div._molHover) return;
+  div._molHover = true;
+  div.on("plotly_hover", (ev) => showMolecule(ev, div));
+  div.on("plotly_unhover", hideMolecule);
+  div.addEventListener("mouseleave", hideMolecule);
+  div.addEventListener("pointerup", (e) => {
+    if (e.pointerType === "mouse") return; // mice already get Plotly's hover
+    const pt = nearestPoint(div, e.clientX, e.clientY);
+    if (pt) showMolecule({ points: [pt], event: e }, div); else hideMolecule();
+  });
+}
+addEventListener("scroll", hideMolecule, { passive: true });
+document.addEventListener("pointerdown", (e) => { if (!e.target.closest?.("#chart, #statChart2")) hideMolecule(); });
+
 function chartMessage(text) {
-  Plotly.purge("chart"); $("chart").hidden = true;
+  Plotly.purge("chart"); $("chart")._molHover = false; $("chart").hidden = true;
   $("chartEmpty").textContent = text; $("chartEmpty").hidden = false; $("chartNote").textContent = "";
 }
 function renderChart() {
@@ -801,7 +956,8 @@ function renderChart() {
     ordered = ordered.slice(0, MAX_GROUPS).concat([["Other", rest]]);
   }
   const colorOf = (name) => ci < 0 ? th.series[0] : name === "Other" ? th.muted : th.series[slotFor(name)];
-  const labelIdx = cols.findIndex((c, i) => i !== ci && state.types[i].kind === "text");
+  const labelIdx = labelColumn(cols, (c, i) => i !== ci);
+  const molOf = type === "scatter" ? structureSource(cols) : null;
   const xName = cols[xi], yName = cols[yi];
   const agg = $("agg").value;
   const traces = [];
@@ -817,7 +973,9 @@ function renderChart() {
         x: pts.map((p) => p[xi]), y: pts.map((p) => p[yi]),
         text: labelIdx >= 0 ? pts.map((p) => p[labelIdx] ?? "") : undefined,
         marker: { size: 8, color, opacity: 0.85, line: { width: 1, color: th.surface } },
-        hovertemplate: (labelIdx >= 0 ? "<b>%{text}</b><br>" : "") + `${xName}: %{x}<br>${yName}: %{y}<extra>${name}</extra>`,
+        // With molecules the structure card replaces Plotly's hover label.
+        ...(molOf ? { customdata: pts.map(molOf), hoverinfo: "none", meta: [xName, yName] }
+                  : { hovertemplate: (labelIdx >= 0 ? "<b>%{text}</b><br>" : "") + `${xName}: %{x}<br>${yName}: %{y}<extra>${name}</extra>` }),
       });
     } else if (type === "histogram") {
       const xs = rows.map((row) => row[xi]).filter((v) => typeof v === "number");
@@ -869,6 +1027,7 @@ function renderChart() {
     hoverlabel: { bgcolor: th.surface, bordercolor: th.line, font: { color: th.fg } },
   };
   Plotly.react("chart", traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
+  attachStructureHover($("chart"));
   const groupsNote = ordered.length > 1 ? `${ordered.length} groups` : "";
   $("chartNote").textContent = [groupsNote, dropped ? `${fmtInt.format(dropped)} rows without a numeric value excluded` : ""].filter(Boolean).join(" · ");
 }
@@ -1096,8 +1255,8 @@ function renderPca(vars) {
   const res = Stats.pca(data, { standardize });
   const k = res.p;
   const pcNames = Array.from({ length: k }, (_, i) => `PC${i + 1}`);
-  fillSelect($("pcX"), pcNames.map((p) => [p, p]), true, "PC1");
-  fillSelect($("pcY"), pcNames.map((p) => [p, p]), true, "PC2");
+  fillSelect($("pcX"), pcNames.map((p) => [p, p]), true, statState.pcaAxes?.x || "PC1");
+  fillSelect($("pcY"), pcNames.map((p) => [p, p]), true, statState.pcaAxes?.y || "PC2");
   if ($("pcX").value === $("pcY").value) $("pcY").value = $("pcX").value === "PC1" ? "PC2" : "PC1";
   const cx = pcNames.indexOf($("pcX").value), cy = pcNames.indexOf($("pcY").value);
   const th = theme();
@@ -1112,7 +1271,8 @@ function renderPca(vars) {
   ], plotLayout(th, { xaxis: statAxis(th, "component"), yaxis: statAxis(th, "explained variance (%)", { range: [0, 105] }) }), PLOT_CONFIG);
 
   // Score plot coloured by group, with loading vectors (biplot).
-  const labelIdx = state.result.columns.findIndex((c, i) => state.types[i].kind === "text" && c !== $("statGroup").value);
+  const labelIdx = labelColumn(state.result.columns, (c) => c !== $("statGroup").value);
+  const molOf = structureSource(state.result.columns);
   const groupsMap = new Map();
   keep.forEach((rowIdx, n) => {
     const g = labels ? (labels[rowIdx] ?? "NULL") : "All";
@@ -1126,7 +1286,8 @@ function renderPca(vars) {
     x: idx.map((n) => res.scores[n][cx]), y: idx.map((n) => res.scores[n][cy]),
     text: labelIdx >= 0 ? idx.map((n) => state.result.rows[keep[n]][labelIdx] ?? "") : undefined,
     marker: { size: 7, opacity: 0.8, color: !labels ? th.series[0] : g === "Other" ? th.muted : th.series[slotFor(g)], line: { width: 1, color: th.surface } },
-    hovertemplate: (labelIdx >= 0 ? "<b>%{text}</b><br>" : "") + `${pcNames[cx]}: %{x:.2f}<br>${pcNames[cy]}: %{y:.2f}<extra>${g}</extra>`,
+    ...(molOf ? { customdata: idx.map((n) => molOf(state.result.rows[keep[n]])), hoverinfo: "none", meta: [pcNames[cx], pcNames[cy]] }
+              : { hovertemplate: (labelIdx >= 0 ? "<b>%{text}</b><br>" : "") + `${pcNames[cx]}: %{x:.2f}<br>${pcNames[cy]}: %{y:.2f}<extra>${g}</extra>` }),
   }));
   const annotations = [];
   if ($("pcaBiplot").checked) {
@@ -1146,6 +1307,7 @@ function renderPca(vars) {
     xaxis: statAxis(th, `${pcNames[cx]} (${pct[cx].toFixed(1)}%)`), yaxis: statAxis(th, `${pcNames[cy]} (${pct[cy].toFixed(1)}%)`),
     showlegend: traces.length > 1, annotations, margin: { l: 56, r: 18, t: traces.length > 1 ? 40 : 14, b: 50 },
   }), PLOT_CONFIG);
+  attachStructureHover($("statChart2"));
 
   const shown = Math.min(k, 5);
   const rows = vars.map((v, j) => [{ v, cls: "strong" }, ...res.loadings[j].slice(0, shown).map((l) =>
@@ -1230,13 +1392,205 @@ function savePcaScores() {
   $("pcaSaveStatus").textContent = `Table pca_scores created: ${fmtInt.format(s.keep.length)} rows, columns ${pcCols.join(", ")}. Example: SELECT * FROM pca_scores ORDER BY PC1 DESC;`;
 }
 
-// ---------- wiring ----------
-function loadExample(i) {
-  const ex = EXAMPLES[i]; $("examples").value = String(i);
-  $("sql").value = ex.sql; runQuery(ex.chart, ex.stats);
+// ---------- working cases ----------
+// Each case keeps its SQL, notes and chart/statistics settings, so leaving the
+// page and coming back restores the work. In the claude.ai artifact cases live in
+// the viewer's private database space (db + user capabilities) and follow them
+// across devices; elsewhere (GitHub Pages, a local server) they stay in this
+// browser's localStorage.
+const LOCAL_KEY = "workbench:cases:v1";
+const PENDING_KEY = "workbench:pendingQuery";
+const NEW_CASE_SQL = "-- New working case\nSELECT *\nFROM inhalation_dataset\nLIMIT 100;";
+const cases = { list: [], activeId: null, store: null, ready: null, timer: null, saved: new Map(), chain: Promise.resolve() };
+
+function localStore() {
+  const read = () => { try { return JSON.parse(localStorage.getItem(LOCAL_KEY)) || { cases: {}, activeId: null }; } catch (_) { return { cases: {}, activeId: null }; } };
+  const write = (data) => { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); };
+  return {
+    label: "Saved in this browser",
+    async load() { const d = read(); return { list: Object.values(d.cases), activeId: d.activeId }; },
+    async save(c) { const d = read(); d.cases[c.id] = c; write(d); },
+    async remove(id) { const d = read(); delete d.cases[id]; write(d); },
+    async setActive(id) { const d = read(); d.activeId = id; write(d); },
+  };
 }
-$("examples").replaceChildren(...EXAMPLES.map((ex, i) => { const o = el("option", null, ex.title); o.value = String(i); return o; }));
-$("examples").addEventListener("change", (e) => loadExample(Number(e.target.value)));
+async function accountStore() {
+  if (!window.claude?.use) return null; // not inside a claude.ai artifact
+  try {
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    const uid = db && user ? await user.id() : null;
+    if (!uid) return null;
+    const root = db.doc(`data/users/${uid}/workbench`);
+    const col = root.collection("cases");
+    const [snap, meta] = await Promise.all([col.get(), root.get()]);
+    return {
+      label: "Saved to your account",
+      async load() { return { list: snap.docs.filter((d) => d.exists).map((d) => ({ ...d.data(), id: d.id })), activeId: meta.exists ? meta.data().activeId : null }; },
+      async save(c) { const { id, ...body } = c; await col.doc(id).set(body); },
+      async remove(id) { await col.doc(id).delete(); },
+      async setActive(id) { await root.set({ activeId: id }); },
+    };
+  } catch (_) { return null; }
+}
+function saveState(text, warn = false) { $("saveState").textContent = text; $("saveState").classList.toggle("warn", warn); }
+function newId() { return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function activeCase() { return cases.list.find((c) => c.id === cases.activeId); }
+function nextCaseName() {
+  const used = cases.list.map((c) => Number((c.name.match(/^Working case (\d+)$/) || [])[1] || 0));
+  return `Working case ${Math.max(0, ...used) + 1}`;
+}
+function captureSettings() {
+  return {
+    chart: { type: $("chartType").value, x: $("xCol").value, y: $("yCol").value, color: $("colorCol").value,
+             agg: $("agg").value, bins: Number($("bins").value) || 30, logX: $("logX").checked, logY: $("logY").checked },
+    stats: { tab: statState.tab, group: $("statGroup").value, vars: selectedVars(), corrMethod: $("corrMethod").value,
+             pcX: $("pcX").value, pcY: $("pcY").value, pcaStd: $("pcaStd").checked, pcaBiplot: $("pcaBiplot").checked },
+  };
+}
+const fingerprint = (c) => JSON.stringify([c.name, c.sql, c.notes, c.chart, c.stats]);
+
+function renderCaseSelect() {
+  const sorted = [...cases.list].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  $("caseSelect").replaceChildren(...sorted.map((c) => { const o = el("option", null, c.name); o.value = c.id; return o; }));
+  $("caseSelect").value = cases.activeId;
+  $("caseSelect").title = `${cases.list.length} saved case${cases.list.length === 1 ? "" : "s"}`;
+}
+async function persist(c) {
+  try {
+    await cases.store.save(c);
+    cases.saved.set(c.id, fingerprint(c));
+    saveState(cases.store.label);
+  } catch (e) {
+    if (cases.store.label !== "Saved in this browser") {
+      // Account storage refused the write (e.g. a view-only viewer): keep working locally.
+      cases.store = localStore();
+      for (const x of cases.list) await persist(x);
+      saveState("Saved in this browser (account storage unavailable)", true);
+    } else {
+      saveState("Not saved: this browser blocks storage", true);
+    }
+  }
+}
+function collectActive() {
+  const c = activeCase(); if (!c) return null;
+  Object.assign(c, { sql: $("sql").value, notes: $("caseNotes").value }, captureSettings());
+  if (cases.saved.get(c.id) === fingerprint(c)) return null;
+  c.updatedAt = new Date().toISOString();
+  return c;
+}
+function saveNow() {
+  if (!cases.store) return cases.chain;
+  const c = collectActive();
+  if (c) { saveState("Saving…"); const copy = structuredClone(c); cases.chain = cases.chain.then(() => persist(copy)); }
+  return cases.chain;
+}
+function scheduleSave() {
+  if (!cases.store) return;
+  clearTimeout(cases.timer);
+  cases.timer = setTimeout(saveNow, 700);
+}
+function loadCase(id) {
+  const c = cases.list.find((x) => x.id === id) || cases.list[0];
+  cases.activeId = c.id;
+  cases.store.setActive(c.id).catch(() => {});
+  renderCaseSelect();
+  $("sql").value = c.sql || "";
+  $("caseNotes").value = c.notes || "";
+  $("notesBox").open = !!c.notes;
+  lastLiveSql = c.sql || "";
+  const s = c.stats || {};
+  if (s.corrMethod) $("corrMethod").value = s.corrMethod;
+  if (s.pcaStd != null) $("pcaStd").checked = s.pcaStd;
+  if (s.pcaBiplot != null) $("pcaBiplot").checked = s.pcaBiplot;
+  statState.pcaAxes = { x: s.pcX, y: s.pcY };
+  runQuery(c.chart || undefined, c.stats || undefined);
+}
+async function openNewCase({ name, sql, chart = null, stats = null, notes = "" }) {
+  await ensureStore();
+  await saveNow();
+  const now = new Date().toISOString();
+  const c = { id: newId(), name: name || nextCaseName(), sql, notes, chart, stats, createdAt: now, updatedAt: now };
+  cases.list.push(c);
+  await persist(c);
+  loadCase(c.id);
+}
+function ensureStore() {
+  if (!cases.ready) cases.ready = (async () => { cases.store = (await accountStore()) || localStore(); })();
+  return cases.ready;
+}
+async function initCases() {
+  await ensureStore();
+  let loaded = { list: [], activeId: null };
+  try { loaded = await cases.store.load(); } catch (_) { saveState("Could not read saved cases", true); }
+  cases.list = loaded.list.filter((c) => c && c.id && typeof c.sql === "string");
+  for (const c of cases.list) cases.saved.set(c.id, fingerprint(c));
+  // A query sent from another page ("Run in workbench") opens in a new case.
+  let pending = null;
+  try { pending = localStorage.getItem(PENDING_KEY); localStorage.removeItem(PENDING_KEY); } catch (_) { /* storage blocked */ }
+  if (pending) {
+    let p; try { p = JSON.parse(pending); } catch (_) { p = { sql: pending }; }
+    if (typeof p === "string") p = { sql: p };
+    if (p && typeof p.sql === "string") return openNewCase({ name: (p.title || "Imported query").slice(0, 60), sql: p.sql });
+  }
+  if (!cases.list.length) {
+    const ex = EXAMPLES[0];
+    return openNewCase({ name: "Working case 1", sql: ex.sql, chart: ex.chart, stats: ex.stats });
+  }
+  loadCase(loaded.activeId);
+}
+function startRename() {
+  const c = activeCase(); if (!c) return;
+  $("caseSelect").hidden = true; $("caseName").hidden = false;
+  $("caseName").value = c.name; $("caseName").focus(); $("caseName").select();
+}
+function finishRename(commit) {
+  if ($("caseName").hidden) return;
+  const c = activeCase(), name = $("caseName").value.trim().slice(0, 60);
+  $("caseName").hidden = true; $("caseSelect").hidden = false;
+  if (commit && c && name && name !== c.name) { c.name = name; renderCaseSelect(); saveNow(); }
+}
+async function deleteActiveCase() {
+  const c = activeCase(); if (!c) return;
+  clearTimeout(cases.timer);
+  cases.list = cases.list.filter((x) => x.id !== c.id);
+  cases.saved.delete(c.id);
+  try { await cases.store.remove(c.id); } catch (_) { saveState("Could not delete the case", true); }
+  if (!cases.list.length) return openNewCase({ name: "Working case 1", sql: NEW_CASE_SQL });
+  loadCase(cases.list[cases.list.length - 1].id);
+}
+// An example replaces the current case only while it is empty or still an untouched example.
+function loadExample(i) {
+  const ex = EXAMPLES[i];
+  $("examples").value = "";
+  const current = $("sql").value.trim();
+  const untouched = !current || EXAMPLES.some((e) => e.sql.trim() === current);
+  const c = activeCase();
+  if (untouched && c) {
+    // A case that only held an example takes the new example's name too.
+    if (EXAMPLES.some((e) => e.title.slice(0, 60) === c.name)) { c.name = ex.title.slice(0, 60); renderCaseSelect(); }
+    $("sql").value = ex.sql; runQuery(ex.chart, ex.stats);
+  }
+  else openNewCase({ name: ex.title.slice(0, 60), sql: ex.sql, chart: ex.chart, stats: ex.stats });
+}
+
+// ---------- wiring ----------
+const placeholder = el("option", null, "Open an example…"); placeholder.value = "";
+$("examples").replaceChildren(placeholder, ...EXAMPLES.map((ex, i) => { const o = el("option", null, ex.title); o.value = String(i); return o; }));
+$("examples").addEventListener("change", (e) => { if (e.target.value !== "") loadExample(Number(e.target.value)); });
+$("caseSelect").addEventListener("change", async (e) => { const id = e.target.value; await saveNow(); loadCase(id); });
+$("caseNew").addEventListener("click", () => openNewCase({ sql: NEW_CASE_SQL }));
+$("caseRename").addEventListener("click", startRename);
+$("caseName").addEventListener("keydown", (e) => { if (e.key === "Enter") finishRename(true); else if (e.key === "Escape") finishRename(false); });
+$("caseName").addEventListener("blur", () => finishRename(true));
+$("caseDelete").addEventListener("click", () => { $("caseConfirm").hidden = false; $("caseDelete").hidden = true; $("caseDeleteNo").focus(); });
+$("caseDeleteNo").addEventListener("click", () => { $("caseConfirm").hidden = true; $("caseDelete").hidden = false; });
+$("caseDeleteYes").addEventListener("click", () => { $("caseConfirm").hidden = true; $("caseDelete").hidden = false; deleteActiveCase(); });
+$("sql").addEventListener("input", scheduleSave);
+$("caseNotes").addEventListener("input", scheduleSave);
+// Any chart or statistics control change is part of the case.
+document.querySelector(".main").addEventListener("change", (e) => { if (!["caseSelect", "examples", "caseName"].includes(e.target.id)) scheduleSave(); });
+addEventListener("pagehide", () => { clearTimeout(cases.timer); saveNow(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { clearTimeout(cases.timer); saveNow(); } });
 $("runBtn").addEventListener("click", () => runQuery());
 $("sql").addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); }
@@ -1276,10 +1630,11 @@ document.querySelectorAll(".stat-tab").forEach((b) => b.addEventListener("click"
   statState.tab = b.dataset.tab;
   document.querySelectorAll(".stat-tab").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
   if (state.result) renderStats();
+  scheduleSave();
 }));
 for (const id of ["statGroup", "corrMethod", "pcX", "pcY", "pcaStd", "pcaBiplot"]) $(id).addEventListener("change", () => state.result && renderStats());
-$("varsAll").addEventListener("click", () => { document.querySelectorAll("#varList input").forEach((i) => (i.checked = true)); statState.vars = selectedVars(); renderStats(); });
-$("varsNone").addEventListener("click", () => { document.querySelectorAll("#varList input").forEach((i) => (i.checked = false)); statState.vars = []; renderStats(); });
+$("varsAll").addEventListener("click", () => { document.querySelectorAll("#varList input").forEach((i) => (i.checked = true)); statState.vars = selectedVars(); renderStats(); scheduleSave(); });
+$("varsNone").addEventListener("click", () => { document.querySelectorAll("#varList input").forEach((i) => (i.checked = false)); statState.vars = []; renderStats(); scheduleSave(); });
 $("pcaSave").addEventListener("click", savePcaScores);
 const rerender = () => { if (state.result) { renderChart(); renderStats(); } };
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);

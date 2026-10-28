@@ -337,7 +337,7 @@ function renderTables() {
     });
     const run = el("button", "btn primary", "Run in workbench"); run.type = "button";
     run.addEventListener("click", () => {
-      try { localStorage.setItem("workbench:pendingQuery", t.example); } catch (_) { /* storage blocked: the workbench opens normally */ }
+      try { localStorage.setItem("workbench:pendingQuery", JSON.stringify({ title: `Data dictionary: ${t.name}`, sql: t.example })); } catch (_) { /* storage blocked: the workbench opens normally */ }
       location.href = "index.html";
     });
     btns.append(copy, document.createTextNode(" "), run); th.append(btns);

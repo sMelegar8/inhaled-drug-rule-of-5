@@ -64,7 +64,14 @@ borderline (p = 0.051), so I report it as a lead, not a result.
 Plotly. It runs fully in the browser:
 
 - SQL editor with a searchable schema and column comments
-- charts that update with the query result
+- charts that update with the query result; hovering (or tapping) a point of a
+  scatter or PCA score plot shows the molecule's 2D structure, drawn from its SMILES
+  with [SmilesDrawer](https://github.com/reymond-group/smilesDrawer) (from a SMILES
+  column, or looked up through a ChEMBL ID column)
+- working cases: SQL, notes and chart/statistics settings are saved automatically
+  (in the browser on GitHub Pages, in the viewer's private storage in the claude.ai
+  artifact), so leaving the page never loses work; cases can be created, renamed
+  and deleted
 - descriptive statistics, Pearson and Spearman correlations, PCA (scree plot, biplot,
   loadings, scores), Mann-Whitney and Kruskal-Wallis tests with Holm correction
 
