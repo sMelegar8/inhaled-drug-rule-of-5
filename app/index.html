@@ -221,7 +221,8 @@ code { font-family: var(--font-mono); font-size: 0.92em; background: var(--surfa
 <nav class="sitenav" aria-label="Project pages">
   <span class="sitenav-brand">Inhalation Workbench</span>
   <a href="index.html" aria-current="page">SQL workbench</a>
-  <a href="case-study.html">Case study</a>
+  <a href="case-study.html">Rule of 5 study</a>
+  <a href="case-study-pde4.html">PDE4 chemical space</a>
   <a href="data-dictionary.html">Data dictionary</a>
   <a href="how-it-works.html">How it works</a>
   <a href="backlog.html">Backlog</a>
@@ -432,6 +433,21 @@ const EXAMPLES = [
 SELECT chembl_id, pref_name, route_group, also_oral,
        mw_freebase, alogp, psa, hbd, hba, rtb, aromatic_rings, qed_weighted
 FROM inhalation_dataset;` },
+  { title: "PDE4 chemical space: map of 8 families",
+    chart: { type: "scatter", x: "map_x", y: "map_y", color: "cluster_label" },
+    stats: { tab: "group", group: "cluster_label" },
+    sql: `-- k-means families on Morgan fingerprints, t-SNE map (src/pde4_chemical_space.py)
+-- Hover a point to see the structure.
+SELECT molecule_chembl_id, pref_name, cluster_label,
+       map_x, map_y, best_p, ligand_efficiency
+FROM pde4_chemical_space;` },
+  { title: "PDE4 families: potency vs size",
+    chart: { type: "scatter", x: "heavy_atoms", y: "best_p", color: "cluster_label" },
+    stats: { tab: "group", group: "cluster_label" },
+    sql: `SELECT molecule_chembl_id, pref_name, cluster_label,
+       heavy_atoms, best_p, ligand_efficiency, lipophilic_efficiency
+FROM pde4_chemical_space
+WHERE heavy_atoms IS NOT NULL;` },
   { title: "Statistics: PCA of chemical properties",
     chart: { type: "scatter", x: "alogp", y: "psa", color: "route_group" },
     stats: { tab: "pca", group: "route_group" },
@@ -1530,7 +1546,7 @@ async function initCases() {
   if (pending) {
     let p; try { p = JSON.parse(pending); } catch (_) { p = { sql: pending }; }
     if (typeof p === "string") p = { sql: p };
-    if (p && typeof p.sql === "string") return openNewCase({ name: (p.title || "Imported query").slice(0, 60), sql: p.sql });
+    if (p && typeof p.sql === "string") return openNewCase({ name: (p.title || "Imported query").slice(0, 60), sql: p.sql, chart: p.chart || null, stats: p.stats || null });
   }
   if (!cases.list.length) {
     const ex = EXAMPLES[0];

@@ -30,6 +30,7 @@ LAYERS = [
     ("integration", "Integration", "Links FDA products to ChEMBL molecules (step 02)."),
     ("clean", "Clean analysis tables", "Produced by the cleaning rules; use these for analysis (step 03)."),
     ("ledger", "Cleaning ledger", "Records every cleaning rule and every excluded record (step 03)."),
+    ("analysis", "Analysis outputs", "Results of the PDE4 chemical space model: fingerprints, k-means and t-SNE (step 04)."),
 ]
 
 # ------------------------------------------------------------------ tables
@@ -169,6 +170,30 @@ TABLES = {
         example="SELECT e.rule_id, l.rule, m.pref_name\nFROM cleaning_exclusions AS e\nJOIN cleaning_log AS l ON l.rule_id = e.rule_id\nJOIN molecules AS m ON m.chembl_id = e.record_id\nWHERE e.dataset = 'molecules'\nORDER BY e.rule_id;"),
 }
 
+TABLES.update({
+    "pde4_chemical_space": dict(
+        layer="analysis", built_by="src/pde4_chemical_space.py",
+        purpose="Every PDE4 compound with a structure and a clean potency, placed on a chemical space map and assigned to one of eight k-means families of similar substructures.",
+        grain="one compound", key="molecule_chembl_id",
+        use_for="Plotting the chemical space (map_x vs map_y), comparing families, finding efficient or selective compounds.",
+        watch_out="map_x and map_y are t-SNE coordinates without units: only neighbourhoods are meaningful, not distances between far-apart islands. Families are model groupings, not natural categories.",
+        example="SELECT cluster_label, COUNT(*) AS compounds, ROUND(AVG(best_p), 2) AS mean_p\nFROM pde4_chemical_space\nGROUP BY cluster_label\nORDER BY mean_p DESC;"),
+    "pde4_clusters": dict(
+        layer="analysis", built_by="src/pde4_chemical_space.py",
+        purpose="One summary row per k-means family: size, potency, properties, history, selectivity, a representative molecule and the named compounds.",
+        grain="one family (cluster)", key="cluster",
+        use_for="Comparing chemical families at a glance; the medoid is the structure to show for each family.",
+        watch_out="Names were assigned by reading each family's motifs and medoid; medians hide the spread inside loose families (2 and 3).",
+        example="SELECT cluster, cluster_label, n_molecules, ROUND(median_p, 2) AS median_p,\n       ROUND(100 * share_potent, 1) AS pct_potent\nFROM pde4_clusters\nORDER BY cluster;"),
+    "pde4_k_selection": dict(
+        layer="analysis", built_by="src/pde4_chemical_space.py",
+        purpose="How k-means behaved for each number of clusters tried: the evidence for choosing k = 8.",
+        grain="one value of k", key="k",
+        use_for="Plotting the elbow, silhouette and stability curves.",
+        watch_out="Silhouettes are low at every k because chemical families overlap; stability matters as much as separation.",
+        example="SELECT k, ROUND(inertia, 0) AS inertia, ROUND(silhouette, 3) AS silhouette,\n       ROUND(stability_ari, 2) AS stability\nFROM pde4_k_selection\nORDER BY k;"),
+})
+
 # ----------------------------------------------------------------- columns
 # Shared explanations for columns that appear in several tables: (meaning, unit)
 COMMON = {
@@ -307,7 +332,42 @@ COLUMNS = {
     "cleaning_log.rows_removed": ("Rows removed by this rule only.", "count"),
     "cleaning_log.rows_after": ("Rows left after the rule.", "count"),
     "cleaning_log.rows_flagged": ("Rows marked by a check but kept.", "count"),
-    "cleaning_exclusions.record_id": ("ID of the excluded record: an activity_id for 'activities', a chembl_id for 'molecules'.", ""),
+    "pde4_chemical_space.cluster": ("k-means family number, 1-8, ordered by size (1 = largest).", ""),
+    "pde4_chemical_space.cluster_label": ("Chemical name of the family, e.g. 'Roflumilast type (difluoromethoxy catechol)'.", ""),
+    "pde4_chemical_space.map_x": ("Horizontal position on the t-SNE map. Has no unit; nearby points are similar structures.", ""),
+    "pde4_chemical_space.map_y": ("Vertical position on the t-SNE map.", ""),
+    "pde4_chemical_space.best_p": ("Highest median pIC50 or pKi of the compound over the PDE4 targets.", "log units"),
+    "pde4_chemical_space.p_pde4b": ("Median potency on PDE4B, when measured.", "log units"),
+    "pde4_chemical_space.p_pde4d": ("Median potency on PDE4D, when measured.", "log units"),
+    "pde4_chemical_space.selectivity_bd": ("p_pde4b - p_pde4d: +1 means ten-fold more potent on PDE4B (the isoform linked to anti-inflammatory effects), -1 ten-fold on PDE4D (linked to nausea).", "log units"),
+    "pde4_chemical_space.ligand_efficiency": ("Potency per heavy atom: 1.37 x best_p / heavy_atoms. About 0.3 or more is often considered good.", "kcal/mol per heavy atom"),
+    "pde4_chemical_space.lipophilic_efficiency": ("best_p - alogp (LLE): potency not explained by lipophilicity. 5 or more is often quoted for good candidates.", "log units"),
+    "pde4_chemical_space.first_year": ("Year of the first paper or patent reporting a clean measurement of the compound.", "year"),
+    "pde4_chemical_space.n_documents": ("Number of papers or patents reporting clean measurements.", "count"),
+    "pde4_chemical_space.inhaled_paper": ("1 if the compound appears in a paper whose title is about inhaled PDE4 inhibitors.", "0/1"),
+    "pde4_chemical_space.is_medoid": ("1 for the family's medoid: the real compound closest to the k-means centre.", "0/1"),
+    "pde4_clusters.cluster": ("Family number, 1-8.", ""),
+    "pde4_clusters.cluster_label": ("Chemical name of the family.", ""),
+    "pde4_clusters.top_motif": ("Most enriched substructure motif with at least 40% prevalence; empty for mixed families.", ""),
+    "pde4_clusters.motif_share": ("Share of the family carrying top_motif.", "0-1"),
+    "pde4_clusters.n_molecules": ("Number of compounds in the family.", "count"),
+    "pde4_clusters.median_p": ("Median best_p of the family.", "log units"),
+    "pde4_clusters.share_potent": ("Share of compounds with best_p >= 8 (IC50 <= 10 nM).", "0-1"),
+    "pde4_clusters.median_mw": ("Median molecular weight.", "Da"),
+    "pde4_clusters.median_alogp": ("Median ALogP.", "log units"),
+    "pde4_clusters.median_le": ("Median ligand efficiency.", "kcal/mol per heavy atom"),
+    "pde4_clusters.median_first_year": ("Median year in which the family's compounds were first reported.", "year"),
+    "pde4_clusters.n_selectivity": ("Compounds measured on both PDE4B and PDE4D.", "count"),
+    "pde4_clusters.median_selectivity_bd": ("Median PDE4B - PDE4D difference.", "log units"),
+    "pde4_clusters.n_inhaled_paper": ("Compounds from papers about inhaled PDE4 inhibitors.", "count"),
+    "pde4_clusters.medoid_chembl_id": ("ChEMBL ID of the medoid, the most central real compound of the family.", ""),
+    "pde4_clusters.medoid_smiles": ("Structure of the medoid as SMILES.", ""),
+    "pde4_clusters.named_compounds": ("Named compounds in the family, most potent first (up to 8).", ""),
+    "pde4_k_selection.k": ("Number of clusters tried.", ""),
+    "pde4_k_selection.inertia": ("Within-cluster sum of squared distances to the centres; always falls as k grows.", ""),
+    "pde4_k_selection.silhouette": ("Mean silhouette on a 3,000-compound sample: -1 to 1, higher = better separated.", ""),
+    "pde4_k_selection.stability_ari": ("Mean adjusted Rand index between runs with 5 random seeds: 1 = identical groupings.", "0-1"),
+    "cleaning_exclusions.record_id":("ID of the excluded record: an activity_id for 'activities', a chembl_id for 'molecules'.", ""),
 }
 
 # Join keys: (from table, from column, to table, to column)
@@ -331,6 +391,9 @@ JOINS = [
     ("activity_potency", "molecule_chembl_id", "molecules", "chembl_id"),
     ("activity_potency", "target_chembl_id", "targets", "target_chembl_id"),
     ("cleaning_exclusions", "rule_id", "cleaning_log", "rule_id"),
+    ("pde4_chemical_space", "molecule_chembl_id", "molecules", "chembl_id"),
+    ("pde4_chemical_space", "cluster", "pde4_clusters", "cluster"),
+    ("pde4_clusters", "medoid_chembl_id", "molecules", "chembl_id"),
 ]
 
 GLOSSARY = [

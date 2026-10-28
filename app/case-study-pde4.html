@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PDE4 Chemical Space Case Study</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: long-form compendium. One reading column with concept boxes, an interactive map that breaks out wider, and a gallery of cluster cards. */
+:root {
+  --bg: #f3f5f4; --surface: #fcfcfb; --surface-2: #e9edeb; --fg: #111614; --fg-2: #4a524e; --muted: #7b837f;
+  --line: #d9dfdc; --accent: #0b6a72; --accent-soft: #d6ebec; --warn: #8a5a00; --warn-soft: #fbefd2;
+  --concept: #6250d6; --concept-soft: #ebe8fb; --figure-bg: #ffffff;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+    --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14;
+    --concept: #9085e9; --concept-soft: #24213d; --figure-bg: #f4f4f2;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
+  --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14;
+  --concept: #9085e9; --concept-soft: #24213d; --figure-bg: #f4f4f2;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.65 var(--font-body); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+.sitenav { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line); background: var(--surface); font-size: 13.5px; }
+.sitenav-brand { font: 600 12.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-right: 6px; }
+.sitenav a { color: var(--fg-2); text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; }
+.sitenav a:hover { color: var(--fg); }
+.sitenav a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+
+.wrap { max-width: 940px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3, h4 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; font-weight: 600; }
+h3 { font-size: 1.1rem; font-weight: 600; margin: 28px 0 8px; }
+h4 { font-size: 1rem; font-weight: 600; margin: 0 0 4px; }
+p { margin: 0 0 12px; max-width: 72ch; }
+ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 72ch; }
+li { margin-bottom: 5px; }
+.eyebrow { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 10px; }
+.lede { font-size: 1.15rem; color: var(--fg-2); margin-top: 14px; max-width: 66ch; }
+.byline { font-size: 13.5px; color: var(--muted); margin-top: 14px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 28px 0 6px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.tile b { display: block; font: 600 1.7rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+.tile span { display: block; font-size: 13.5px; color: var(--fg-2); margin-top: 4px; line-height: 1.4; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 22px; font-size: 14px; }
+.toc a { text-decoration: none; color: var(--fg-2); border-bottom: 1px solid var(--line); }
+.toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+section.part { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 30px; scroll-margin-top: 12px; }
+.part-head { display: flex; gap: 14px; align-items: baseline; margin-bottom: 14px; }
+.num { font: 600 1.4rem var(--font-mono); color: var(--accent); min-width: 2ch; }
+
+.callout { border-radius: 8px; padding: 12px 16px; margin: 16px 0; max-width: 76ch; }
+.callout .label { display: block; font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 2px; }
+.callout p { margin: 0 0 6px; } .callout p:last-child { margin: 0; }
+.callout.key { background: var(--accent-soft); } .callout.key .label { color: var(--accent); }
+.callout.caveat { background: var(--warn-soft); } .callout.caveat .label { color: var(--warn); }
+
+.concepts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.concept { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--concept); border-radius: 8px; padding: 14px 18px; }
+.concept .tag { font: 600 11px var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; color: var(--concept); }
+.concept h3 { margin: 2px 0 8px; }
+.concept p, .concept ul { font-size: 15px; }
+.formula { display: block; font: 14px/1.6 var(--font-mono); background: var(--concept-soft); border-radius: 6px; padding: 8px 12px; margin: 8px 0 10px; overflow-x: auto; white-space: pre; }
+.in-practice { font-size: 14px; color: var(--fg-2); border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 8px; }
+.in-practice b { color: var(--fg); }
+
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 14px 0; counter-reset: s; }
+.flow div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13.5px; }
+.flow b { display: block; font: 600 14px var(--font-display); }
+.flow i { font-style: normal; font: 500 11.5px var(--font-mono); color: var(--accent); }
+
+figure { margin: 18px 0; }
+figure .frame { background: var(--figure-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; overflow-x: auto; }
+figure img { display: block; width: 100%; height: auto; min-width: 560px; }
+figcaption { font-size: 13.5px; color: var(--fg-2); margin-top: 8px; max-width: 76ch; }
+
+.table-wrap { overflow-x: auto; margin: 10px 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.n { text-align: right; font: 13px var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.chosen td { background: var(--accent-soft); font-weight: 600; }
+
+/* interactive map: wider than the text column on large screens */
+.map-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin: 18px 0; overflow: hidden; }
+@media (min-width: 1100px) { .map-panel { margin-left: -90px; margin-right: -90px; } }
+.map-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--fg-2); padding: 5px 11px; cursor: pointer; font: 13px var(--font-body); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); font-weight: 600; }
+.check { display: inline-flex; gap: 6px; align-items: center; }
+#map { width: 100%; height: 620px; }
+.map-note { padding: 8px 14px 12px; font-size: 13px; color: var(--muted); }
+@media (max-width: 700px) { #map { height: 460px; } }
+
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 12px; }
+.ccard { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ccard header { display: flex; gap: 8px; align-items: baseline; }
+.ccard .cnum { font: 600 1.1rem var(--font-mono); color: var(--c); }
+.ccard h4 { font-size: 15px; }
+.ccard .draw { background: var(--figure-bg); border-radius: 6px; display: flex; justify-content: center; }
+.ccard .draw svg { width: 220px; height: 150px; }
+.ccard dl { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; margin: 0; font-size: 13px; }
+.ccard dt { color: var(--fg-2); } .ccard dd { margin: 0; text-align: right; font: 12.5px var(--font-mono); }
+.ccard .named { font-size: 12.5px; color: var(--muted); margin: 0; }
+.ccard .medoid { font-size: 11.5px; color: var(--muted); margin: 0; }
+
+.query { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 12px 0; overflow: hidden; }
+.query-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.query-head h4 { margin: 0; }
+.query-head p { margin: 2px 0 0; font-size: 13.5px; color: var(--fg-2); }
+.query pre { margin: 0; padding: 12px 14px; font: 12.5px/1.55 var(--font-mono); overflow-x: auto; background: var(--bg); }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 4px 11px; border-radius: 6px; cursor: pointer; font: 13px var(--font-body); white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+
+.findings { display: grid; gap: 10px; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+.finding h3 { margin: 0 0 4px; }
+.finding p { margin: 0; font-size: 15px; }
+.finding .stat { display: block; margin-top: 6px; font: 12.5px var(--font-mono); color: var(--muted); }
+.answer { font: 500 1.25rem/1.45 var(--font-display); max-width: 62ch; border-left: 3px solid var(--accent); padding-left: 16px; margin: 6px 0 18px; }
+
+.mol-card { position: fixed; z-index: 60; width: 266px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); padding: 10px 12px; pointer-events: none; }
+.mol-card b { display: block; font-size: 13px; overflow-wrap: anywhere; }
+.mol-card span { display: block; font-size: 11.5px; color: var(--muted); }
+.mol-card .d svg { display: block; width: 240px; height: 170px; margin: 6px auto 4px; }
+.mol-card .v { font: 12px var(--font-mono); color: var(--fg-2); }
+.foot { margin-top: 48px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Project pages">
+  <span class="sitenav-brand">Inhalation Workbench</span>
+  <a href="index.html">SQL workbench</a>
+  <a href="case-study.html">Rule of 5 study</a>
+  <a href="case-study-pde4.html" aria-current="page">PDE4 chemical space</a>
+  <a href="data-dictionary.html">Data dictionary</a>
+  <a href="how-it-works.html">How it works</a>
+  <a href="backlog.html">Backlog</a>
+</nav>
+
+<main class="wrap">
+  <header>
+    <div class="eyebrow">Portfolio case study · Cheminformatics and machine learning</div>
+    <h1>Mapping 5,211 PDE4 inhibitors: which chemical families shaped the field?</h1>
+    <p class="lede">Forty years of medicinal chemistry on one enzyme, turned into a map. Each compound becomes a fingerprint of its substructures, a k-means model groups similar structures into families, and SQL and statistics show which families are potent, selective and efficient, and when each one was made.</p>
+    <p class="byline">Matteo Melegari · Data: ChEMBL 37 (May 2026) · Tools: SQL (SQLite), Python, RDKit, scikit-learn, SciPy, Plotly, SmilesDrawer</p>
+    <div class="tiles" aria-label="Key numbers">
+      <div class="tile"><b>8 families</b><span>found by k-means in 5,211 compounds with a clean potency</span></div>
+      <div class="tile"><b>24% → 5%</b><span>share of new compounds from the classic rolipram-type family, 1980-2000 vs 2015-2025</span></div>
+      <div class="tile"><b>+1.4 log</b><span>median preference for PDE4B over PDE4D in the newest family (about 25-fold)</span></div>
+      <div class="tile"><b>LE 0.39</b><span>best ligand efficiency: the most selective family also binds most efficiently</span></div>
+    </div>
+    <nav class="toc" aria-label="Sections">
+      <a href="#problem">Problem</a><a href="#questions">Questions</a><a href="#data">Data and SQL</a><a href="#concepts">Concepts</a>
+      <a href="#methods">Methods</a><a href="#model">Choosing k</a><a href="#map-section">The map</a><a href="#families">The families</a>
+      <a href="#results">Results</a><a href="#queries">Queries</a><a href="#conclusion">Conclusion</a><a href="#limits">Limitations</a>
+    </nav>
+  </header>
+
+  <section class="part" id="problem">
+    <div class="part-head"><span class="num">01</span><h2>Problem statement</h2></div>
+    <p>PDE4 is an enzyme that breaks down cAMP, a messenger that keeps inflammatory cells quiet. Blocking PDE4 raises cAMP and dampens inflammation, which is why PDE4 inhibitors are used in COPD (roflumilast), psoriasis (apremilast) and atopic dermatitis (crisaborole), and why inhaled ones such as tanimilast are in development.</p>
+    <p>The field has a known weakness: nausea and vomiting limit the dose. The PDE4D isoform is widely linked to these side effects, while PDE4B is linked to the anti-inflammatory effect, so chemists have tried for years to make compounds that prefer PDE4B.</p>
+    <p>ChEMBL holds thousands of PDE4 compounds from hundreds of papers and patents, but as a list of rows it says little. A project team, a new hire or an investor would ask simpler questions: what kinds of molecules exist, which kinds work best, and where is the chemistry going?</p>
+    <div class="callout key"><span class="label">Goal</span><p>Turn 11,954 raw measurements into a readable map of chemical families, and use SQL and statistics to describe each family's potency, selectivity, efficiency and history.</p></div>
+  </section>
+
+  <section class="part" id="questions">
+    <div class="part-head"><span class="num">02</span><h2>Questions</h2></div>
+    <ol>
+      <li>Can a machine learning model group PDE4 inhibitors into chemically meaningful families from their structures alone?</li>
+      <li>Do the families differ in potency, and is that potency achieved efficiently or by making molecules bigger?</li>
+      <li>How has the chemistry moved over four decades?</li>
+      <li>Which families achieve PDE4B over PDE4D selectivity?</li>
+      <li>Where do approved and clinical compounds, and compounds designed for inhalation, sit on the map?</li>
+    </ol>
+  </section>
+
+  <section class="part" id="data">
+    <div class="part-head"><span class="num">03</span><h2>Data and SQL extraction</h2></div>
+    <p>The starting point is the cleaned table <code>activity_potency</code> from this project: one median potency per compound, PDE4 target and measurement type, after removing censored values, flagged records and unusable units (see the <a href="case-study.html#methods">cleaning steps</a>). One SQL query turns it into one row per compound:</p>
+    <div class="query" data-q="extract"></div>
+    <ul>
+      <li><code>GROUP BY</code> collapses the rows of a compound into one; <code>MAX(p_median)</code> keeps its best potency on any PDE4 target.</li>
+      <li><code>MAX(CASE WHEN target_name = 'PDE4B' THEN ... END)</code> is a <em>pivot</em>: it moves the PDE4B and PDE4D values from rows into their own columns, which makes the selectivity a simple subtraction.</li>
+      <li>The join to <code>molecules</code> adds the structure (SMILES) and calculated properties; compounds without a structure are dropped.</li>
+    </ul>
+    <p>Result: <strong>5,211 compounds</strong>, of which 1,190 are very potent (best pIC50 ≥ 8, i.e. IC50 ≤ 10 nM) and 675 were measured on both PDE4B and PDE4D.</p>
+  </section>
+
+  <section class="part" id="concepts">
+    <div class="part-head"><span class="num">04</span><h2>Concepts: a short compendium</h2></div>
+    <p>Each idea used in the analysis, explained from the basics, with what it means for this dataset.</p>
+    <div class="concepts">
+      <article class="concept">
+        <span class="tag">Chemistry as data</span><h3>SMILES</h3>
+        <p>A SMILES string writes a molecule as a line of text: atoms as letters, bonds as symbols, rings as matching digits, branches in brackets. Roflumilast is <code>O=C(Nc1c(Cl)cncc1Cl)c1ccc(OC(F)F)c(OCC2CC2)c1</code>. Software such as RDKit reads it back into a molecular graph of atoms and bonds.</p>
+        <div class="in-practice"><b>Here:</b> every structure on this page, including the ones drawn when you hover a point, is rebuilt from the SMILES stored in ChEMBL.</div>
+      </article>
+      <article class="concept">
+        <span class="tag">Chemistry as data</span><h3>Molecular fingerprints (Morgan / ECFP4)</h3>
+        <p>A model cannot read a graph directly; it needs numbers. A Morgan fingerprint describes a molecule by its small circular neighbourhoods: for each atom, it records the atom, then the atom plus its neighbours (radius 1), then neighbours of neighbours (radius 2). Each neighbourhood is hashed to a position in a list of 2,048 bits, and the bit is set to 1 if that substructure is present.</p>
+        <span class="formula">molecule  →  { atom environments up to radius 2 }  →  hash  →  [0 1 0 0 1 ... 0]  (2,048 bits)</span>
+        <p>Two molecules that share many substructures share many 1-bits. Different substructures can occasionally land on the same bit (a <em>collision</em>), a small loss of detail accepted for speed.</p>
+        <div class="in-practice"><b>Here:</b> 5,211 molecules × 2,048 bits, a 10.7-million-cell matrix of 0s and 1s.</div>
+      </article>
+      <article class="concept">
+        <span class="tag">Similarity</span><h3>Tanimoto similarity</h3>
+        <p>The standard way to compare two fingerprints is to count shared bits relative to all bits set in either:</p>
+        <span class="formula">T(A, B) = |A ∩ B| / |A ∪ B|        0 = nothing in common, 1 = identical fingerprints</span>
+        <p>For ECFP4, close analogues from the same series often score above about 0.4, while unrelated drug-like molecules typically score around 0.1-0.2.</p>
+        <div class="in-practice"><b>Here:</b> used to check the clusters afterwards: molecules in the same cluster are more similar (mean 0.181) than molecules in different clusters (0.127).</div>
+      </article>
+      <article class="concept">
+        <span class="tag">Dimensionality reduction</span><h3>PCA, and why reduce dimensions</h3>
+        <p>With 2,048 dimensions most bits are rarely set, distances become noisy and algorithms slow down (the "curse of dimensionality"). Principal component analysis finds new axes, the principal components, ordered by how much of the variation between molecules they capture, and keeps only the first few.</p>
+        <p>Before PCA each fingerprint is divided by its length (L2 normalisation), so that a large molecule with many bits does not dominate just because of its size; distances then behave more like the similarity of the bit patterns.</p>
+        <div class="in-practice"><b>Here:</b> 50 components keep 51.4% of the variation. The rest is spread over many small, mostly noisy directions.</div>
+      </article>
+      <article class="concept">
+        <span class="tag">Machine learning</span><h3>k-means clustering</h3>
+        <p>k-means is an unsupervised learning method: it groups data without being told the right answer. Given a number of groups k, it repeats four steps:</p>
+        <ol>
+          <li>Place k centres (here with <em>k-means++</em>, which spreads the starting centres apart).</li>
+          <li>Assign every molecule to its nearest centre.</li>
+          <li>Move each centre to the average of the molecules assigned to it.</li>
+          <li>Repeat steps 2 and 3 until the assignments stop changing.</li>
+        </ol>
+        <p>It minimises the <em>inertia</em>, the total squared distance of each point to its centre:</p>
+        <span class="formula">inertia = Σ over molecules  ‖ x − centre of its cluster ‖²</span>
+        <p>Because the result depends on the random start, the algorithm is run several times (here 10 starts) and the best run is kept. k-means assumes roughly round, similar-sized groups and needs k to be chosen in advance, two limits discussed below.</p>
+        <div class="in-practice"><b>Here:</b> k-means runs on the 50 principal components; each cluster is then described by its most typical molecule, the <em>medoid</em> (the real molecule closest to the centre).</div>
+      </article>
+      <article class="concept">
+        <span class="tag">Model selection</span><h3>Choosing k: elbow, silhouette, stability</h3>
+        <ul>
+          <li><strong>Elbow:</strong> inertia always falls as k grows; the "elbow" where it stops falling quickly suggests a natural k. With chemical data the curve is often smooth, as here.</li>
+          <li><strong>Silhouette:</strong> for each molecule, compare its average distance to its own cluster (a) with the average distance to the nearest other cluster (b):
+            <span class="formula">s = (b − a) / max(a, b)        1 = well inside its cluster, 0 = on a border, &lt; 0 = probably misplaced</span></li>
+          <li><strong>Stability:</strong> run k-means with 5 different random seeds and compare the results with the adjusted Rand index (ARI): 1 means the same grouping every time, 0 means agreement no better than chance. A useful grouping should not depend on luck.</li>
+        </ul>
+        <div class="in-practice"><b>Here:</b> silhouettes are low (0.07-0.15) for every k: chemical families overlap and share substructures, so there are no sharply separated groups. k = 8 was chosen because it is among the most stable settings (ARI 0.75) while still separating known chemotypes, and because 8 colours stay readable on a map.</div>
+      </article>
+      <article class="concept">
+        <span class="tag">Visualisation</span><h3>t-SNE maps</h3>
+        <p>t-SNE places each molecule on a 2D map so that molecules that are close in the 50-dimensional space stay close on the map. It focuses on local neighbourhoods: <em>perplexity</em> (here 40) sets roughly how many neighbours each point tries to keep nearby.</p>
+        <p>What a t-SNE map shows reliably: which molecules are neighbours, and tight islands of analogues. What it does not show reliably: the size of islands and the distances between far-apart islands, which can be distorted.</p>
+        <div class="in-practice"><b>Here:</b> a k-means family often appears as several islands of one colour. That is expected: k-means groups by the 50 components globally, while t-SNE splits a family into its tight series of close analogues.</div>
+      </article>
+      <article class="concept">
+        <span class="tag">Validation</span><h3>Checking clusters with chemistry</h3>
+        <ul>
+          <li><strong>Murcko scaffolds:</strong> the ring systems and linkers of a molecule with side chains removed. The "generic" form also ignores atom and bond types. The 5,211 compounds have 1,350 generic scaffolds.</li>
+          <li><strong>Normalised mutual information (NMI):</strong> how much knowing the cluster tells you about the scaffold (0 = nothing, 1 = everything). Here 0.42: clusters follow scaffolds partly, but group related scaffolds together.</li>
+          <li><strong>Enriched motifs:</strong> for each cluster, the share of molecules carrying known substructures (for example the catechol diether of rolipram) compared with the whole set.</li>
+          <li><strong>Expert reading:</strong> the cluster names below were given by reading each cluster's motifs, medoid and most frequent scaffolds; the code falls back to automatic labels if a rerun changes the clusters.</li>
+        </ul>
+      </article>
+      <article class="concept">
+        <span class="tag">Pharmacology</span><h3>Potency, efficiency and selectivity</h3>
+        <ul>
+          <li><strong>pIC50:</strong> −log10 of the IC50 in mol/L. 9 = 1 nM, 6 = 1 µM; +1 means ten times more potent.</li>
+          <li><strong>Ligand efficiency (LE):</strong> potency per heavy (non-hydrogen) atom, about the binding energy each atom contributes:
+            <span class="formula">LE = 1.37 × pIC50 / heavy atoms        (kcal/mol per heavy atom; about 0.3 or more is often considered good)</span></li>
+          <li><strong>Lipophilic efficiency (LLE):</strong> potency minus logP. Potency gained by adding grease raises logP as well, so LLE stays flat; values of 5 or more are often quoted for good candidates.
+            <span class="formula">LLE = pIC50 − logP</span></li>
+          <li><strong>Isoform selectivity:</strong> pIC50(PDE4B) − pIC50(PDE4D). +1 means ten-fold more potent on PDE4B, −1 ten-fold more potent on PDE4D.</li>
+        </ul>
+      </article>
+      <article class="concept">
+        <span class="tag">Statistics</span><h3>Comparing families</h3>
+        <ul>
+          <li><strong>Kruskal-Wallis test:</strong> do several groups have the same distribution? It works on ranks, so it does not assume normal data. Its effect size ε² = H / (n − 1) runs from 0 to 1 (about 0.01 small, 0.08 medium, 0.26 large).</li>
+          <li><strong>Mann-Whitney test:</strong> the two-group version; its effect size, the rank-biserial r, runs from −1 to 1.</li>
+          <li><strong>p-value vs effect size:</strong> with thousands of compounds almost any difference is "significant". The effect size says whether it matters.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="part" id="methods">
+    <div class="part-head"><span class="num">05</span><h2>Methods: the pipeline</h2></div>
+    <div class="flow" aria-label="Analysis pipeline">
+      <div><i>1 · SQL</i><b>Extract</b>5,211 compounds with best potency and PDE4B/D values</div>
+      <div><i>2 · RDKit</i><b>Fingerprint</b>Morgan, radius 2, 2,048 bits</div>
+      <div><i>3 · scikit-learn</i><b>Reduce</b>L2 normalise, PCA to 50 components (51.4%)</div>
+      <div><i>4 · scikit-learn</i><b>Cluster</b>k-means for k = 4…16; choose k = 8</div>
+      <div><i>5 · scikit-learn</i><b>Map</b>t-SNE to 2D, perplexity 40</div>
+      <div><i>6 · SQL + SciPy</i><b>Describe</b>motifs, medoids, potency, time, selectivity</div>
+    </div>
+    <p>The script <code>src/pde4_chemical_space.py</code> runs all steps with fixed random seeds, so the same input gives the same clusters and map. It writes three tables to the project database, so every result on this page can be queried in SQL:</p>
+    <ul>
+      <li><code>pde4_chemical_space</code>: one row per compound with cluster, map coordinates, potency, selectivity and efficiency.</li>
+      <li><code>pde4_clusters</code>: one row per family with its statistics, medoid and named compounds.</li>
+      <li><code>pde4_k_selection</code>: inertia, silhouette and stability for each k tried.</li>
+    </ul>
+  </section>
+
+  <section class="part" id="model">
+    <div class="part-head"><span class="num">06</span><h2>Choosing the number of clusters</h2></div>
+    <div class="table-wrap"><table id="kTable"><thead><tr><th>k</th><th>Inertia</th><th>Silhouette</th><th>Stability (ARI)</th></tr></thead><tbody></tbody></table></div>
+    <figure>
+      <div class="frame"><img src="figures/pde4_k_selection.png" alt="Three line charts: inertia falls smoothly with k, silhouette rises slowly from 0.07 to 0.15, stability peaks at k = 4 and 8." loading="lazy"></div>
+      <figcaption>No clear elbow and low silhouettes at every k: the chemical space is a continuum of overlapping families. Stability is highest at k = 4 (too coarse to separate known chemotypes) and k = 8, the choice used here.</figcaption>
+    </figure>
+    <div class="callout caveat"><span class="label">Honest reading</span><p>k-means imposes a grouping even when the data form a continuum. The families are useful summaries, checked against chemistry, not natural categories. Two of them (2 and 3) are loose "catch-all" groups with low internal similarity (Tanimoto 0.15 and 0.13), while families 4, 6, 7 and 8 are tight (0.29-0.40).</p></div>
+  </section>
+
+  <section class="part" id="map-section">
+    <div class="part-head"><span class="num">07</span><h2>The map</h2></div>
+    <p>Each point is a compound. Hover (or tap) a point to see its structure. Click a family in the legend to hide or show it.</p>
+    <div class="map-panel">
+      <div class="map-controls">
+        <span>Colour by</span>
+        <span class="seg" role="group" aria-label="Colour points by">
+          <button type="button" data-mode="cluster" aria-pressed="true">Family</button>
+          <button type="button" data-mode="potency" aria-pressed="false">Potency</button>
+          <button type="button" data-mode="year" aria-pressed="false">First year</button>
+        </span>
+        <label class="check"><input type="checkbox" id="showNamed" checked> Named drugs</label>
+        <label class="check"><input type="checkbox" id="showInhaled"> Inhaled programmes</label>
+      </div>
+      <div id="map" role="img" aria-label="t-SNE map of 5,211 PDE4 inhibitors"></div>
+      <p class="map-note" id="mapNote">Loading the map…</p>
+    </div>
+  </section>
+
+  <section class="part" id="families">
+    <div class="part-head"><span class="num">08</span><h2>The eight families</h2></div>
+    <p>Each card shows the family's medoid structure (its most central real molecule) and its key numbers. Open a family in the workbench to list and plot its compounds.</p>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section class="part" id="results">
+    <div class="part-head"><span class="num">09</span><h2>Results</h2></div>
+
+    <h3>Q2 · Families differ strongly in potency, and the best are efficient, not just big</h3>
+    <figure>
+      <div class="frame"><img src="figures/pde4_cluster_potency_timeline.png" alt="Left: box plots of potency by cluster, highest for clusters 7, 6 and 5, lowest for 3. Right: stacked bars of the share of new compounds by cluster in four periods." loading="lazy"></div>
+      <figcaption>Left: best potency per family (dashed line: IC50 = 10 nM). Right: share of newly reported compounds from each family per period.</figcaption>
+    </figure>
+    <ul>
+      <li>Potency differs across families (Kruskal-Wallis H = 805, p = 1.9 × 10⁻¹⁶⁹, ε² = 0.15, a medium-to-large effect).</li>
+      <li>The most potent families are the aryl-tetrahydrophthalazinones (7, median pIC50 7.8), the roflumilast type (6, 7.7) and the aza-bicyclic carboxamides (5, 7.4). The purine and cAMP-like heterocycles (3) are the weakest (5.6): they resemble the natural substrate and include old, weak xanthines.</li>
+      <li>Efficiency separates them. Family 5 has the best ligand efficiency (median 0.39) and lipophilic efficiency (4.4) with the smallest molecules (median 342 Da). The roflumilast type reaches its potency with large, lipophilic molecules (475 Da, ALogP 5.2) and a lower LLE (2.6).</li>
+    </ul>
+
+    <h3>Q3 · Forty years of chemistry, three shifts</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Family</th><th>1980-2000</th><th>2001-2008</th><th>2009-2014</th><th>2015-2025</th></tr></thead>
+      <tbody>
+        <tr><td>4 · Classic catechol diethers (rolipram type)</td><td class="n">23.8%</td><td class="n">18.7%</td><td class="n">4.7%</td><td class="n">5.4%</td></tr>
+        <tr><td>3 · Purine and cAMP-like heterocycles</td><td class="n">39.3%</td><td class="n">17.0%</td><td class="n">16.6%</td><td class="n">15.8%</td></tr>
+        <tr><td>6 · Roflumilast type</td><td class="n">0.2%</td><td class="n">11.5%</td><td class="n">9.0%</td><td class="n">6.1%</td></tr>
+        <tr><td>7 · Aryl-tetrahydrophthalazinones</td><td class="n">0.0%</td><td class="n">16.5%</td><td class="n">4.2%</td><td class="n">4.3%</td></tr>
+        <tr><td>5 · Aza-bicyclic carboxamides</td><td class="n">0.0%</td><td class="n">0.4%</td><td class="n">4.5%</td><td class="n">17.1%</td></tr>
+        <tr><td>Compounds in the period</td><td class="n">947</td><td class="n">782</td><td class="n">1,295</td><td class="n">2,187</td></tr>
+      </tbody>
+    </table></div>
+    <ol>
+      <li><strong>From substrate mimics to designed inhibitors:</strong> purine-like heterocycles made up 39% of early compounds and 16% today.</li>
+      <li><strong>The rise and fall of the catechol diether:</strong> the rolipram scaffold dominated until 2008, then its roflumilast and phthalazinone descendants peaked in 2001-2008.</li>
+      <li><strong>A new family:</strong> the aza-bicyclic carboxamides were almost absent before 2009 and are 17% of compounds since 2015.</li>
+    </ol>
+
+    <h3>Q4 · The newest family is the PDE4B-selective one</h3>
+    <ul>
+      <li>Family 5 has a median PDE4B − PDE4D difference of +1.41 (about 25-fold), against +0.33 for all other families (Mann-Whitney, r = +0.58, p = 1.8 × 10⁻³⁴); 71% of its measured compounds are at least ten-fold PDE4B-selective.</li>
+      <li>It contains PF-06445974, described in the literature as a PDE4B-preferring compound, and the family's growth after 2015 matches the field's push for PDE4B selectivity.</li>
+      <li>A sanity check: zatolmilast, known as a PDE4D-preferring inhibitor, sits at −2.4, at the opposite end.</li>
+    </ul>
+    <div class="callout caveat"><span class="label">Caveat</span><p>The 217 selectivity values of family 5 come from 13 papers, so a few large series weigh heavily. The direction is clear; the exact size of the effect needs paper-level analysis.</p></div>
+
+    <h3>Q5 · Where the known drugs and inhaled programmes sit</h3>
+    <ul>
+      <li>Roflumilast (oral, COPD), orismilast and tanimilast (inhaled, in development; ChEMBL name "tranimilast", pIC50 10.4, 688 Da) are all in family 6, the roflumilast type.</li>
+      <li>Rolipram, cilomilast and piclamilast are in family 4; apremilast in family 1; crisaborole in family 2; zatolmilast in family 8.</li>
+      <li>The 248 compounds from papers about inhaled PDE4 inhibitors fall mostly in families 2 (115), 6 (57) and 5 (44): inhaled design built on the roflumilast scaffold and on diverse amide series, consistent with the large molecules found in the <a href="case-study.html#results">Rule of 5 study</a>.</li>
+    </ul>
+  </section>
+
+  <section class="part" id="queries">
+    <div class="part-head"><span class="num">10</span><h2>Key queries</h2></div>
+    <p>Every number above can be reproduced from the three tables. Each query opens in the workbench as a new working case, with a suitable chart.</p>
+    <div id="queryList"></div>
+  </section>
+
+  <section class="part" id="conclusion">
+    <div class="part-head"><span class="num">11</span><h2>Conclusion</h2></div>
+    <p class="answer">Unsupervised learning on substructure fingerprints turns 5,211 PDE4 inhibitors into eight readable chemical families, and the families tell the story of the field: from substrate mimics, through the catechol diether era, to compact, efficient, PDE4B-selective carboxamides.</p>
+    <div class="findings">
+      <div class="finding"><h3>The model finds real chemistry</h3><p>Families match known chemotypes and contain the expected drugs (rolipram, roflumilast, apremilast), even though no labels were given to the model.</p><span class="stat">Within-family Tanimoto 0.181 vs 0.127 between; NMI with scaffolds 0.42</span></div>
+      <div class="finding"><h3>Potency is a family trait</h3><p>Family explains a medium-to-large share of potency differences; the best family combines potency with the highest efficiency.</p><span class="stat">ε² = 0.15; family 5: LE 0.39, LLE 4.4 at 342 Da</span></div>
+      <div class="finding"><h3>Selectivity arrived with a new scaffold</h3><p>PDE4B selectivity is concentrated in the youngest family rather than spread across old ones.</p><span class="stat">+1.41 vs +0.33 log units; 0% → 17% of new compounds</span></div>
+    </div>
+    <h3>What this means for a project team</h3>
+    <ul>
+      <li>A chemical-space map shows at a glance where a new series sits, which families it resembles and how those families performed.</li>
+      <li>Efficiency metrics (LE, LLE) should be reported next to potency: they separate genuinely better chemistry from bigger molecules.</li>
+      <li>The same pipeline, rerun on a company's own compounds, gives a quick and explainable portfolio review.</li>
+    </ul>
+  </section>
+
+  <section class="part" id="limits">
+    <div class="part-head"><span class="num">12</span><h2>Limitations</h2></div>
+    <ul>
+      <li>k-means needs k in advance and assumes compact groups; chemical space is a continuum, so families overlap (silhouette about 0.1). Other methods (Butina clustering on Tanimoto, hierarchical clustering, HDBSCAN) may split it differently.</li>
+      <li>PCA keeps 51.4% of the fingerprint variation; t-SNE distorts distances between distant islands.</li>
+      <li>Potency is the best median on any PDE4 target, mixing IC50 and Ki and different assay conditions across papers.</li>
+      <li>Compounds are grouped by papers and patents; large series can dominate a family's statistics, notably for selectivity.</li>
+      <li>Inhaled programmes were identified from paper titles only (7 papers).</li>
+    </ul>
+    <h3>Next steps</h3>
+    <ol>
+      <li>Compare k-means with Butina and HDBSCAN clustering, and report agreement.</li>
+      <li>Repeat the selectivity comparison with one value per paper.</li>
+      <li>Find activity cliffs: pairs of very similar compounds (Tanimoto ≥ 0.8) with very different potency.</li>
+      <li>Train a simple model to predict potency from fingerprints, with scaffold-based splits to avoid leakage.</li>
+    </ol>
+  </section>
+
+  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0. Results come from <code>src/pde4_chemical_space.py</code> (fixed seeds) on the project database built from ChEMBL 37; molecule drawings by SmilesDrawer.</p>
+</main>
+
+<div id="molCard" class="mol-card" hidden><b id="molName"></b><span id="molSub"></span><div class="d" id="molDraw"></div><div class="v" id="molVals"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-strict-dist-min@2.35.2/plotly-strict.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/smiles-drawer@2.4.1/dist/smiles-drawer.min.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const isDark = () => { const t = document.documentElement.dataset.theme; return t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches); };
+const NAMED = ["ROFLUMILAST", "TRANIMILAST", "ROLIPRAM", "CILOMILAST", "PICLAMILAST", "APREMILAST", "CRISABOROLE", "ZATOLMILAST", "PF-06445974", "ORISMILAST"];
+const DISPLAY_NAME = { TRANIMILAST: "Tanimilast" };
+
+const QUERIES = {
+  extract: { title: "Extract: one row per PDE4 compound", note: "Best potency, PDE4B and PDE4D values (pivot) and the structure.",
+    chart: { type: "histogram", x: "best_p", color: "" },
+    sql: `SELECT ap.molecule_chembl_id, m.pref_name,
+       MAX(ap.p_median) AS best_p,
+       MAX(CASE WHEN ap.target_name = 'PDE4B' THEN ap.p_median END) AS p_pde4b,
+       MAX(CASE WHEN ap.target_name = 'PDE4D' THEN ap.p_median END) AS p_pde4d,
+       m.canonical_smiles
+FROM activity_potency AS ap
+JOIN molecules AS m ON m.chembl_id = ap.molecule_chembl_id
+WHERE m.canonical_smiles IS NOT NULL
+GROUP BY ap.molecule_chembl_id
+ORDER BY best_p DESC;` },
+  map: { title: "The chemical space map", note: "t-SNE coordinates coloured by family; hover a point in the workbench to see the structure.",
+    chart: { type: "scatter", x: "map_x", y: "map_y", color: "cluster_label" },
+    sql: `SELECT molecule_chembl_id, pref_name, cluster_label,
+       map_x, map_y, best_p
+FROM pde4_chemical_space;` },
+  summary: { title: "Family summary", note: "One row per family from pde4_clusters.",
+    chart: { type: "bar", x: "cluster_label", y: "median_p", agg: "none" },
+    sql: `SELECT cluster, cluster_label, n_molecules,
+       ROUND(median_p, 2) AS median_p,
+       ROUND(100 * share_potent, 1) AS pct_potent,
+       ROUND(median_le, 3) AS median_le,
+       median_first_year,
+       ROUND(median_selectivity_bd, 2) AS median_selectivity_bd
+FROM pde4_clusters
+ORDER BY cluster;` },
+  timeline: { title: "Which families were made when", note: "Counts per period and family; switch the chart colour to cluster_label.",
+    chart: { type: "bar", x: "period", y: "compounds", agg: "sum", color: "cluster_label" },
+    sql: `SELECT CASE WHEN first_year <= 2000 THEN '1980-2000'
+            WHEN first_year <= 2008 THEN '2001-2008'
+            WHEN first_year <= 2014 THEN '2009-2014'
+            ELSE '2015-2025' END AS period,
+       cluster_label, COUNT(*) AS compounds
+FROM pde4_chemical_space
+WHERE first_year IS NOT NULL
+GROUP BY period, cluster_label
+ORDER BY period, compounds DESC;` },
+  selectivity: { title: "PDE4B vs PDE4D selectivity by family", note: "Box plot of selectivity; the statistics panel can run Kruskal-Wallis on it.",
+    chart: { type: "box", y: "selectivity_bd", color: "cluster_label" }, stats: { tab: "group", group: "cluster_label" },
+    sql: `SELECT molecule_chembl_id, pref_name, cluster_label,
+       selectivity_bd, best_p
+FROM pde4_chemical_space
+WHERE selectivity_bd IS NOT NULL;` },
+  efficiency: { title: "Potency vs size", note: "Heavy atoms against potency; efficient families sit high on the left.",
+    chart: { type: "scatter", x: "heavy_atoms", y: "best_p", color: "cluster_label" },
+    sql: `SELECT molecule_chembl_id, pref_name, cluster_label, heavy_atoms,
+       best_p, ROUND(ligand_efficiency, 3) AS ligand_efficiency,
+       ROUND(lipophilic_efficiency, 2) AS lipophilic_efficiency
+FROM pde4_chemical_space
+WHERE heavy_atoms IS NOT NULL;` },
+  named: { title: "Named compounds and their families", note: "Drugs and clinical candidates on the map.",
+    chart: { type: "scatter", x: "mw_freebase", y: "best_p", color: "cluster_label" },
+    sql: `SELECT pref_name, molecule_chembl_id, cluster_label,
+       ROUND(best_p, 2) AS best_p, ROUND(selectivity_bd, 2) AS selectivity_bd,
+       mw_freebase
+FROM pde4_chemical_space
+WHERE pref_name IS NOT NULL
+ORDER BY best_p DESC;` },
+  inhaled: { title: "Inhaled programmes by family", note: "Compounds from papers about inhaled PDE4 inhibitors.",
+    chart: { type: "bar", x: "cluster_label", y: "inhaled_compounds", agg: "none" },
+    sql: `SELECT cluster_label, SUM(inhaled_paper) AS inhaled_compounds,
+       COUNT(*) AS all_compounds
+FROM pde4_chemical_space
+GROUP BY cluster_label
+ORDER BY inhaled_compounds DESC;` },
+};
+
+function sendToWorkbench(q) {
+  try { localStorage.setItem("workbench:pendingQuery", JSON.stringify({ title: `PDE4 map: ${q.title}`.slice(0, 60), sql: q.sql, chart: q.chart || null, stats: q.stats || null })); }
+  catch (_) { /* storage blocked: the workbench opens with its last case */ }
+  location.href = "index.html";
+}
+function queryCard(q) {
+  const card = el("div", "query"), head = el("div", "query-head"), text = el("div");
+  text.append(el("h4", null, q.title), el("p", null, q.note));
+  const pre = el("pre", null, q.sql), btns = el("div", "btns");
+  const copy = el("button", "btn", "Copy"); copy.type = "button";
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(q.sql); copy.textContent = "Copied"; }
+    catch (_) { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copy.textContent = "Selected: press Ctrl+C"; }
+    setTimeout(() => (copy.textContent = "Copy"), 2500);
+  });
+  const run = el("button", "btn primary", "Run in workbench"); run.type = "button";
+  run.addEventListener("click", () => sendToWorkbench(q));
+  btns.append(copy, run); head.append(text, btns); card.append(head, pre);
+  return card;
+}
+document.querySelectorAll(".query[data-q]").forEach((slot) => slot.replaceWith(queryCard(QUERIES[slot.dataset.q])));
+for (const key of ["map", "summary", "timeline", "selectivity", "efficiency", "named", "inhaled"]) $("queryList").append(queryCard(QUERIES[key]));
+
+// ---------- structures ----------
+const molCache = new Map();
+function moleculeSvg(smiles, w = 240, h = 170) {
+  const theme = isDark() ? "dark" : "light", key = `${theme}|${w}|${smiles}`;
+  if (!molCache.has(key)) {
+    let drawn = null;
+    if (window.SmilesDrawer && smiles) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      try { SmilesDrawer.parse(smiles, (tree) => { new SmilesDrawer.SvgDrawer({ width: w, height: h, padding: 8 }).draw(tree, svg, theme); drawn = svg; }, () => {}); }
+      catch (_) { drawn = null; }
+    }
+    molCache.set(key, drawn);
+  }
+  return molCache.get(key);
+}
+
+// ---------- data ----------
+let DATA = null, MODE = "cluster";
+const colorOf = (c) => tok(`--s${((c - 1) % 8) + 1}`);
+const titleCase = (s) => (DISPLAY_NAME[s] || s.toLowerCase().replace(/(^|[\s-])\w/g, (m) => m.toUpperCase()));
+
+function renderKTable() {
+  const body = $("kTable").querySelector("tbody");
+  body.replaceChildren(...DATA.k_selection.map((r) => {
+    const tr = el("tr", r.k === DATA.k ? "chosen" : null);
+    tr.append(el("td", "n", String(r.k) + (r.k === DATA.k ? " (chosen)" : "")), el("td", "n", r.inertia.toFixed(0)),
+      el("td", "n", r.silhouette.toFixed(3)), el("td", "n", r.stability_ari.toFixed(2)));
+    return tr;
+  }));
+}
+
+function renderGallery() {
+  const g = $("gallery"); g.replaceChildren();
+  for (const c of DATA.clusters) {
+    const card = el("article", "ccard"); card.style.setProperty("--c", colorOf(c.cluster));
+    const head = el("header"); head.append(el("span", "cnum", String(c.cluster)), el("h4", null, c.cluster_label));
+    const draw = el("div", "draw"); const svg = moleculeSvg(c.medoid_smiles, 220, 150);
+    if (svg) draw.append(svg.cloneNode(true));
+    const dl = el("dl");
+    const row = (k, v) => { dl.append(el("dt", null, k), el("dd", null, v)); };
+    row("Compounds", c.n_molecules.toLocaleString("en-US"));
+    row("Median pIC50", c.median_p.toFixed(2));
+    row("Potent (≤ 10 nM)", `${Math.round(c.share_potent * 100)}%`);
+    row("Median MW · ALogP", `${Math.round(c.median_mw)} · ${c.median_alogp.toFixed(1)}`);
+    row("Ligand efficiency", c.median_le.toFixed(3));
+    row("Median first year", String(Math.round(c.median_first_year)));
+    row("PDE4B − PDE4D", c.median_selectivity_bd == null ? "–" : `${c.median_selectivity_bd >= 0 ? "+" : ""}${c.median_selectivity_bd.toFixed(2)} (n=${c.n_selectivity})`);
+    if (c.top_motif) row("Top motif", `${c.top_motif} ${Math.round(c.motif_share * 100)}%`);
+    const named = el("p", "named", c.named_compounds ? `Named: ${c.named_compounds}` : "No named compounds");
+    const medoid = el("p", "medoid", `Medoid ${c.medoid_chembl_id}`);
+    const btn = el("button", "btn", "Open in workbench"); btn.type = "button";
+    btn.addEventListener("click", () => sendToWorkbench({ title: `Family ${c.cluster}`, chart: { type: "scatter", x: "heavy_atoms", y: "best_p", color: "" },
+      sql: `SELECT molecule_chembl_id, pref_name, best_p, heavy_atoms, mw_freebase, alogp,\n       ROUND(ligand_efficiency, 3) AS ligand_efficiency, first_year\nFROM pde4_chemical_space\nWHERE cluster = ${c.cluster}\nORDER BY best_p DESC;` }));
+    card.append(head, draw, dl, named, medoid, btn);
+    g.append(card);
+  }
+}
+
+function renderMap() {
+  const P = DATA.points, f = Object.fromEntries(DATA.fields.map((n, i) => [n, i]));
+  const surface = tok("--surface"), fg2 = tok("--fg-2"), muted = tok("--muted"), line = tok("--line");
+  const base = (pts) => ({ x: pts.map((p) => p[f.x]), y: pts.map((p) => p[f.y]), text: pts.map((p) => p[f.name] || p[f.chembl_id]),
+    customdata: pts.map((p) => [p[f.smiles], p[f.chembl_id], p[f.best_p], p[f.cluster]]), hoverinfo: "none", type: "scattergl", mode: "markers" });
+  let traces;
+  if (MODE === "cluster") {
+    traces = DATA.clusters.map((c) => ({ ...base(P.filter((p) => p[f.cluster] === c.cluster)), name: `${c.cluster} · ${c.cluster_label}`,
+      marker: { size: 5, color: colorOf(c.cluster), opacity: 0.8 } }));
+  } else {
+    // Sequential colour: most potent (or most recent) points drawn last, on top.
+    const field = MODE === "potency" ? f.best_p : f.first_year;
+    const sorted = P.filter((p) => p[field] != null).sort((a, b) => a[field] - b[field]);
+    traces = [{ ...base(sorted), name: MODE === "potency" ? "best pIC50" : "first year", showlegend: false,
+      marker: { size: 5, opacity: 0.85, color: sorted.map((p) => p[field]),
+        colorscale: MODE === "potency" ? [[0, "#cde2fb"], [0.5, "#5598e7"], [1, "#0d366b"]] : [[0, "#fde3cf"], [0.5, "#eb6834"], [1, "#7a2a0c"]],
+        cmin: MODE === "potency" ? 4 : 1985, cmax: MODE === "potency" ? 10 : 2025,
+        colorbar: { title: { text: MODE === "potency" ? "pIC50" : "year", font: { color: fg2 } }, tickfont: { color: muted }, thickness: 12, outlinewidth: 0 } } }];
+  }
+  if ($("showInhaled").checked) {
+    const inh = P.filter((p) => p[f.inhaled_paper] === 1);
+    traces.push({ ...base(inh), name: "inhaled programmes", marker: { size: 9, color: "rgba(0,0,0,0)", line: { width: 1.5, color: tok("--fg") } } });
+  }
+  const annotations = [];
+  if ($("showNamed").checked) {
+    for (const p of P) if (NAMED.includes(p[f.name])) annotations.push({ x: p[f.x], y: p[f.y], text: titleCase(p[f.name]), showarrow: true, arrowhead: 0, arrowwidth: 1,
+      arrowcolor: fg2, ax: 18, ay: -22, font: { size: 11, color: tok("--fg") }, bgcolor: surface, bordercolor: line, borderpad: 2 });
+  }
+  Plotly.react("map", traces, {
+    paper_bgcolor: surface, plot_bgcolor: surface, margin: { l: 10, r: 10, t: 10, b: 10 }, annotations,
+    xaxis: { visible: false }, yaxis: { visible: false, scaleanchor: "x" },
+    legend: { orientation: "v", x: 1, xanchor: "right", y: 1, bgcolor: surface, bordercolor: line, borderwidth: 1, font: { color: tok("--fg"), size: 11 } },
+    showlegend: MODE === "cluster" || $("showInhaled").checked, dragmode: "pan",
+  }, { responsive: true, displaylogo: false, scrollZoom: true, modeBarButtonsToRemove: ["toImage", "lasso2d", "select2d"] });
+  attachHover($("map"));
+  $("mapNote").textContent = `${DATA.n.toLocaleString("en-US")} compounds · ${DATA.k} k-means families on 50 principal components (${(DATA.pca_variance * 100).toFixed(1)}% of the fingerprint variance), laid out with t-SNE. Scroll to zoom, drag to pan.`;
+}
+
+// ---------- hover card ----------
+function showCard(pt, e, div) {
+  if (!pt || !Array.isArray(pt.customdata)) return hideCard();
+  const [smiles, id, p, cluster] = pt.customdata;
+  const card = $("molCard");
+  $("molName").textContent = pt.text && pt.text !== id ? titleCase(String(pt.text)) : id;
+  const c = DATA.clusters.find((x) => x.cluster === cluster);
+  $("molSub").textContent = `${id}${c ? ` · family ${c.cluster}: ${c.cluster_label}` : ""}`;
+  const svg = moleculeSvg(smiles); $("molDraw").replaceChildren(...(svg ? [svg.cloneNode(true)] : []));
+  $("molVals").textContent = `best pIC50 ${Number(p).toFixed(2)}`;
+  card.hidden = false;
+  const rect = div.getBoundingClientRect();
+  const x = e?.clientX ?? rect.left + 20, y = e?.clientY ?? rect.top + 20;
+  let left = x + 18, top = y + 18;
+  if (left + card.offsetWidth > innerWidth - 8) left = x - card.offsetWidth - 18;
+  if (top + card.offsetHeight > innerHeight - 8) top = y - card.offsetHeight - 18;
+  card.style.left = `${Math.max(8, left)}px`; card.style.top = `${Math.max(8, top)}px`;
+}
+function hideCard() { $("molCard").hidden = true; }
+function nearest(div, cx, cy) {
+  const fl = div._fullLayout; if (!fl?.xaxis) return null;
+  const r = div.getBoundingClientRect(), xa = fl.xaxis, ya = fl.yaxis;
+  let best = null, bd = 24 * 24;
+  for (const tr of div.data) {
+    if (!Array.isArray(tr.customdata) || tr.visible === "legendonly") continue;
+    for (let i = 0; i < tr.x.length; i++) {
+      const dx = r.left + xa._offset + xa.l2p(tr.x[i]) - cx, dy = r.top + ya._offset + ya.l2p(tr.y[i]) - cy, dd = dx * dx + dy * dy;
+      if (dd < bd) { bd = dd; best = { customdata: tr.customdata[i], text: tr.text[i] }; }
+    }
+  }
+  return best;
+}
+function attachHover(div) {
+  if (div._hover) return; div._hover = true;
+  div.on("plotly_hover", (ev) => showCard(ev.points?.[0], ev.event, div));
+  div.on("plotly_unhover", hideCard);
+  div.addEventListener("mouseleave", hideCard);
+  div.addEventListener("pointerup", (e) => { if (e.pointerType !== "mouse") { const pt = nearest(div, e.clientX, e.clientY); pt ? showCard(pt, e, div) : hideCard(); } });
+}
+addEventListener("scroll", hideCard, { passive: true });
+
+// ---------- boot ----------
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+  MODE = b.dataset.mode;
+  document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  if (DATA) renderMap();
+}));
+$("showNamed").addEventListener("change", () => DATA && renderMap());
+$("showInhaled").addEventListener("change", () => DATA && renderMap());
+const rerender = () => { if (DATA) { molCache.clear(); renderMap(); renderGallery(); } };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);
+new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+(async () => {
+  try {
+    const res = await fetch("pde4-map.json");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    DATA = await res.json();
+  } catch (e) {
+    $("mapNote").textContent = `The map data could not be loaded (${e.message}). Serve the app folder over HTTP.`;
+    return;
+  }
+  renderKTable(); renderGallery(); renderMap();
+})();
+</script>
+</body>
+</html>

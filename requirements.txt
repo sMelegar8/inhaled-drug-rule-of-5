@@ -7,3 +7,4 @@ nbclient>=0.10
 ipykernel>=6.29
 rdkit>=2024.9
 scipy>=1.13
+scikit-learn>=1.5

@@ -33,6 +33,11 @@
    "id": "ledger",
    "title": "Cleaning ledger",
    "text": "Records every cleaning rule and every excluded record (step 03)."
+  },
+  {
+   "id": "analysis",
+   "title": "Analysis outputs",
+   "text": "Results of the PDE4 chemical space model: fingerprints, k-means and t-SNE (step 04)."
   }
  ],
  "glossary": [
@@ -2988,6 +2993,719 @@
      ]
     }
    ]
+  },
+  {
+   "name": "pde4_chemical_space",
+   "kind": "table",
+   "rows": 5211,
+   "layer": "analysis",
+   "built_by": "src/pde4_chemical_space.py",
+   "purpose": "Every PDE4 compound with a structure and a clean potency, placed on a chemical space map and assigned to one of eight k-means families of similar substructures.",
+   "grain": "one compound",
+   "key": "molecule_chembl_id",
+   "use_for": "Plotting the chemical space (map_x vs map_y), comparing families, finding efficient or selective compounds.",
+   "watch_out": "map_x and map_y are t-SNE coordinates without units: only neighbourhoods are meaningful, not distances between far-apart islands. Families are model groupings, not natural categories.",
+   "example": "SELECT cluster_label, COUNT(*) AS compounds, ROUND(AVG(best_p), 2) AS mean_p\nFROM pde4_chemical_space\nGROUP BY cluster_label\nORDER BY mean_p DESC;",
+   "columns": [
+    {
+     "name": "molecule_chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the tested molecule. Joins to molecules.chembl_id.",
+     "unit": "",
+     "filled": 5211,
+     "distinct": 5211,
+     "total": 5211,
+     "examples": [
+      "CHEMBL100011",
+      "CHEMBL101301",
+      "CHEMBL101368"
+     ]
+    },
+    {
+     "name": "pref_name",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Preferred name in ChEMBL, usually the international non-proprietary name (INN) in capitals. Empty for most research compounds.",
+     "unit": "",
+     "filled": 99,
+     "distinct": 99,
+     "total": 5211,
+     "examples": [
+      "STREPTONIGRIN",
+      "SILMITASERTIB",
+      "OMIPALISIB"
+     ]
+    },
+    {
+     "name": "cluster",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "k-means family number, 1-8, ordered by size (1 = largest).",
+     "unit": "",
+     "filled": 5211,
+     "distinct": 8,
+     "total": 5211,
+     "min": 1,
+     "median": 3,
+     "max": 8
+    },
+    {
+     "name": "cluster_label",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Chemical name of the family, e.g. 'Roflumilast type (difluoromethoxy catechol)'.",
+     "unit": "",
+     "filled": 5211,
+     "distinct": 8,
+     "total": 5211,
+     "top": [
+      [
+       "Catechol diethers, newer variants",
+       1229
+      ],
+      [
+       "Diverse heteroaryl amides",
+       1135
+      ],
+      [
+       "Purine and cAMP-like heterocycles",
+       1065
+      ],
+      [
+       "Classic catechol diethers (rolipram type)",
+       550
+      ],
+      [
+       "Aza-bicyclic carboxamides",
+       436
+      ],
+      [
+       "Roflumilast type (difluoromethoxy catechol)",
+       342
+      ]
+     ]
+    },
+    {
+     "name": "map_x",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Horizontal position on the t-SNE map. Has no unit; nearby points are similar structures.",
+     "unit": "",
+     "filled": 5211,
+     "distinct": 4868,
+     "total": 5211,
+     "min": -84.56300354003906,
+     "median": 1.0640000104904175,
+     "max": 73.60399627685547
+    },
+    {
+     "name": "map_y",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Vertical position on the t-SNE map.",
+     "unit": "",
+     "filled": 5211,
+     "distinct": 4842,
+     "total": 5211,
+     "min": -75.69999694824219,
+     "median": 0.531000018119812,
+     "max": 76.80400085449219
+    },
+    {
+     "name": "best_p",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Highest median pIC50 or pKi of the compound over the PDE4 targets.",
+     "unit": "log units",
+     "filled": 5211,
+     "distinct": 2038,
+     "total": 5211,
+     "min": 4.0,
+     "median": 6.655607726314889,
+     "max": 11.0
+    },
+    {
+     "name": "p_pde4b",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median potency on PDE4B, when measured.",
+     "unit": "log units",
+     "filled": 2377,
+     "distinct": 1274,
+     "total": 5211,
+     "min": 4.0,
+     "median": 6.853871964321762,
+     "max": 11.0
+    },
+    {
+     "name": "p_pde4d",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median potency on PDE4D, when measured.",
+     "unit": "log units",
+     "filled": 1561,
+     "distinct": 1019,
+     "total": 5211,
+     "min": 4.0,
+     "median": 6.207608310501746,
+     "max": 10.700057099977233
+    },
+    {
+     "name": "selectivity_bd",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "p_pde4b - p_pde4d: +1 means ten-fold more potent on PDE4B (the isoform linked to anti-inflammatory effects), -1 ten-fold on PDE4D (linked to nausea).",
+     "unit": "log units",
+     "filled": 675,
+     "distinct": 628,
+     "total": 5211,
+     "min": -2.6197887582883936,
+     "median": 0.6078895349886864,
+     "max": 2.986211715514367
+    },
+    {
+     "name": "mw_freebase",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Molecular weight of the parent molecule without its salt.",
+     "unit": "Da (g/mol)",
+     "filled": 5211,
+     "distinct": 3002,
+     "total": 5211,
+     "min": 146.15,
+     "median": 396.5,
+     "max": 1447.71
+    },
+    {
+     "name": "alogp",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Calculated octanol-water partition coefficient (Crippen ALogP): how much the molecule prefers fat to water. Higher = more lipophilic.",
+     "unit": "log units",
+     "filled": 5144,
+     "distinct": 726,
+     "total": 5211,
+     "min": -2.88,
+     "median": 3.77,
+     "max": 9.43
+    },
+    {
+     "name": "heavy_atoms",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of non-hydrogen atoms. A size measure used for ligand efficiency.",
+     "unit": "count",
+     "filled": 5144,
+     "distinct": 50,
+     "total": 5211,
+     "min": 11,
+     "median": 28.0,
+     "max": 68
+    },
+    {
+     "name": "ligand_efficiency",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Potency per heavy atom: 1.37 x best_p / heavy_atoms. About 0.3 or more is often considered good.",
+     "unit": "kcal/mol per heavy atom",
+     "filled": 5144,
+     "distinct": 4304,
+     "total": 5211,
+     "min": 0.11371321815952798,
+     "median": 0.3225559042935853,
+     "max": 0.8457240390978723
+    },
+    {
+     "name": "lipophilic_efficiency",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "best_p - alogp (LLE): potency not explained by lipophilicity. 5 or more is often quoted for good candidates.",
+     "unit": "log units",
+     "filled": 5144,
+     "distinct": 4964,
+     "total": 5211,
+     "min": -3.3208520116421454,
+     "median": 2.8882611782735026,
+     "max": 9.680120913598763
+    },
+    {
+     "name": "first_year",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Year of the first paper or patent reporting a clean measurement of the compound.",
+     "unit": "year",
+     "filled": 5211,
+     "distinct": 40,
+     "total": 5211,
+     "min": 1980,
+     "median": 2013,
+     "max": 2025
+    },
+    {
+     "name": "n_documents",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of papers or patents reporting clean measurements.",
+     "unit": "count",
+     "filled": 5211,
+     "distinct": 16,
+     "total": 5211,
+     "min": 1,
+     "median": 1,
+     "max": 113
+    },
+    {
+     "name": "inhaled_paper",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "1 if the compound appears in a paper whose title is about inhaled PDE4 inhibitors.",
+     "unit": "0/1",
+     "filled": 5211,
+     "distinct": 2,
+     "total": 5211,
+     "top": [
+      [
+       0,
+       4963
+      ],
+      [
+       1,
+       248
+      ]
+     ]
+    },
+    {
+     "name": "is_medoid",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "1 for the family's medoid: the real compound closest to the k-means centre.",
+     "unit": "0/1",
+     "filled": 5211,
+     "distinct": 2,
+     "total": 5211,
+     "top": [
+      [
+       0,
+       5203
+      ],
+      [
+       1,
+       8
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "pde4_clusters",
+   "kind": "table",
+   "rows": 8,
+   "layer": "analysis",
+   "built_by": "src/pde4_chemical_space.py",
+   "purpose": "One summary row per k-means family: size, potency, properties, history, selectivity, a representative molecule and the named compounds.",
+   "grain": "one family (cluster)",
+   "key": "cluster",
+   "use_for": "Comparing chemical families at a glance; the medoid is the structure to show for each family.",
+   "watch_out": "Names were assigned by reading each family's motifs and medoid; medians hide the spread inside loose families (2 and 3).",
+   "example": "SELECT cluster, cluster_label, n_molecules, ROUND(median_p, 2) AS median_p,\n       ROUND(100 * share_potent, 1) AS pct_potent\nFROM pde4_clusters\nORDER BY cluster;",
+   "columns": [
+    {
+     "name": "cluster",
+     "type": "INTEGER",
+     "pk": true,
+     "meaning": "Family number, 1-8.",
+     "unit": "",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 1,
+     "median": 4.5,
+     "max": 8
+    },
+    {
+     "name": "cluster_label",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Chemical name of the family.",
+     "unit": "",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "top": [
+      [
+       "Anilino-aryl-pyrimidines",
+       1
+      ],
+      [
+       "Aryl-tetrahydrophthalazinones",
+       1
+      ],
+      [
+       "Aza-bicyclic carboxamides",
+       1
+      ],
+      [
+       "Catechol diethers, newer variants",
+       1
+      ],
+      [
+       "Classic catechol diethers (rolipram type)",
+       1
+      ],
+      [
+       "Diverse heteroaryl amides",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "top_motif",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Most enriched substructure motif with at least 40% prevalence; empty for mixed families.",
+     "unit": "",
+     "filled": 6,
+     "distinct": 4,
+     "total": 8,
+     "top": [
+      [
+       "catechol diether",
+       3
+      ],
+      [
+       "carboxylic acid",
+       1
+      ],
+      [
+       "difluoromethoxy aryl",
+       1
+      ],
+      [
+       "pyrimidine",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "motif_share",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Share of the family carrying top_motif.",
+     "unit": "0-1",
+     "filled": 6,
+     "distinct": 6,
+     "total": 8,
+     "min": 0.49483568075117373,
+     "median": 0.7144375408763898,
+     "max": 0.9970760233918129
+    },
+    {
+     "name": "n_molecules",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Number of compounds in the family.",
+     "unit": "count",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 176,
+     "median": 493.0,
+     "max": 1229
+    },
+    {
+     "name": "median_p",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median best_p of the family.",
+     "unit": "log units",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 5.6020599913279625,
+     "median": 6.913529196767072,
+     "max": 7.795227859451799
+    },
+    {
+     "name": "share_potent",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Share of compounds with best_p >= 8 (IC50 <= 10 nM).",
+     "unit": "0-1",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 0.07605633802816901,
+     "median": 0.2412315445744006,
+     "max": 0.43884892086330934
+    },
+    {
+     "name": "median_mw",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median molecular weight.",
+     "unit": "Da",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 342.1,
+     "median": 398.9425,
+     "max": 475.48
+    },
+    {
+     "name": "median_alogp",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median ALogP.",
+     "unit": "log units",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 3.0,
+     "median": 4.029999999999999,
+     "max": 5.16
+    },
+    {
+     "name": "median_le",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median ligand efficiency.",
+     "unit": "kcal/mol per heavy atom",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 0.3036124793664769,
+     "median": 0.3221050343092454,
+     "max": 0.3936236418358956
+    },
+    {
+     "name": "median_first_year",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median year in which the family's compounds were first reported.",
+     "unit": "year",
+     "filled": 8,
+     "distinct": 6,
+     "total": 8,
+     "min": 2002.0,
+     "median": 2013.5,
+     "max": 2017.0
+    },
+    {
+     "name": "n_selectivity",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Compounds measured on both PDE4B and PDE4D.",
+     "unit": "count",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 5,
+     "median": 62.0,
+     "max": 217
+    },
+    {
+     "name": "median_selectivity_bd",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Median PDE4B - PDE4D difference.",
+     "unit": "log units",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": -1.5985994592184554,
+     "median": 0.25130373885172697,
+     "max": 1.4076272760751696
+    },
+    {
+     "name": "n_inhaled_paper",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Compounds from papers about inhaled PDE4 inhibitors.",
+     "unit": "count",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "min": 0,
+     "median": 13.5,
+     "max": 115
+    },
+    {
+     "name": "medoid_chembl_id",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "ChEMBL ID of the medoid, the most central real compound of the family.",
+     "unit": "",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "top": [
+      [
+       "CHEMBL2385565",
+       1
+      ],
+      [
+       "CHEMBL255610",
+       1
+      ],
+      [
+       "CHEMBL313982",
+       1
+      ],
+      [
+       "CHEMBL3545215",
+       1
+      ],
+      [
+       "CHEMBL4534321",
+       1
+      ],
+      [
+       "CHEMBL4637027",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "medoid_smiles",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Structure of the medoid as SMILES.",
+     "unit": "",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "top": [
+      [
+       "CC(=O)Nc1cccc(-c2ccn(C(Cc3cc[n+]([O-])cc3)c3ccc(OC(F)F)c(OCC4CC4)c3)n2)c1",
+       1
+      ],
+      [
+       "CC(C)c1cc(-c2ccc3c(c2)[C@H](N)CO3)cc([C@H](O)Cn2ccc3cccc(C(=O)O)c32)c1",
+       1
+      ],
+      [
+       "CCn1c(C(=O)N(C2CC2)C2CC2)cc2c3c(ncn3C)c(Nc3cc(C)n(C)n3)nc21",
+       1
+      ],
+      [
+       "COC(=O)CCc1ccc(OC)c2c1[C@H](C(=O)OC)[C@@H](c1ccc(OC)c(OC)c1)O2",
+       1
+      ],
+      [
+       "COc1ccc(/C=C2\\SC(=S)N(CC(=O)O)C2=O)cc1OC1CCCC1",
+       1
+      ],
+      [
+       "COc1ccc(C2=NN(C3C4CC5CC(C4)CC3C5)C(=O)[C@@H]3CC=CC[C@H]23)cc1OC",
+       1
+      ]
+     ]
+    },
+    {
+     "name": "named_compounds",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Named compounds in the family, most potent first (up to 8).",
+     "unit": "",
+     "filled": 8,
+     "distinct": 8,
+     "total": 8,
+     "top": [
+      [
+       "",
+       1
+      ],
+      [
+       "Denbufylline, Indolidan, Lixazinone, Tofimilast, Sibenadet, Nitraquazone, Lenrispodun, Lenrispodun Phosphate",
+       1
+      ],
+      [
+       "Idrebormilast, Lotamilast, Pumafentrine, Apremilast, Sch-351591, Tetomilast, Mufemilast, Trequinsin",
+       1
+      ],
+      [
+       "Piclamilast, Cdp840, Rolipram, Cilomilast, (-)-Rolipram, Ht-0712, Pseudothiohydantoin, Filaminast",
+       1
+      ],
+      [
+       "T-2585.Hcl, Elbimilast, Pyridopyridazinone, Awd-12-281, Ibudilast, Crisaborole, Cudraflavone C, Kuwanon C",
+       1
+      ],
+      [
+       "Tranimilast, Roflumilast, Revamilast, Orismilast, Oglemilast, Zardaverine",
+       1
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "pde4_k_selection",
+   "kind": "table",
+   "rows": 7,
+   "layer": "analysis",
+   "built_by": "src/pde4_chemical_space.py",
+   "purpose": "How k-means behaved for each number of clusters tried: the evidence for choosing k = 8.",
+   "grain": "one value of k",
+   "key": "k",
+   "use_for": "Plotting the elbow, silhouette and stability curves.",
+   "watch_out": "Silhouettes are low at every k because chemical families overlap; stability matters as much as separation.",
+   "example": "SELECT k, ROUND(inertia, 0) AS inertia, ROUND(silhouette, 3) AS silhouette,\n       ROUND(stability_ari, 2) AS stability\nFROM pde4_k_selection\nORDER BY k;",
+   "columns": [
+    {
+     "name": "k",
+     "type": "INTEGER",
+     "pk": true,
+     "meaning": "Number of clusters tried.",
+     "unit": "",
+     "filled": 7,
+     "distinct": 7,
+     "total": 7,
+     "min": 4,
+     "median": 10,
+     "max": 16
+    },
+    {
+     "name": "inertia",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Within-cluster sum of squared distances to the centres; always falls as k grows.",
+     "unit": "",
+     "filled": 7,
+     "distinct": 7,
+     "total": 7,
+     "min": 1310.7574462890625,
+     "median": 1474.880859375,
+     "max": 1746.1898193359375
+    },
+    {
+     "name": "silhouette",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Mean silhouette on a 3,000-compound sample: -1 to 1, higher = better separated.",
+     "unit": "",
+     "filled": 7,
+     "distinct": 7,
+     "total": 7,
+     "min": 0.06843173503875732,
+     "median": 0.11703067272901535,
+     "max": 0.1504228711128235
+    },
+    {
+     "name": "stability_ari",
+     "type": "REAL",
+     "pk": false,
+     "meaning": "Mean adjusted Rand index between runs with 5 random seeds: 1 = identical groupings.",
+     "unit": "0-1",
+     "filled": 7,
+     "distinct": 7,
+     "total": 7,
+     "min": 0.48923754911024436,
+     "median": 0.6435161008583199,
+     "max": 0.7965682197143003
+    }
+   ]
   }
  ],
  "joins": [
@@ -3142,6 +3860,30 @@
    "to_col": "rule_id",
    "filled": 3312,
    "matched": 3312
+  },
+  {
+   "from": "pde4_chemical_space",
+   "from_col": "molecule_chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 5211,
+   "matched": 5211
+  },
+  {
+   "from": "pde4_chemical_space",
+   "from_col": "cluster",
+   "to": "pde4_clusters",
+   "to_col": "cluster",
+   "filled": 5211,
+   "matched": 5211
+  },
+  {
+   "from": "pde4_clusters",
+   "from_col": "medoid_chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 8,
+   "matched": 8
   }
  ]
 }

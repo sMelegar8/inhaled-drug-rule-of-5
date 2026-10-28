@@ -12,7 +12,7 @@
 :root {
   --bg: #f3f5f4; --surface: #fcfcfb; --surface-2: #e9edeb; --fg: #111614; --fg-2: #4a524e; --muted: #7b837f;
   --line: #d9dfdc; --accent: #0b6a72; --accent-soft: #d6ebec; --warn: #8a5a00; --warn-soft: #fbefd2; --mark: #fde9a8;
-  --raw: #2a78d6; --integ: #6250d6; --clean: #1baf7a; --ledger: #eb6834; --prov: #7b837f;
+  --raw: #2a78d6; --integ: #6250d6; --clean: #1baf7a; --ledger: #eb6834; --prov: #7b837f; --analysis: #e87ba4;
   --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
@@ -21,13 +21,13 @@
   :root:not([data-theme="light"]) {
     --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
     --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14; --mark: #5a4a12;
-    --raw: #3987e5; --integ: #9085e9; --clean: #199e70; --ledger: #d95926; --prov: #8a928e; color-scheme: dark;
+    --raw: #3987e5; --integ: #9085e9; --clean: #199e70; --ledger: #d95926; --prov: #8a928e; --analysis: #d55181; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
   --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14; --mark: #5a4a12;
-  --raw: #3987e5; --integ: #9085e9; --clean: #199e70; --ledger: #d95926; --prov: #8a928e; color-scheme: dark;
+  --raw: #3987e5; --integ: #9085e9; --clean: #199e70; --ledger: #d95926; --prov: #8a928e; --analysis: #d55181; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -152,7 +152,8 @@ pre { margin: 0; font: 12.5px/1.55 var(--font-mono); background: var(--surface);
 <nav class="sitenav" aria-label="Project pages">
   <span class="sitenav-brand">Inhalation Workbench</span>
   <a href="index.html">SQL workbench</a>
-  <a href="case-study.html">Case study</a>
+  <a href="case-study.html">Rule of 5 study</a>
+  <a href="case-study-pde4.html">PDE4 chemical space</a>
   <a href="data-dictionary.html" aria-current="page">Data dictionary</a>
   <a href="how-it-works.html">How it works</a>
   <a href="backlog.html">Backlog</a>
@@ -196,7 +197,7 @@ pre { margin: 0; font: 12.5px/1.55 var(--font-mono); background: var(--surface);
 </div>
 
 <script>
-const LANE = { provenance: "--prov", raw_chembl: "--raw", raw_fda: "--raw", integration: "--integ", clean: "--clean", ledger: "--ledger" };
+const LANE = { provenance: "--prov", raw_chembl: "--raw", raw_fda: "--raw", integration: "--integ", clean: "--clean", ledger: "--ledger", analysis: "--analysis" };
 const nf = new Intl.NumberFormat("en-US");
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const fmt = (v) => {

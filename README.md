@@ -79,6 +79,12 @@ The [case study](https://smelegar8.github.io/inhaled-drug-rule-of-5/case-study.h
 the analysis as a portfolio project: problem, questions, data, methods, key queries,
 results, conclusion and limitations.
 
+A second case study, [PDE4 chemical space](https://smelegar8.github.io/inhaled-drug-rule-of-5/case-study-pde4.html),
+groups 5,211 PDE4 inhibitors into eight chemical families with Morgan fingerprints, PCA and
+k-means, maps them with t-SNE and compares the families' potency, efficiency, selectivity
+and history. It doubles as a compendium of the concepts used (fingerprints, Tanimoto, PCA,
+k-means, silhouette, stability, t-SNE, ligand efficiency).
+
 The [data dictionary](https://smelegar8.github.io/inhaled-drug-rule-of-5/data-dictionary.html)
 explains every table and column (what one row is, keys, joins and their match rate, fill
 rates, value ranges) and opens each example query in the workbench. It is generated from
@@ -97,6 +103,7 @@ pip install -r requirements.txt
 python src/01_download_data.py      # raw files -> data/raw/ (about 63 MB)
 python src/02_build_database.py     # SQLite -> data/processed/ + app copy
 python src/cleaning.py              # cleaned tables + exclusion ledger
+python src/pde4_chemical_space.py  # PDE4 families (RDKit, scikit-learn) -> tables, map, figures
 python src/build_data_dictionary.py # app/data-dictionary.json from the database
 python src/explore_trends.py        # time trends -> reports/
 python src/explore_chemistry.py     # structural trends (RDKit) -> reports/
