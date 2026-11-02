@@ -36,6 +36,16 @@ approved by the FDA.
 PDE4B over PDE4D selectivity also rose over time, but at paper level the trend is
 borderline (p = 0.051), so I report it as a lead, not a result.
 
+A sensitivity analysis decides what belongs to the route rather than to the
+therapeutic classes that happen to be inhaled. Repeating the group comparison on
+the 29 drugs whose ATC code says they treat airway disease, only two differences
+survive: H-bond donors (r +0.48 to +0.35, p = 0.001) and QED drug-likeness
+(-0.33 to -0.24, p = 0.03). Polar surface area falls to +0.08 (p = 0.49) and
+ALogP to +0.02 (p = 0.82), because those two are carried by a handful of very
+polar inhaled antibiotics, sugars and chelators.
+
+![Sensitivity of the group comparison](reports/figures/sensitivity_by_class.png)
+
 ![Five structural trends](reports/figures/chemistry_trends.png)
 
 ## What this project shows
@@ -105,6 +115,7 @@ python src/02_build_database.py     # SQLite -> data/processed/ + app copy
 python src/cleaning.py              # cleaned tables + exclusion ledger
 python src/pde4_chemical_space.py  # PDE4 families (RDKit, scikit-learn) -> tables, map, figures
 python src/build_data_dictionary.py # app/data-dictionary.json from the database
+python src/compare_inhaled_oral.py  # inhaled vs oral + sensitivity analysis -> reports/
 python src/explore_trends.py        # time trends -> reports/
 python src/explore_chemistry.py     # structural trends (RDKit) -> reports/
 python tests/validate_stats.py      # app statistics vs numpy/pandas/scipy

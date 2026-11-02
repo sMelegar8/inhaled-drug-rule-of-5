@@ -1,0 +1,81 @@
+scenario,why,property,label,n_inhaled,r,p,median_inhaled,median_oral
+All inhaled drugs,the published comparison,hbd,H-bond donors,46,0.4763184743368387,1.6232829622212786e-08,3.5,2.0
+All inhaled drugs,the published comparison,qed_weighted,QED drug-likeness,46,-0.32740150682781355,0.0001650273200478497,0.495,0.62
+All inhaled drugs,the published comparison,aromatic_rings,Aromatic rings,46,-0.2647543556741485,0.0016806131386516575,1.0,2.0
+All inhaled drugs,the published comparison,psa,Polar surface area (Å²),46,0.2548265578402136,0.003370127071646392,90.82,75.68
+All inhaled drugs,the published comparison,hba,H-bond acceptors,46,0.23041908648563814,0.007501625862179182,6.0,4.0
+All inhaled drugs,the published comparison,rtb,Rotatable bonds,46,0.2088761575890754,0.015695101626334144,5.0,5.0
+All inhaled drugs,the published comparison,alogp,ALogP,46,-0.1853515931564903,0.03297339213576859,2.31,2.88
+All inhaled drugs,the published comparison,heavy_atoms,Heavy atoms,46,0.0968058389577775,0.2651586733337771,27.5,25.0
+All inhaled drugs,the published comparison,mw_freebase,Molecular weight (Da),46,0.08579893266363214,0.323660495740575,391.51,349.42
+All inhaled drugs,the published comparison,num_ro5_violations,Rule-of-five violations,46,0.019090409668811814,0.7651907122828585,0.0,0.0
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,hbd,H-bond donors,29,0.3450765591933276,0.0010534089533568753,2.0,2.0
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,qed_weighted,QED drug-likeness,29,-0.23639985061620816,0.029575063270086313,0.54,0.62
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,aromatic_rings,Aromatic rings,29,-0.19911614589817006,0.05868255682986056,1.0,2.0
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,psa,Polar surface area (Å²),29,0.07509647703224198,0.48964208593092207,84.86,75.68
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,hba,H-bond acceptors,29,0.15781775177393254,0.14297172466643263,5.0,4.0
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,rtb,Rotatable bonds,29,0.15009958919457245,0.1649544044577227,4.0,5.0
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,alogp,ALogP,29,0.024617204033362317,0.8209824779696211,2.46,2.88
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,heavy_atoms,Heavy atoms,29,0.1344765342960288,0.215665846735141,29.0,25.0
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,mw_freebase,Molecular weight (Da),29,0.11368728992904265,0.2955389746135042,392.52,349.42
+Respiratory classes only,only drugs whose ATC code says they treat airway disease,num_ro5_violations,Rule-of-five violations,29,0.02113158222332867,0.7914880862917705,0.0,0.0
+Without antimuscarinics,drops the antimuscarinics,hbd,H-bond donors,40,0.5835063176895308,9.998096226069845e-11,4.0,2.0
+Without antimuscarinics,drops the antimuscarinics,qed_weighted,QED drug-likeness,40,-0.3270081227436823,0.00043494926825430816,0.505,0.62
+Without antimuscarinics,drops the antimuscarinics,aromatic_rings,Aromatic rings,40,-0.33720667870036103,0.00018321477815116217,1.0,2.0
+Without antimuscarinics,drops the antimuscarinics,psa,Polar surface area (Å²),40,0.3399593862815884,0.0002553767851902796,92.12,75.68
+Without antimuscarinics,drops the antimuscarinics,hba,H-bond acceptors,40,0.27416516245487355,0.002936974869112773,6.0,4.0
+Without antimuscarinics,drops the antimuscarinics,rtb,Rotatable bonds,40,0.18729693140794224,0.042833220048939594,5.0,5.0
+Without antimuscarinics,drops the antimuscarinics,alogp,ALogP,40,-0.25548285198555953,0.005995015896251456,2.165,2.88
+Without antimuscarinics,drops the antimuscarinics,heavy_atoms,Heavy atoms,40,0.06083032490974727,0.5127773190808743,27.5,25.0
+Without antimuscarinics,drops the antimuscarinics,mw_freebase,Molecular weight (Da),40,0.04932310469314083,0.5958779722498968,388.485,349.42
+Without antimuscarinics,drops the antimuscarinics,num_ro5_violations,Rule-of-five violations,40,0.010988267148014375,0.8723304861698502,0.0,0.0
+Without corticosteroids,drops the corticosteroids,hbd,H-bond donors,38,0.6006317689530687,8.384066604372207e-11,4.0,2.0
+Without corticosteroids,drops the corticosteroids,qed_weighted,QED drug-likeness,38,-0.37578377351320535,8.022294991535347e-05,0.475,0.62
+Without corticosteroids,drops the corticosteroids,aromatic_rings,Aromatic rings,38,-0.166349990499715,0.07176223012288177,1.0,2.0
+Without corticosteroids,drops the corticosteroids,psa,Polar surface area (Å²),38,0.2384571537146114,0.012344594521248933,85.47999999999999,75.68
+Without corticosteroids,drops the corticosteroids,hba,H-bond acceptors,38,0.1721926657799735,0.06840290485041882,5.0,4.0
+Without corticosteroids,drops the corticosteroids,rtb,Rotatable bonds,38,0.28773988219646585,0.002403396915031194,6.0,5.0
+Without corticosteroids,drops the corticosteroids,alogp,ALogP,38,-0.29246627398821967,0.002148498092849078,2.0599999999999996,2.88
+Without corticosteroids,drops the corticosteroids,heavy_atoms,Heavy atoms,38,-0.019475584267528046,0.8381564030706705,25.5,25.0
+Without corticosteroids,drops the corticosteroids,mw_freebase,Molecular weight (Da),38,-0.03194470834125018,0.7376414753784724,352.45000000000005,349.42
+Without corticosteroids,drops the corticosteroids,num_ro5_violations,Rule-of-five violations,38,-0.04781018430552919,0.4929614656186606,0.0,0.0
+Without other inhaled,drops the other inhaled,hbd,H-bond donors,29,0.3450765591933276,0.0010534089533568753,2.0,2.0
+Without other inhaled,drops the other inhaled,qed_weighted,QED drug-likeness,29,-0.23639985061620816,0.029575063270086313,0.54,0.62
+Without other inhaled,drops the other inhaled,aromatic_rings,Aromatic rings,29,-0.19911614589817006,0.05868255682986056,1.0,2.0
+Without other inhaled,drops the other inhaled,psa,Polar surface area (Å²),29,0.07509647703224198,0.48964208593092207,84.86,75.68
+Without other inhaled,drops the other inhaled,hba,H-bond acceptors,29,0.15781775177393254,0.14297172466643263,5.0,4.0
+Without other inhaled,drops the other inhaled,rtb,Rotatable bonds,29,0.15009958919457245,0.1649544044577227,4.0,5.0
+Without other inhaled,drops the other inhaled,alogp,ALogP,29,0.024617204033362317,0.8209824779696211,2.46,2.88
+Without other inhaled,drops the other inhaled,heavy_atoms,Heavy atoms,29,0.1344765342960288,0.215665846735141,29.0,25.0
+Without other inhaled,drops the other inhaled,mw_freebase,Molecular weight (Da),29,0.11368728992904265,0.2955389746135042,392.52,349.42
+Without other inhaled,drops the other inhaled,num_ro5_violations,Rule-of-five violations,29,0.02113158222332867,0.7914880862917705,0.0,0.0
+Without β2-agonists,drops the β2-agonists,hbd,H-bond donors,31,0.30840223593804583,0.002488868605527228,2.0,2.0
+Without β2-agonists,drops the β2-agonists,qed_weighted,QED drug-likeness,31,-0.35373238616513336,0.0007704031481311349,0.46,0.62
+Without β2-agonists,drops the β2-agonists,aromatic_rings,Aromatic rings,31,-0.35329567951554675,0.0005341743192791377,1.0,2.0
+Without β2-agonists,drops the β2-agonists,psa,Polar surface area (Å²),31,0.3331780598579248,0.001538165034301441,93.81,75.68
+Without β2-agonists,drops the β2-agonists,hba,H-bond acceptors,31,0.3132642366367766,0.0026704697985413927,6.0,4.0
+Without β2-agonists,drops the β2-agonists,rtb,Rotatable bonds,31,0.19503318970536854,0.06233942113044322,5.0,5.0
+Without β2-agonists,drops the β2-agonists,alogp,ALogP,31,-0.1599802026318854,0.12833167290570774,2.46,2.88
+Without β2-agonists,drops the β2-agonists,heavy_atoms,Heavy atoms,31,0.2505240479795039,0.0171728384775062,31.0,25.0
+Without β2-agonists,drops the β2-agonists,mw_freebase,Molecular weight (Da),31,0.2511063235122861,0.01698295298526601,430.54,349.42
+Without β2-agonists,drops the β2-agonists,num_ro5_violations,Rule-of-five violations,31,0.1096424828228717,0.15747526455391836,0.0,0.0
+Without also-oral drugs,drops the inhaled drugs that also have oral products,hbd,H-bond donors,35,0.4626869520371326,1.505988728607323e-06,4.0,2.0
+Without also-oral drugs,drops the inhaled drugs that also have oral products,qed_weighted,QED drug-likeness,35,-0.42405879319236717,1.8969358686068488e-05,0.45,0.62
+Without also-oral drugs,drops the inhaled drugs that also have oral products,aromatic_rings,Aromatic rings,35,-0.23009283135636927,0.016706212096982687,1.0,2.0
+Without also-oral drugs,drops the inhaled drugs that also have oral products,psa,Polar surface area (Å²),35,0.3191335740072203,0.0012906698477131075,93.06,75.68
+Without also-oral drugs,drops the inhaled drugs that also have oral products,hba,H-bond acceptors,35,0.3027075812274369,0.002080789764520121,6.0,4.0
+Without also-oral drugs,drops the inhaled drugs that also have oral products,rtb,Rotatable bonds,35,0.29646725116039185,0.0026532796166582767,6.0,5.0
+Without also-oral drugs,drops the inhaled drugs that also have oral products,alogp,ALogP,35,-0.1025528623001547,0.301168537889262,2.42,2.88
+Without also-oral drugs,drops the inhaled drugs that also have oral products,heavy_atoms,Heavy atoms,35,0.23073749355337814,0.01991167646922836,29.0,25.0
+Without also-oral drugs,drops the inhaled drugs that also have oral products,mw_freebase,Molecular weight (Da),35,0.22511603919546164,0.02321314000424406,415.57,349.42
+Without also-oral drugs,drops the inhaled drugs that also have oral products,num_ro5_violations,Rule-of-five violations,35,0.09685404847859713,0.18536591452716344,0.0,0.0
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,hbd,H-bond donors,40,0.4031362815884476,7.774670613959294e-06,3.0,2.0
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,qed_weighted,QED drug-likeness,40,-0.25074458483754514,0.006987728343697648,0.525,0.62
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,aromatic_rings,Aromatic rings,40,-0.1894178700361011,0.035577541310776534,1.0,2.0
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,psa,Polar surface area (Å²),40,0.15521209386281587,0.09503357836948502,85.47999999999999,75.68
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,hba,H-bond acceptors,40,0.15139891696750896,0.10047792153187284,5.0,4.0
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,rtb,Rotatable bonds,40,0.1831001805054151,0.047706174773660945,5.0,5.0
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,alogp,ALogP,40,-0.06365072202166067,0.4936816172290849,2.44,2.88
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,heavy_atoms,Heavy atoms,40,0.11322202166064987,0.22305258041946674,28.0,25.0
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,mw_freebase,Molecular weight (Da),40,0.09537454873646212,0.30502187073843046,391.51,349.42
+Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,num_ro5_violations,Rule-of-five violations,40,-0.04747292418772564,0.48556742798495156,0.0,0.0

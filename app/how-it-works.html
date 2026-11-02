@@ -288,7 +288,7 @@ erDiagram
     <ul>
       <li><strong>Normalised routes of administration</strong>: "INHALATION, ORAL" and "Inhalation, Oral" are split and upper-cased. Inhaled molecules go from 65 to 66.</li>
       <li><strong>ATC codes inherited from salts</strong>: many ATC codes are stored on the salt (e.g. tiotropium bromide, R03BB04) and are assigned to the parent molecule.</li>
-      <li><strong>Exclusive groups</strong>: a molecule with inhaled products goes into the inhaled group even if it also exists as an oral product (15 cases, flagged with <code>also_oral</code> for the sensitivity analysis).</li>
+      <li><strong>Exclusive groups</strong>: a molecule with inhaled products goes into the inhaled group even if it also exists as an oral product (15 cases here, 11 of them still in the analysis set after the later rules, flagged with <code>also_oral</code> for the sensitivity analysis).</li>
     </ul>
     <p>Then six exclusion rules, with a symmetrical logic between the two groups:</p>
     <div class="table-wrap"><table>
@@ -315,7 +315,7 @@ erDiagram
 
   <section class="step" id="s7">
     <div class="step-head"><span class="step-num">07</span><h2>Next steps: statistics and presentation</h2></div>
-    <p>Notebook 03 will compare the two groups for each property with non-parametric tests (Mann-Whitney), effect sizes and bootstrap confidence intervals, repeating the analysis without the 15 <code>also_oral</code> molecules. Then a simple, explainable "inhalability" score, to be checked on the reference drugs, and its application to potent PDE4 inhibitors.</p>
+    <p>Notebook 03 will compare the two groups for each property with non-parametric tests (Mann-Whitney), effect sizes and bootstrap confidence intervals, repeating the analysis without the 11 <code>also_oral</code> molecules. Then a simple, explainable "inhalability" score, to be checked on the reference drugs, and its application to potent PDE4 inhibitors.</p>
   </section>
 
   <section class="step qa" id="qa">

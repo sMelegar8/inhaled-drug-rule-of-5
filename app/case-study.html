@@ -187,7 +187,7 @@ td.weak { color: var(--muted); }
     <h3>From raw data to the analysis set</h3>
     <ol class="pipeline">
       <li><span class="step">Start</span><span>Parent molecules with at least one oral or inhaled FDA product</span><span class="count">1,305</span></li>
-      <li><span class="step">Transform</span><span>Split combined routes ("INHALATION, ORAL") and normalise case; inherit ATC codes from salts; make groups exclusive (inhaled takes precedence, 15 molecules flagged as also oral)<small>The route fix alone adds an inhaled molecule that exact text matching missed.</small></span><span class="count">1,305</span></li>
+      <li><span class="step">Transform</span><span>Split combined routes ("INHALATION, ORAL") and normalise case; inherit ATC codes from salts; make groups exclusive (inhaled takes precedence; 15 molecules flagged as also oral here, 11 of them still in the analysis set after the later rules)<small>The route fix alone adds an inhaled molecule that exact text matching missed.</small></span><span class="count">1,305</span></li>
       <li><span class="step">M1-M2</span><span>Remove non-small molecules and molecules without core properties</span><span class="count">−37 · −63</span></li>
       <li><span class="step">M3-M4</span><span>Remove medical gases (&lt; 100 Da or ATC V03AN) and diagnostic-only agents</span><span class="count">−10 · −12</span></li>
       <li><span class="step">M5</span><span>Remove inhaled drugs acting on the nervous system (anaesthetics, loxapine, levodopa): they are inhaled to reach the blood<small>The mirror rule M6 removes oral drugs acting only in the gut, designed not to be absorbed.</small></span><span class="count">−9</span></li>
@@ -201,7 +201,7 @@ td.weak { color: var(--muted); }
     <h3>Statistics</h3>
     <ul>
       <li><strong>Group comparison:</strong> Mann-Whitney U tests (the properties are not normally distributed) with Holm correction for multiple testing, and the rank-biserial correlation r as effect size. With 46 inhaled drugs, effect sizes matter more than p-values.</li>
-      <li><strong>Sensitivity analysis:</strong> the comparison repeated without the 15 inhaled molecules that also have oral products.</li>
+      <li><strong>Sensitivity analysis:</strong> the comparison repeated on subsets of the inhaled group — without the 11 molecules that also have oral products, on the 29 drugs whose ATC code says they treat airway disease, and leaving out one respiratory class at a time. A difference that survives every subset belongs to the route; one that disappears when a few molecules leave belongs to those molecules.</li>
       <li><strong>Multivariate view:</strong> principal component analysis on eight standardised descriptors.</li>
       <li><strong>Time trends:</strong> Spearman correlation with year of first approval, bootstrap 95% confidence intervals, and a model with one intercept per respiratory class tested by shuffling years within class (permutation test).</li>
       <li><strong>Structural motifs:</strong> RDKit substructure searches with Fisher exact tests, and a logistic model with a year × route interaction for fluorination.</li>
@@ -227,7 +227,26 @@ td.weak { color: var(--muted); }
       </table>
     </div>
     <p class="legend">Rank-biserial r from −1 to 1: bar to the right<i style="background:var(--pos)"></i>higher in inhaled drugs, to the left<i style="background:var(--neg)"></i>lower. Grey rows are not significant after correction.</p>
-    <p>Without the 15 molecules that also exist orally, the pattern holds or strengthens: H-bond donors r = +0.46, QED r = −0.42, PSA r = +0.32, aromatic rings r = −0.23. The lower logP of inhaled drugs does not survive (r = −0.10, p = 0.30).</p>
+    <p>Two checks ask whether this really is about the route of administration. The first is easy to pass: without the 11 molecules that also exist orally (35 inhaled drugs left), the pattern holds or strengthens — H-bond donors r = +0.46, QED r = −0.42, PSA r = +0.32, aromatic rings r = −0.23. The lower logP does not survive even here (r = −0.10, p = 0.30).</p>
+    <p>The second check is harder. The inhaled group is four classes: 15 β2-agonists, 8 corticosteroids, 6 antimuscarinics and 17 "other inhaled" drugs. That last group holds drugs that are <em>not</em> designed to stay in the lung — inhaled antibiotics (amikacin, tobramycin), an antiviral (zanamivir), a diagnostic sugar (mannitol), a chelator (pentetic acid) — and six of them have an ALogP below −2. Repeating the comparison on the 29 drugs whose ATC code says they treat airway disease separates what belongs to the route from what belongs to those molecules:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Property</th><th>All 46 inhaled</th><th>29 respiratory only</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>H-bond donors</td><td class="n">+0.48</td><td class="n">+0.35 (p = 0.001)</td><td>holds</td></tr>
+          <tr><td>QED drug-likeness</td><td class="n">−0.33</td><td class="n">−0.24 (p = 0.03)</td><td>holds, weaker</td></tr>
+          <tr><td>Aromatic rings</td><td class="n">−0.26</td><td class="n">−0.20 (p = 0.06)</td><td>no longer significant</td></tr>
+          <tr><td>H-bond acceptors</td><td class="n">+0.23</td><td class="n">+0.16 (p = 0.14)</td><td>no longer significant</td></tr>
+          <tr><td>Polar surface area</td><td class="n">+0.25</td><td class="n">+0.08 (p = 0.49)</td><td>disappears</td></tr>
+          <tr><td>ALogP</td><td class="n">−0.19</td><td class="n">+0.02 (p = 0.82)</td><td>disappears (already not significant)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figure>
+      <div class="frame"><img src="figures/sensitivity_by_class.png" alt="Dot plot of effect sizes for ten properties across four subsets of the inhaled group; H-bond donors and QED stay significant everywhere, polar surface area and ALogP lose significance on respiratory drugs only." loading="lazy"></div>
+      <figcaption>Effect size for each property across subsets of the inhaled group. Filled dots are significant at p &lt; 0.05, hollow ones are not. Two results stay filled in every subset; polarity and lipophilicity do not.</figcaption>
+    </figure>
+    <div class="callout caveat"><span class="label">What this changes</span><p>Only two of the five differences that survived the Holm correction are properties of the inhaled route itself: more H-bond donors and a lower QED. The polarity result is carried by a handful of very polar antibiotics, sugars and chelators rather than by respiratory drugs, so it is reported below as a property of what is given by inhalation today, not as a design rule. The same six molecules drive the ALogP difference, which was already not significant after correction.</p></div>
     <figure>
       <div class="frame"><img src="figures/inhaled_vs_oral_after_cleaning.png" alt="Scatter plot of polar surface area against molecular weight for 1,108 oral and 46 inhaled drugs." loading="lazy" style="min-width:420px"></div>
       <figcaption>Inhaled drugs are spread across the oral property space rather than in a separate corner, which is why single cut-offs fail.</figcaption>
@@ -269,13 +288,13 @@ td.weak { color: var(--muted); }
     <p class="answer">There is no simple rule of five for inhaled drugs, but there is a recognisable inhaled profile, and it is not the oral one.</p>
     <div class="findings">
       <div class="finding"><h3>Lipinski is the wrong filter for inhalation</h3><p>Inhaled and oral drugs break the rule of five equally often. A screen built on it neither selects nor rejects inhaled candidates for the right reasons.</p><span class="stat">26.1% vs 22.8% with at least one violation, p = 0.77</span></div>
-      <div class="finding"><h3>Approved inhaled drugs are more polar and less "drug-like"</h3><p>More H-bond donors, higher polar surface area, fewer aromatic rings and lower QED, robust to removing drugs that also exist orally.</p><span class="stat">HBD r = +0.48, QED r = −0.33, PSA r = +0.26, aromatic rings r = −0.27 (all Holm p &lt; 0.05)</span></div>
+      <div class="finding"><h3>Two differences belong to the route: more H-bond donors, lower drug-likeness</h3><p>Inhaled drugs carry more H-bond donors and score lower on QED than oral drugs, and both differences hold when only respiratory-class drugs are compared. The higher polar surface area and the lower ALogP of the inhaled group do not: they come from a few very polar inhaled antibiotics, sugars and chelators, so they describe what is currently given by inhalation rather than a design rule.</p><span class="stat">All 46 inhaled: HBD r = +0.48, QED r = −0.33 (Holm p &lt; 0.05) · 29 respiratory only: +0.35 and −0.24 (p = 0.001 and 0.03); PSA falls to +0.08 (p = 0.49)</span></div>
       <div class="finding"><h3>Modern inhaled design trades polarity for lipophilicity and size</h3><p>Within each respiratory class, newer drugs are more lipophilic and flexible, and inhaled PDE4 programmes produce much larger molecules than oral ones. This fits a design goal of lung retention and long duration.</p><span class="stat">+0.43 logP per decade (p = 0.002); PDE4 inhaled papers 571 vs 393 Da</span></div>
       <div class="finding"><h3>Systemic safety is built into the structure</h3><p>Permanent positive charges are seven times more common, and the fluorination wave that reshaped oral drugs did not reach inhaled ones.</p><span class="stat">Quaternary ammonium OR 7.0; fluorine 7% vs 33% since 2000</span></div>
     </div>
     <h3>What this means for a respiratory R&amp;D team</h3>
     <ul>
-      <li>Do not use oral property filters for inhaled projects; describe the target profile on inhaled reference drugs instead.</li>
+      <li>Do not use oral property filters for inhaled projects; describe the target profile on inhaled reference drugs instead, and build that profile on respiratory drugs rather than on everything that happens to be inhaled.</li>
       <li>Treat lipophilicity, flexibility, permanent charge and metabolic lability as levers for lung retention and systemic clearance, to be tested against measured lung residence time.</li>
       <li>The open data and code make the profile easy to extend to new targets and to update with each ChEMBL release.</li>
     </ul>
@@ -284,7 +303,8 @@ td.weak { color: var(--muted); }
   <section class="part" id="limits">
     <div class="part-head"><span class="num">08</span><h2>Limitations</h2></div>
     <ul>
-      <li>Small inhaled group: 46 drugs (35 without the also-oral group), so confidence intervals are wide. Results describe approved drugs, not a validated design rule.</li>
+      <li>Small inhaled group: 46 drugs, 35 without the also-oral ones and 29 when only respiratory classes are kept, so confidence intervals are wide. Results describe approved drugs, not a validated design rule.</li>
+      <li>The inhaled group mixes therapeutic classes, and the sensitivity analysis shows this matters: the polarity and lipophilicity differences do not survive on respiratory drugs alone. Leaving one class out at a time also moves the effect sizes by up to 0.2, so no single number should be read as precise.</li>
       <li>Calculated descriptors (ALogP, PSA) from ChEMBL, not measured values. The ChEMBL 37 API returns no ionisation descriptors, so charge is only captured by substructure searches.</li>
       <li>Routes come from US FDA products only. The year is the first approval of the molecule by any route.</li>
       <li>Some exclusion rules use ATC codes as a proxy for therapeutic intent; seven inhaled molecules have no ATC code and are kept without that filter.</li>
@@ -303,7 +323,7 @@ td.weak { color: var(--muted); }
     <p>The full list is on the <a href="backlog.html">backlog</a> page; the pipeline is explained step by step in <a href="how-it-works.html">How it works</a>.</p>
   </section>
 
-  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/explore_trends.py</code> and <code>src/explore_chemistry.py</code>.</p>
+  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/compare_inhaled_oral.py</code> (group comparison and sensitivity analysis), <code>src/explore_trends.py</code> and <code>src/explore_chemistry.py</code>.</p>
 </main>
 
 <script>
