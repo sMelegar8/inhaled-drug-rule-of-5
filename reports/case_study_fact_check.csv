@@ -6,6 +6,22 @@ n_fda_products,"51,886 FDA products",51886.0,51886.0,db,True
 match_exact,92.3% of FDA ingredient names matched exactly,92.3,92.3368,db,True
 match_salt,0.3% matched after removing salt words,0.3,0.2749,db,True
 match_none,7.4% unmatched,7.4,7.3883,db,True
+audit_matched,"2,695 matched ingredient names",2695.0,2695.0,db,True
+audit_inhaled_names,82 ingredient names on an inhalation product,82.0,82.0,db,True
+audit_inhaled_matched,76 of them matched and were reviewed,76.0,76.0,db,True
+audit_inhaled_unmatched,6 unmatched inhaled names,6.0,6.0,db,True
+audit_inhaled_gas,all 6 carry the dosage form GAS,6.0,6.0,db,True
+audit_verdicts,76 reviewed verdicts on file,76.0,76.0,db,True
+audit_verdicts_wrong,none of them was wrong,0.0,0.0,db,True
+audit_ambiguous,290 ambiguous names in the index,290.0,290.0,db,True
+audit_ambiguous_used,25 of them used by an FDA name,25.0,25.0,db,True
+audit_ambiguous_same,23 resolve to the same parent molecule,23.0,23.0,db,True
+audit_trade_name,2 matches made only through a trade-name synonym,2.0,2.0,db,True
+audit_un_single,143 single names ChEMBL does not hold,143.0,143.0,db,True
+audit_un_combo,42 combination products in one ingredient field,42.0,42.0,db,True
+audit_un_salt,26 salt forms whose parent is also unknown,26.0,26.0,db,True
+audit_un_other,4 biologics or descriptive names,4.0,4.0,db,True
+audit_recoverable,stripping pharmacopoeia suffixes would recover 1 name,1.0,1.0,db,True
 clean_start,"1,305 parent molecules at the start",1305.0,1305.0,db,True
 clean_m1,M1 removes 37,37.0,37.0,db,True
 clean_m2,M2 removes 63,63.0,63.0,db,True

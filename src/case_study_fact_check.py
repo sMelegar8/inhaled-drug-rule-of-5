@@ -18,6 +18,7 @@ Usage:  py -3.13 src/case_study_fact_check.py      (after cleaning.py and the ex
 from __future__ import annotations
 
 import ast
+import importlib
 import re
 import sqlite3
 import sys
@@ -50,6 +51,23 @@ CLAIMS = [
     ("match_exact", "92.3% of FDA ingredient names matched exactly", 92.3, 0.05, "db"),
     ("match_salt", "0.3% matched after removing salt words", 0.3, 0.05, "db"),
     ("match_none", "7.4% unmatched", 7.4, 0.05, "db"),
+    # The name-matching audit (src/audit_name_matching.py)
+    ("audit_matched", "2,695 matched ingredient names", 2695, 0, "db"),
+    ("audit_inhaled_names", "82 ingredient names on an inhalation product", 82, 0, "db"),
+    ("audit_inhaled_matched", "76 of them matched and were reviewed", 76, 0, "db"),
+    ("audit_inhaled_unmatched", "6 unmatched inhaled names", 6, 0, "db"),
+    ("audit_inhaled_gas", "all 6 carry the dosage form GAS", 6, 0, "db"),
+    ("audit_verdicts", "76 reviewed verdicts on file", 76, 0, "db"),
+    ("audit_verdicts_wrong", "none of them was wrong", 0, 0, "db"),
+    ("audit_ambiguous", "290 ambiguous names in the index", 290, 0, "db"),
+    ("audit_ambiguous_used", "25 of them used by an FDA name", 25, 0, "db"),
+    ("audit_ambiguous_same", "23 resolve to the same parent molecule", 23, 0, "db"),
+    ("audit_trade_name", "2 matches made only through a trade-name synonym", 2, 0, "db"),
+    ("audit_un_single", "143 single names ChEMBL does not hold", 143, 0, "db"),
+    ("audit_un_combo", "42 combination products in one ingredient field", 42, 0, "db"),
+    ("audit_un_salt", "26 salt forms whose parent is also unknown", 26, 0, "db"),
+    ("audit_un_other", "4 biologics or descriptive names", 4, 0, "db"),
+    ("audit_recoverable", "stripping pharmacopoeia suffixes would recover 1 name", 1, 0, "db"),
     # Cleaning pipeline
     ("clean_start", "1,305 parent molecules at the start", 1305, 0, "db"),
     ("clean_m1", "M1 removes 37", 37, 0, "db"),
@@ -195,6 +213,58 @@ def recompute(con: sqlite3.Connection) -> dict:
     share = {r.match_method: 100 * r.n / total for r in methods.itertuples()}
     v["match_exact"], v["match_salt"] = share.get("exact", 0), share.get("salt_stripped", 0)
     v["match_none"] = 100 - v["match_exact"] - v["match_salt"]
+
+    # The name-matching audit: the same numbers src/audit_name_matching.py reports,
+    # recomputed here so the page cannot drift from them.
+    audit = importlib.import_module("audit_name_matching")
+    candidates, _ = audit.index_provenance(con)
+    mapping = pd.read_sql_query("SELECT * FROM fda_ingredient_map", con)
+    v["audit_matched"] = int((mapping.match_method != "unmatched").sum())
+    used = set(mapping.ingredient_name) | {audit.build.strip_salts(n) for n in mapping.ingredient_name}
+    ambiguous = {n: c for n, c in candidates.items() if len({cid for cid, _ in c}) > 1}
+    in_use = {n: c for n, c in ambiguous.items() if n in used}
+    v["audit_ambiguous"], v["audit_ambiguous_used"] = len(ambiguous), len(in_use)
+    parent_of = dict(con.execute("SELECT chembl_id, parent_chembl_id FROM molecules"))
+    v["audit_ambiguous_same"] = sum(
+        len({parent_of.get(cid, cid) for cid, _ in c}) == 1 for c in in_use.values())
+    winner_type = {n: c[0][1] for n, c in candidates.items()}
+    v["audit_trade_name"] = sum(
+        winner_type.get(n if n in candidates else audit.build.strip_salts(n)) == "TRADE_NAME"
+        for n in mapping[mapping.match_method != "unmatched"].ingredient_name)
+
+    inhaled_names = pd.read_sql_query("""
+        SELECT DISTINCT i.ingredient_name FROM fda_products AS p
+        JOIN fda_product_ingredients AS i ON i.application_number = p.application_number
+                                         AND i.product_number = p.product_number
+        WHERE UPPER(p.route) LIKE '%INHALATION%'""", con).ingredient_name
+    census = mapping[mapping.ingredient_name.isin(inhaled_names)]
+    v["audit_inhaled_names"] = len(census)
+    v["audit_inhaled_matched"] = int((census.match_method != "unmatched").sum())
+    unmatched_inhaled = census[census.match_method == "unmatched"].ingredient_name
+    v["audit_inhaled_unmatched"] = len(unmatched_inhaled)
+    marks = ",".join("?" * len(unmatched_inhaled))
+    v["audit_inhaled_gas"] = con.execute(f"""
+        SELECT COUNT(*) FROM (SELECT i.ingredient_name FROM fda_product_ingredients AS i
+        JOIN fda_products AS p ON p.application_number = i.application_number
+                              AND p.product_number = i.product_number
+        WHERE UPPER(p.route) LIKE '%INHALATION%' AND i.ingredient_name IN ({marks})
+        GROUP BY 1 HAVING GROUP_CONCAT(DISTINCT p.dosage_form) = 'GAS')""",
+        unmatched_inhaled.tolist()).fetchone()[0]
+
+    reviewed = pd.read_csv(ROOT / "data" / "name_match_verdicts.csv")
+    v["audit_verdicts"] = len(reviewed)
+    v["audit_verdicts_wrong"] = int((reviewed.verdict != "correct").sum())
+
+    reasons = mapping[mapping.match_method == "unmatched"].ingredient_name.map(audit.classify_unmatched).value_counts()
+    v["audit_un_single"] = int(reasons.get("single name not found in ChEMBL", 0))
+    v["audit_un_combo"] = int(reasons.get("combination of several ingredients in one field", 0))
+    v["audit_un_salt"] = int(reasons.get("salt form whose parent is also unknown to ChEMBL", 0))
+    v["audit_un_other"] = int(reasons.sum() - v["audit_un_single"] - v["audit_un_combo"] - v["audit_un_salt"])
+    v["audit_recoverable"] = sum(
+        audit.PHARMACOPOEIA.sub("", n).strip() != n
+        and (audit.PHARMACOPOEIA.sub("", n).strip() in candidates
+             or audit.build.strip_salts(audit.PHARMACOPOEIA.sub("", n).strip()) in candidates)
+        for n in mapping[mapping.match_method == "unmatched"].ingredient_name)
 
     # Cleaning ledger.
     log = pd.read_sql_query("SELECT * FROM cleaning_log WHERE dataset = 'molecules' ORDER BY step", con)

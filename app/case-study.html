@@ -180,6 +180,17 @@ td.weak { color: var(--muted); }
       <li>Every raw file is stored unchanged with its download time and SHA-256 hash, and the whole database rebuilds from two scripts.</li>
     </ul>
     <p>FDA and ChEMBL share no identifier. Ingredient names were matched to ChEMBL names and synonyms (92.3% exact, 0.3% after removing salt words, 7.4% unmatched), and salts were mapped to their parent molecule so that properties are compared on the active molecule. The <a href="data-dictionary.html">data dictionary</a> documents every table and column.</p>
+
+    <h3>How good is that join?</h3>
+    <p>Everything in this study rests on a join with no shared key behind it, so "92.3% matched" is a coverage figure, not a correctness one: it says how many names found a partner, not how many found the right one. <code>src/audit_name_matching.py</code> estimates correctness instead, and the group that matters is small enough to check completely rather than sample.</p>
+    <ul>
+      <li><strong>The inhaled side was audited in full, not sampled.</strong> 82 ingredient names appear on an FDA inhalation product; 76 matched and were read one by one against the molecule they were assigned, which is what produces the 46 drugs in the analysis set. <strong>None was wrong.</strong> The review is stored in <code>data/name_match_verdicts.csv</code>, and the audit compares against it on every run, so a future ChEMBL release that silently re-points a match fails the check instead of passing unnoticed.</li>
+      <li><strong>The 6 unmatched inhaled names cost nothing.</strong> They are AIR, MEDICAL AIR, CARBON DIOXIDE in three spellings (one of them, "CARBON DIOIDE", a typo in the FDA source) and NITROGEN. All six carry the dosage form <code>GAS</code> in the FDA data itself — not in my reading of the names — and cleaning rule M3 removes medical gases in any case. So no therapeutic inhaled drug is missing from the group because of name matching.</li>
+      <li><strong>Ambiguity is the real failure mode, and it was measured.</strong> The index is built with <code>setdefault</code>, so a name known to several molecules silently resolves to whichever was inserted first. 290 names in the index are ambiguous and 25 are actually used by an FDA name. For 23 of them both candidates are the salt and the free base of one drug, which collapse to the same parent, so the choice cannot change a result. The two that differ — a ChEMBL synonym "bicalutamide" attached to talazoparib, and an indium-111 labelled version of capromab pendetide — both resolve correctly, because preferred names are indexed before synonyms. That ordering is load-bearing, not cosmetic.</li>
+      <li><strong>One wrong match was found, outside the analysis.</strong> Only 2 of 2,695 matches were made through a trade-name synonym rather than a preferred name or a regulatory one, and reading both showed one error: the FDA ingredient "iron dextran" was matched to ferric oxyhydroxide, a different substance. It is an injectable product, so it never reaches the oral or inhaled groups — but it is the kind of error this check exists to surface, and it is reported rather than quietly fixed.</li>
+      <li><strong>The 7.4% unmatched became a set of reasons:</strong> 143 single names ChEMBL does not hold, 42 combination products written into one ingredient field, 26 salt forms whose parent is also unknown, and 4 biologics or descriptive names. Stripping pharmacopoeia suffixes such as "NITROGEN, NF" was tested as a fix and would recover exactly 1 name, so it was not worth adding.</li>
+    </ul>
+    <div class="callout key"><span class="label">What this licenses, and what it does not</span><p>The inhaled group of 46 can be relied on: it was checked molecule by molecule, and the only names it misses are gases that the cleaning rules exclude anyway. The oral group of 1,108 was not audited in full — a random sample of 50 exact matches is in <code>reports/name_match_audit.csv</code> — so the right statement is that one wrong match is known across the whole mapping, not that none exists.</p></div>
   </section>
 
   <section class="part" id="methods">
@@ -206,7 +217,7 @@ td.weak { color: var(--muted); }
       <li><strong>Time trends:</strong> Spearman correlation with year of first approval, bootstrap 95% confidence intervals, and a model with one intercept per respiratory class tested by shuffling years within class (permutation test).</li>
       <li><strong>Structural motifs:</strong> RDKit substructure searches with Fisher exact tests, and a logistic model with a year × route interaction for fluorination.</li>
       <li><strong>Verification:</strong> the browser statistics are checked against numpy, pandas and SciPy (40 automated checks), and the cleaning stops if a reference inhaled drug (albuterol, budesonide, fluticasone, formoterol, ipratropium, salmeterol, tiotropium) disappears.</li>
-      <li><strong>The page itself is checked:</strong> every number written here is listed in <code>src/case_study_fact_check.py</code> with the value this page states, recomputed, and reported as pass or fail — 128 checks, 111 of them recomputed directly from the database and the rest read from the report tables that hold the resampling results. The script fails if a number has drifted, and warns if it is still checking a value that has been removed from the page. A page is only as true as the last time somebody checked it against the data, so that check is a command rather than a memory.</li>
+      <li><strong>The page itself is checked:</strong> every number written here is listed in <code>src/case_study_fact_check.py</code> with the value this page states, recomputed, and reported as pass or fail — 144 checks, 127 of them recomputed directly from the database and the rest read from the report tables that hold the resampling results. The script fails if a number has drifted, and warns if it is still checking a value that has been removed from the page. A page is only as true as the last time somebody checked it against the data, so that check is a command rather than a memory.</li>
     </ul>
   </section>
 
@@ -309,6 +320,7 @@ td.weak { color: var(--muted); }
       <li>Calculated descriptors (ALogP, PSA) from ChEMBL, not measured values. The ChEMBL 37 API returns no ionisation descriptors, so charge is only captured by substructure searches.</li>
       <li>Routes come from US FDA products only. The year is the first approval of the molecule by any route.</li>
       <li>Some exclusion rules use ATC codes as a proxy for therapeutic intent; seven inhaled molecules have no ATC code and are kept without that filter.</li>
+      <li>Salts and esters are mapped to their ChEMBL parent, which is right for a salt and debatable for a chelate: the two pentetate products become free pentetic acid, so their descriptors are those of the free acid rather than of the calcium or zinc complex actually administered. Pentetic acid is one of the six very polar molecules the sensitivity analysis showed were driving the polarity result.</li>
       <li>Associations, not causes: the link between lipophilicity and duration of action is a hypothesis here. The PDE4 selectivity trend is borderline at paper level, and inhaled PDE4 papers were identified from titles only.</li>
     </ul>
   </section>
@@ -319,12 +331,13 @@ td.weak { color: var(--muted); }
       <li>Add dosing frequency from FDA labels to test whether lipophilicity predicts once-daily dosing.</li>
       <li>Build a simple, explainable inhalability score, check that reference inhaled drugs score high, and apply it to potent PDE4 inhibitors.</li>
       <li>Compute charge and ionisable groups with RDKit, and add EU (EMA) inhaled products.</li>
-      <li>Audit a random sample of the FDA-ChEMBL name matching and split combination products.</li>
+      <li>Split the 42 combination products written into a single FDA ingredient field, the largest remaining cause of unmatched names.</li>
+      <li>Audit the oral side of the name matching as thoroughly as the inhaled side has been.</li>
     </ol>
     <p>The full list is on the <a href="backlog.html">backlog</a> page; the pipeline is explained step by step in <a href="how-it-works.html">How it works</a>.</p>
   </section>
 
-  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/compare_inhaled_oral.py</code> (group comparison and sensitivity analysis), <code>src/explore_trends.py</code> and <code>src/explore_chemistry.py</code>. All 128 of them are re-checked against the data by <code>src/case_study_fact_check.py</code>; its output is in <code>reports/case_study_fact_check.csv</code>. Checked on 4 November 2026: every number matched.</p>
+  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/compare_inhaled_oral.py</code> (group comparison and sensitivity analysis), <code>src/explore_trends.py</code> and <code>src/explore_chemistry.py</code>. All 144 of them are re-checked against the data by <code>src/case_study_fact_check.py</code>, and the name matching is audited by <code>src/audit_name_matching.py</code>; their output is in <code>reports/case_study_fact_check.csv</code> and <code>reports/name_match_audit.csv</code>. Checked on 4 November 2026: every number matched.</p>
 </main>
 
 <script>

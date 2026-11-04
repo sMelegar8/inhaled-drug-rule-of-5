@@ -69,8 +69,14 @@ polar inhaled antibiotics, sugars and chelators.
   against numpy, pandas and scipy on the real dataset in CI.
 - **Pages that are checked, not trusted**: each case study has a fact-check script
   (`src/case_study_fact_check.py`, `src/pde4_fact_check.py`) that lists every number the
-  page states, recomputes it, and fails if any has drifted — 128 and 75 claims. It also
+  page states, recomputes it, and fails if any has drifted — 144 and 75 claims. It also
   warns when a claim still checks a value that has been removed from the page.
+- **An audited join**: FDA and ChEMBL share no identifier, so `src/audit_name_matching.py`
+  estimates how often the name matching is *right*, not just how often it matched. All 76
+  ingredient names on FDA inhalation products were reviewed against the molecule they were
+  assigned (none wrong, recorded in `data/name_match_verdicts.csv` and re-checked on every
+  run); the 6 unmatched ones are medical gases the cleaning removes anyway; and one wrong
+  match elsewhere in the mapping was found and is reported.
 
 ## Interactive app
 
@@ -131,6 +137,7 @@ python src/pde4_chemical_space.py  # PDE4 families (RDKit, scikit-learn) -> tabl
 python src/pde4_fact_check.py       # re-check every number on the PDE4 page + robustness tests
 python src/build_data_dictionary.py # app/data-dictionary.json from the database
 python src/compare_inhaled_oral.py  # inhaled vs oral + sensitivity analysis -> reports/
+python src/audit_name_matching.py   # audit the FDA -> ChEMBL join -> reports/
 python src/case_study_fact_check.py # re-check every number on the Rule of 5 page
 python src/explore_trends.py        # time trends -> reports/
 python src/explore_chemistry.py     # structural trends (RDKit) -> reports/
