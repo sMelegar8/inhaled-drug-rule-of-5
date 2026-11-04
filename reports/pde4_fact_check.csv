@@ -1,0 +1,76 @@
+claim,page_says,claimed,recomputed,pass
+n_compounds,"5,211 compounds with a structure and a clean potency",5211.0,5211.0,True
+n_measurements,"11,954 raw measurements",11954.0,11954.0,True
+n_potent,"1,183 compounds with best pIC50 >= 8",1183.0,1183.0,True
+n_both_isoforms,675 measured on both PDE4B and PDE4D,675.0,675.0,True
+bits_mean,"a molecule sets 53.4 of the 2,048 bits on average",53.4,53.3673,True
+bits_methoxyethane,methoxyethane (CCOC) sets 8 bits,8.0,8.0,True
+bits_glycol,ethylene glycol (OCCO) sets 5 bits despite having more atoms,5.0,5.0,True
+n_documents,430 papers and patents behind the clean measurements,430.0,430.0,True
+bits_roflumilast,roflumilast sets 50 bits,50.0,50.0,True
+tan_rolipram_roflumilast,Tanimoto rolipram / roflumilast 0.154,0.154,0.1538,True
+tan_rolipram_piclamilast,Tanimoto rolipram / piclamilast 0.387,0.387,0.3871,True
+tan_roflumilast_tanimilast,Tanimoto roflumilast / tanimilast 0.440,0.44,0.4405,True
+pca_pc1,the first component carries 5.0% of the variance,5.0,5.0362,True
+pca_first2,a plot of PC1 against PC2 would show only 7.9%,7.9,7.8605,True
+pca_first10,the first 10 components carry 22.7%,22.7,22.7491,True
+pca_variance,50 components keep 51.4% of the variance,51.4,51.3825,True
+pca_first100,100 components would keep 66.1%,66.1,66.1497,True
+sil_share_negative,12.4% of molecules have a negative silhouette,12.4,12.3667,True
+tanimoto_c2,"family 2 is loose, mean Tanimoto 0.14",0.14,0.1446,True
+tanimoto_c3,"family 3 is loose, 0.13",0.13,0.1296,True
+tanimoto_c7,"family 7 is the tightest, 0.41",0.41,0.4076,True
+k_chosen,k = 8 clusters,8.0,8.0,True
+ari_k8,stability ARI 0.75 at k = 8,0.75,0.7527,True
+silhouette_min,silhouettes from 0.07,0.07,0.0684,True
+silhouette_max,silhouettes to 0.15,0.15,0.1504,True
+tanimoto_within,within-family Tanimoto 0.181,0.181,0.1792,True
+tanimoto_between,between-family Tanimoto 0.127,0.127,0.1266,True
+n_scaffolds,"1,350 generic Murcko scaffolds",1350.0,1350.0,True
+nmi_scaffold,NMI between clusters and scaffolds 0.42,0.42,0.4156,True
+kw_h,Kruskal-Wallis H = 805 for potency by family,805.0,804.5899,True
+kw_eps2,epsilon-squared = 0.15,0.15,0.1544,True
+median_p_c7,family 7 median pIC50 7.8,7.8,7.7952,True
+median_p_c6,family 6 median pIC50 7.7,7.7,7.682,True
+median_p_c5,family 5 median pIC50 7.4,7.4,7.4196,True
+median_p_c3,family 3 median pIC50 5.6,5.6,5.6021,True
+le_c5,family 5 median ligand efficiency 0.39,0.39,0.3936,True
+lle_c5,family 5 median lipophilic efficiency 4.4,4.4,4.3672,True
+mw_c5,family 5 median MW 342 Da,342.0,342.1,True
+mw_c6,family 6 median MW 475 Da,475.0,475.48,True
+alogp_c6,family 6 median ALogP 5.2,5.2,5.16,True
+lle_c6,family 6 median lipophilic efficiency 2.6,2.6,2.6268,True
+sel_c5,family 5 median PDE4B - PDE4D +1.41,1.41,1.4076,True
+sel_others,all other families +0.33,0.33,0.3295,True
+sel_r,Mann-Whitney r = +0.58 for family 5 vs the rest,0.58,0.583,True
+sel_n_c5,217 selectivity values in family 5,217.0,217.0,True
+sel_share_10x,71% of family 5 at least ten-fold PDE4B-selective,71.0,70.9677,True
+sel_papers_c5,those values come from 13 papers,13.0,13.0,True
+zatolmilast_sel,zatolmilast sits at -2.4,-2.4,-2.4117,True
+tanimilast_p,tanimilast best pIC50 10.4,10.4,10.3979,True
+tanimilast_mw,tanimilast 688 Da,688.0,687.54,True
+n_inhaled,248 compounds from inhaled-PDE4 papers,248.0,248.0,True
+inhaled_c2,of which 115 in family 2,115.0,115.0,True
+inhaled_c6,57 in family 6,57.0,57.0,True
+inhaled_c5,44 in family 5,44.0,44.0,True
+inhaled_papers,inhaled programmes identified from 7 papers,7.0,7.0,True
+period_1,947 compounds first reported 1980-2000,947.0,947.0,True
+period_2,782 compounds 2001-2008,782.0,782.0,True
+period_3,"1,295 compounds 2009-2014",1295.0,1295.0,True
+period_4,"2,187 compounds 2015-2025",2187.0,2187.0,True
+share_c4_early,family 4 is 23.8% of 1980-2000 compounds,23.8,23.7592,True
+share_c4_late,and 5.4% of 2015-2025,5.4,5.3955,True
+share_c3_early,family 3 is 39.3% of 1980-2000,39.3,39.2819,True
+share_c3_late,and 15.8% of 2015-2025,15.8,15.775,True
+share_c5_late,family 5 is 17.1% of 2015-2025,17.1,17.1468,True
+share_c5_early,and 0.0% of 1980-2000,0.0,0.0,True
+family_roflumilast,Roflumilast is in family 6,6.0,6.0,True
+family_tranimilast,Tranimilast is in family 6,6.0,6.0,True
+family_orismilast,Orismilast is in family 6,6.0,6.0,True
+family_rolipram,Rolipram is in family 4,4.0,4.0,True
+family_cilomilast,Cilomilast is in family 4,4.0,4.0,True
+family_piclamilast,Piclamilast is in family 4,4.0,4.0,True
+family_apremilast,Apremilast is in family 1,1.0,1.0,True
+family_crisaborole,Crisaborole is in family 2,2.0,2.0,True
+family_zatolmilast,Zatolmilast is in family 8,8.0,8.0,True
+family_pf-06445974,Pf-06445974 is in family 5,5.0,5.0,True

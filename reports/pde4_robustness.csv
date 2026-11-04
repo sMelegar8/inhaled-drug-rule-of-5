@@ -1,0 +1,9 @@
+check,variant,n,effect,effect_name,p
+R1 potency by family,published (all compounds),5211,0.15443184894873918,epsilon-squared,1.8967135771627128e-169
+R1 potency by family,"without the largest paper (CHEMBL5729306, 116 compounds)",5095,0.15470226683501145,epsilon-squared,7.020773931497795e-166
+R2 family 5 selectivity,"published (molecule level, across papers)",675,0.583039864769686,rank-biserial r,1.7883706595879149e-34
+R2 family 5 selectivity,"within-paper only (same document, same assay)",882,0.6516834019174,rank-biserial r,1.308862484808316e-58
+R2 family 5 selectivity,one value per paper (12 vs 81 papers),93,0.47736625514403297,rank-biserial r,0.00796127006225124
+R2 family 5 selectivity,paper level without CHEMBL5725695 (98 values),92,0.4365881032547698,rank-biserial r,0.019532949936441737
+R3 grouping vs algorithm,"k-means vs Ward agglomerative, same 50 components",5211,0.4812548924844172,adjusted Rand index,
+R3 grouping vs algorithm,"selectivity test on Ward's own cluster 0: 983 compounds, holding 432 of 436 family-5 ones",675,0.23677264969296008,rank-biserial r,1.0501855061672976e-07

@@ -93,7 +93,17 @@ A second case study, [PDE4 chemical space](https://smelegar8.github.io/inhaled-d
 groups 5,211 PDE4 inhibitors into eight chemical families with Morgan fingerprints, PCA and
 k-means, maps them with t-SNE and compares the families' potency, efficiency, selectivity
 and history. It doubles as a compendium of the concepts used (fingerprints, Tanimoto, PCA,
-k-means, silhouette, stability, t-SNE, ligand efficiency).
+k-means, silhouette, stability, t-SNE, ligand efficiency), with the reasoning behind each
+decision and the alternatives rejected.
+
+Its numbers are not trusted on memory: `src/pde4_fact_check.py` recomputes all 75 of them
+from the database and fails if any has drifted. The same script runs the robustness tests.
+The PDE4B selectivity of the newest family survives the stricter definitions, getting
+stronger when both isoforms must come from the same paper (rank-biserial r +0.58 to +0.65)
+and holding with the paper as the unit of analysis (r = +0.48, p = 0.008; r = +0.44 after
+dropping the largest contributing paper). The eight-family partition itself is weaker:
+Ward clustering on the same components agrees only moderately (ARI 0.48), so the per-family
+figures are a readable summary of a continuum, not natural categories.
 
 The [data dictionary](https://smelegar8.github.io/inhaled-drug-rule-of-5/data-dictionary.html)
 explains every table and column (what one row is, keys, joins and their match rate, fill
@@ -114,6 +124,7 @@ python src/01_download_data.py      # raw files -> data/raw/ (about 63 MB)
 python src/02_build_database.py     # SQLite -> data/processed/ + app copy
 python src/cleaning.py              # cleaned tables + exclusion ledger
 python src/pde4_chemical_space.py  # PDE4 families (RDKit, scikit-learn) -> tables, map, figures
+python src/pde4_fact_check.py       # re-check every number on the PDE4 page + robustness tests
 python src/build_data_dictionary.py # app/data-dictionary.json from the database
 python src/compare_inhaled_oral.py  # inhaled vs oral + sensitivity analysis -> reports/
 python src/explore_trends.py        # time trends -> reports/

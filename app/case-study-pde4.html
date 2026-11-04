@@ -13,6 +13,7 @@
   --bg: #f3f5f4; --surface: #fcfcfb; --surface-2: #e9edeb; --fg: #111614; --fg-2: #4a524e; --muted: #7b837f;
   --line: #d9dfdc; --accent: #0b6a72; --accent-soft: #d6ebec; --warn: #8a5a00; --warn-soft: #fbefd2;
   --concept: #6250d6; --concept-soft: #ebe8fb; --figure-bg: #ffffff;
+  --bad: #9c2b2b; --bad-soft: #f8dede;
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
   --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -23,6 +24,7 @@
     --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
     --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14;
     --concept: #9085e9; --concept-soft: #24213d; --figure-bg: #f4f4f2;
+    --bad: #f08a8a; --bad-soft: #3b1f1f;
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
     color-scheme: dark;
   }
@@ -31,6 +33,7 @@
   --bg: #0e1110; --surface: #1a1a19; --surface-2: #232826; --fg: #eceeed; --fg-2: #b8c0bc; --muted: #8a928e;
   --line: #2f3532; --accent: #43b4bb; --accent-soft: #163a3d; --warn: #e3b04b; --warn-soft: #3a2f14;
   --concept: #9085e9; --concept-soft: #24213d; --figure-bg: #f4f4f2;
+  --bad: #f08a8a; --bad-soft: #3b1f1f;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
   color-scheme: dark;
 }
@@ -89,6 +92,31 @@ section.part { border-top: 1px solid var(--line); margin-top: 44px; padding-top:
 .in-practice { font-size: 14px; color: var(--fg-2); border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 8px; }
 .in-practice b { color: var(--fg); }
 
+/* reasoning steps: the thinking, numbered, with the alternative that was not taken */
+.steps { display: grid; gap: 10px; counter-reset: st; margin: 14px 0; }
+.step { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px 12px 50px; }
+.step::before { counter-increment: st; content: counter(st); position: absolute; left: 16px; top: 11px; font: 600 1.05rem var(--font-mono); color: var(--accent); }
+.step h4 { margin-bottom: 4px; }
+.step p { font-size: 15px; margin: 0 0 6px; } .step p:last-child { margin: 0; }
+.step .alt { font-size: 14px; color: var(--fg-2); border-top: 1px dashed var(--line); padding-top: 7px; margin-top: 7px; }
+.step .alt b { color: var(--fg); }
+
+/* verdict chips, used in the robustness table */
+.chip { display: inline-block; font: 600 10.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.chip.ok { background: var(--accent-soft); color: var(--accent); }
+.chip.weak { background: var(--warn-soft); color: var(--warn); }
+.chip.gone { background: var(--bad-soft); color: var(--bad); }
+
+/* interview questions */
+.qa { display: grid; gap: 8px; margin-top: 12px; }
+details.qa-item { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; padding: 11px 15px; }
+details.qa-item summary { cursor: pointer; font: 600 15px/1.4 var(--font-display); color: var(--fg); }
+details.qa-item summary::marker { color: var(--accent); }
+details.qa-item[open] summary { margin-bottom: 8px; }
+details.qa-item p { font-size: 15px; margin: 0 0 8px; max-width: 70ch; } details.qa-item p:last-child { margin: 0; }
+details.qa-item .say { border-left: 2px solid var(--line); padding-left: 12px; color: var(--fg-2); }
+
 .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 14px 0; counter-reset: s; }
 .flow div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13.5px; }
 .flow b { display: block; font: 600 14px var(--font-display); }
@@ -108,7 +136,8 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
 
 /* interactive map: wider than the text column on large screens */
 .map-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin: 18px 0; overflow: hidden; }
-@media (min-width: 1100px) { .map-panel { margin-left: -90px; margin-right: -90px; } }
+/* 940px column + 2 x 90px breakout = 1120px, so only widen past 1140px to avoid page scroll */
+@media (min-width: 1140px) { .map-panel { margin-left: -90px; margin-right: -90px; } }
 .map-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .seg button { border: 0; background: transparent; color: var(--fg-2); padding: 5px 11px; cursor: pointer; font: 13px var(--font-body); }
@@ -173,17 +202,20 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
     <div class="eyebrow">Portfolio case study · Cheminformatics and machine learning</div>
     <h1>Mapping 5,211 PDE4 inhibitors: which chemical families shaped the field?</h1>
     <p class="lede">Forty years of medicinal chemistry on one enzyme, turned into a map. Each compound becomes a fingerprint of its substructures, a k-means model groups similar structures into families, and SQL and statistics show which families are potent, selective and efficient, and when each one was made.</p>
+    <p class="lede">This page is written to be read as a <strong>walkthrough of the reasoning</strong>, not only of the result: how the question was chosen, what each method actually does, which decision was taken at every fork and what the alternative would have cost, and then how hard the conclusions were pushed before being published.</p>
     <p class="byline">Matteo Melegari · Data: ChEMBL 37 (May 2026) · Tools: SQL (SQLite), Python, RDKit, scikit-learn, SciPy, Plotly, SmilesDrawer</p>
     <div class="tiles" aria-label="Key numbers">
       <div class="tile"><b>8 families</b><span>found by k-means in 5,211 compounds with a clean potency</span></div>
       <div class="tile"><b>24% → 5%</b><span>share of new compounds from the classic rolipram-type family, 1980-2000 vs 2015-2025</span></div>
-      <div class="tile"><b>+1.4 log</b><span>median preference for PDE4B over PDE4D in the newest family (about 25-fold)</span></div>
-      <div class="tile"><b>LE 0.39</b><span>best ligand efficiency: the most selective family also binds most efficiently</span></div>
+      <div class="tile"><b>+1.4 log</b><span>median PDE4B over PDE4D preference in the newest family (about 26-fold); survives testing at paper level</span></div>
+      <div class="tile"><b>75 claims</b><span>numbers on this page recomputed from the database by a script that fails if any drifts</span></div>
     </div>
     <nav class="toc" aria-label="Sections">
-      <a href="#problem">Problem</a><a href="#questions">Questions</a><a href="#data">Data and SQL</a><a href="#concepts">Concepts</a>
-      <a href="#methods">Methods</a><a href="#model">Choosing k</a><a href="#map-section">The map</a><a href="#families">The families</a>
-      <a href="#results">Results</a><a href="#queries">Queries</a><a href="#conclusion">Conclusion</a><a href="#limits">Limitations</a>
+      <a href="#problem">Problem</a><a href="#thinking">Choosing the question</a><a href="#questions">Questions</a>
+      <a href="#data">Data and SQL</a><a href="#concepts">Concepts</a><a href="#methods">Methods and decisions</a>
+      <a href="#model">Choosing k</a><a href="#map-section">The map</a><a href="#families">The families</a>
+      <a href="#results">Results</a><a href="#robustness">Robustness</a><a href="#queries">Queries</a>
+      <a href="#interview">Interview questions</a><a href="#conclusion">Conclusion</a><a href="#limits">Limitations</a>
     </nav>
   </header>
 
@@ -195,8 +227,45 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
     <div class="callout key"><span class="label">Goal</span><p>Turn 11,954 raw measurements into a readable map of chemical families, and use SQL and statistics to describe each family's potency, selectivity, efficiency and history.</p></div>
   </section>
 
+  <section class="part" id="thinking">
+    <div class="part-head"><span class="num">02</span><h2>How the question was chosen</h2></div>
+    <p>The analysis did not start from a hypothesis. It started from a table, and the first job was to find a question that the table can actually answer and that somebody would pay to have answered. This is the part of the work that never appears in a notebook, so it is written out here.</p>
+    <div class="steps">
+      <article class="step">
+        <h4>Look at what the data can support, before deciding what to ask</h4>
+        <p>PDE4 in ChEMBL 37: <strong>11,954 measurements</strong> on PDE4 targets, from <strong>430 papers and patents</strong>, covering <strong>5,211 compounds</strong> that have both a structure and a usable potency. The fields available are structure, calculated properties, target isoform, potency, assay type, document and year.</p>
+        <p class="alt"><b>What that rules out immediately:</b> anything needing a clinical endpoint, a dose, a formulation, a company name or a pharmacokinetic measurement. Those columns do not exist here, so a question about them would end in guesswork dressed as analysis.</p>
+      </article>
+      <article class="step">
+        <h4>Write down several candidate questions and filter them</h4>
+        <p>Each candidate was judged on three tests: the data can answer it; a respiratory R&amp;D team would care about the answer; and it takes more than one <code>SELECT</code>, otherwise it is a lookup, not an analysis.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Candidate question</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td>Which PDE4 inhibitor is the most potent?</td><td><span class="chip gone">rejected</span> One <code>ORDER BY</code>. A lookup, and the answer is dominated by assay noise at the top end.</td></tr>
+            <tr><td>Does PDE4B selectivity reduce nausea?</td><td><span class="chip gone">rejected</span> No side-effect or clinical column exists in this data. Not answerable, at any effort.</td></tr>
+            <tr><td>Which company leads the field?</td><td><span class="chip gone">rejected</span> The document records in this slice carry no reliable assignee, so the answer would be inferred from paper titles.</td></tr>
+            <tr><td>Can potency be predicted from structure?</td><td><span class="chip weak">deferred</span> Answerable, but it is a modelling exercise whose ceiling is the assay noise across 430 papers, and it needs scaffold-based splits to avoid leakage. Kept as a next step, not as the story.</td></tr>
+            <tr><td>What kinds of molecule exist here, which kinds work, and where is the chemistry going?</td><td><span class="chip ok">chosen</span> Answerable from structure, potency, isoform and year alone; it is the question a new project team actually asks; and it needs cheminformatics, unsupervised learning, SQL and statistics together.</td></tr>
+          </tbody>
+        </table></div>
+      </article>
+      <article class="step">
+        <h4>Fix the unit of analysis before any computation</h4>
+        <p>The same data can be counted three ways, and they give different answers. A row of <code>activities</code> is <em>one measurement</em>; a compound may have twenty. A paper may report one compound or two hundred. Choosing wrongly here inflates every later p-value.</p>
+        <p class="alt"><b>Decision:</b> the unit is <b>one compound</b>, because the question is about kinds of molecule. Measurements are collapsed to a median per compound and target first. Where a claim could instead be driven by one prolific paper, it is <a href="#robustness">re-tested with the paper as the unit</a> — which is exactly what happened to the selectivity result.</p>
+      </article>
+      <article class="step">
+        <h4>Decide in advance what would count as success, and as failure</h4>
+        <p>An unsupervised model always returns groups, so "it produced 8 clusters" is not a result. Before running anything, success was defined as: the groups recover chemotypes a medicinal chemist already names, and the known drugs land where a chemist would put them — rolipram and piclamilast together, roflumilast with its own descendants.</p>
+        <p class="alt"><b>The failure condition, written first:</b> if the clusters had scattered the known drugs at random, or if their statistics had been indistinguishable, the honest output would have been "substructure fingerprints plus k-means do not resolve this space", and the page would say that. Deciding this beforehand is what stops a null result being quietly reshaped into a positive one.</p>
+      </article>
+    </div>
+    <div class="callout key"><span class="label">The transferable part</span><p>The method here is not PDE4-specific: inventory the columns, write candidate questions, kill the ones the data cannot support, fix the unit of analysis, and define success and failure before modelling. The same four steps apply to a sales table or a manufacturing log.</p></div>
+  </section>
+
   <section class="part" id="questions">
-    <div class="part-head"><span class="num">02</span><h2>Questions</h2></div>
+    <div class="part-head"><span class="num">03</span><h2>Questions</h2></div>
     <ol>
       <li>Can a machine learning model group PDE4 inhibitors into chemically meaningful families from their structures alone?</li>
       <li>Do the families differ in potency, and is that potency achieved efficiently or by making molecules bigger?</li>
@@ -207,7 +276,7 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
   </section>
 
   <section class="part" id="data">
-    <div class="part-head"><span class="num">03</span><h2>Data and SQL extraction</h2></div>
+    <div class="part-head"><span class="num">04</span><h2>Data and SQL extraction</h2></div>
     <p>The starting point is the cleaned table <code>activity_potency</code> from this project: one median potency per compound, PDE4 target and measurement type, after removing censored values, flagged records and unusable units (see the <a href="case-study.html#methods">cleaning steps</a>). One SQL query turns it into one row per compound:</p>
     <div class="query" data-q="extract"></div>
     <ul>
@@ -215,11 +284,25 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
       <li><code>MAX(CASE WHEN target_name = 'PDE4B' THEN ... END)</code> is a <em>pivot</em>: it moves the PDE4B and PDE4D values from rows into their own columns, which makes the selectivity a simple subtraction.</li>
       <li>The join to <code>molecules</code> adds the structure (SMILES) and calculated properties; compounds without a structure are dropped.</li>
     </ul>
-    <p>Result: <strong>5,211 compounds</strong>, of which 1,190 are very potent (best pIC50 ≥ 8, i.e. IC50 ≤ 10 nM) and 675 were measured on both PDE4B and PDE4D.</p>
+    <p>Result: <strong>5,211 compounds</strong> from 430 papers and patents, of which 1,183 are very potent (best pIC50 ≥ 8, i.e. IC50 ≤ 10 nM) and 675 were measured on both PDE4B and PDE4D.</p>
+    <h3>Three judgement calls hidden in that query</h3>
+    <p>A query of this kind looks mechanical, but each line encodes a decision that changes the result. These are the ones worth defending out loud:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Line</th><th>Decision</th><th>Why, and what it costs</th></tr></thead>
+      <tbody>
+        <tr><td><code>MAX(p_median)</code></td><td>The compound's <em>best</em> potency, not its average</td>
+          <td>A compound measured on PDE4A, B, C and D has four values; averaging them would punish a selective compound for being weak on the isoforms it avoids. The cost: "best" is optimistic, and the maximum of several noisy numbers is biased upward. Acceptable because every family is treated the same way.</td></tr>
+        <tr><td><code>MAX(CASE WHEN … END)</code></td><td>Pivot the isoforms into columns</td>
+          <td>Selectivity is a difference between two values that live in different rows. Pivoting makes it a subtraction instead of a self-join. The cost: silent <code>NULL</code> when an isoform was never measured, which is why only 675 of 5,211 compounds have a selectivity value at all.</td></tr>
+        <tr><td><code>WHERE canonical_smiles IS NOT NULL</code></td><td>Drop compounds without a structure</td>
+          <td>No structure means no fingerprint, so such a compound cannot be placed on the map. The cost: a silent exclusion, so it is counted and reported rather than left implicit.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout caveat"><span class="label">The trap in the median</span><p>The potency is a median <em>per compound and target</em> taken across papers, so one compound's value can blend a 1999 assay with a 2019 one. That is tolerable for describing families, and not tolerable for the selectivity claim, which is why selectivity is <a href="#robustness">recomputed inside single papers</a> in the robustness section.</p></div>
   </section>
 
   <section class="part" id="concepts">
-    <div class="part-head"><span class="num">04</span><h2>Concepts: a short compendium</h2></div>
+    <div class="part-head"><span class="num">05</span><h2>Concepts: a short compendium</h2></div>
     <p>Each idea used in the analysis, explained from the basics, with what it means for this dataset.</p>
     <div class="concepts">
       <article class="concept">
@@ -232,20 +315,63 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
         <p>A model cannot read a graph directly; it needs numbers. A Morgan fingerprint describes a molecule by its small circular neighbourhoods: for each atom, it records the atom, then the atom plus its neighbours (radius 1), then neighbours of neighbours (radius 2). Each neighbourhood is hashed to a position in a list of 2,048 bits, and the bit is set to 1 if that substructure is present.</p>
         <span class="formula">molecule  →  { atom environments up to radius 2 }  →  hash  →  [0 1 0 0 1 ... 0]  (2,048 bits)</span>
         <p>Two molecules that share many substructures share many 1-bits. Different substructures can occasionally land on the same bit (a <em>collision</em>), a small loss of detail accepted for speed.</p>
-        <div class="in-practice"><b>Here:</b> 5,211 molecules × 2,048 bits, a 10.7-million-cell matrix of 0s and 1s.</div>
+        <h4>Worked by hand: methoxyethane, <code>CCOC</code></h4>
+        <p>Four heavy atoms, numbered as RDKit reads the SMILES: C0–C1–O2–C3. These are the exact bits the generator sets, and each line is one substructure:</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Radius</th><th>Centre atom</th><th>Substructure it records</th><th>Bit</th></tr></thead>
+          <tbody>
+            <tr><td class="n">0</td><td>C0</td><td>a CH₃ carbon, nothing else</td><td class="n">1057</td></tr>
+            <tr><td class="n">0</td><td>C3</td><td>also a CH₃ carbon → <strong>the same bit</strong></td><td class="n">1057</td></tr>
+            <tr><td class="n">0</td><td>C1</td><td>a CH₂ carbon</td><td class="n">80</td></tr>
+            <tr><td class="n">0</td><td>O2</td><td>an ether oxygen</td><td class="n">695</td></tr>
+            <tr><td class="n">1</td><td>C0</td><td>CH₃ <em>bonded to a carbon</em></td><td class="n">294</td></tr>
+            <tr><td class="n">1</td><td>C3</td><td>CH₃ <em>bonded to an oxygen</em> → now a different bit</td><td class="n">841</td></tr>
+            <tr><td class="n">1</td><td>C1</td><td>CH₂ between a carbon and an oxygen</td><td class="n">1238</td></tr>
+            <tr><td class="n">1</td><td>O2</td><td>oxygen between two carbons</td><td class="n">1005</td></tr>
+            <tr><td class="n">2</td><td>C1</td><td>the whole molecule seen from C1</td><td class="n">817</td></tr>
+          </tbody>
+        </table></div>
+        <p><strong>8 bits set out of 2,048.</strong> Three things in that table are the whole idea. At radius 0 the two methyl groups are indistinguishable and share a bit; at radius 1 they separate, because one sits next to carbon and the other next to oxygen — <em>that</em> is what the radius buys. And at radius 2 only one bit appears: the other atoms' radius-2 neighbourhoods are the same whole molecule, and an environment already recorded is not recorded twice.</p>
+        <div class="callout caveat"><span class="label">Two limits to say out loud</span><p>The fingerprint stores <em>presence</em>, not count. Ethylene glycol, <code>OCCO</code>, has more atoms than methoxyethane but sets only <strong>5</strong> bits, because its two halves are identical and collapse onto the same bits. And a bit set to 1 does not identify its substructure uniquely: with 2,048 slots for millions of possible environments, collisions are certain — the trade accepted in exchange for a fixed-length vector that any model can consume.</p></div>
+        <div class="in-practice"><b>Here:</b> 5,211 molecules × 2,048 bits, a 10.7-million-cell matrix that is <b>97.4% zeros</b>: a molecule sets 53.4 bits on average, roflumilast 50. Only 2 of the 2,048 bits are never used by any compound in the set.</div>
       </article>
       <article class="concept">
         <span class="tag">Similarity</span><h3>Tanimoto similarity</h3>
         <p>The standard way to compare two fingerprints is to count shared bits relative to all bits set in either:</p>
         <span class="formula">T(A, B) = |A ∩ B| / |A ∪ B|        0 = nothing in common, 1 = identical fingerprints</span>
         <p>For ECFP4, close analogues from the same series often score above about 0.4, while unrelated drug-like molecules typically score around 0.1-0.2.</p>
-        <div class="in-practice"><b>Here:</b> used to check the clusters afterwards: molecules in the same cluster are more similar (mean 0.181) than molecules in different clusters (0.127).</div>
+        <h4>Calibrate the number on molecules you know</h4>
+        <p>A similarity value means nothing until you have seen what it looks like for pairs whose relationship you can already judge. Computed on the real PDE4 drugs in this dataset:</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Pair</th><th>Tanimoto</th><th>How a chemist would describe them</th></tr></thead>
+          <tbody>
+            <tr><td>Roflumilast / tanimilast</td><td class="n">0.440</td><td>Same chemotype, one optimised from the other</td></tr>
+            <tr><td>Rolipram / piclamilast</td><td class="n">0.387</td><td>Same era, same catechol core, different right-hand side</td></tr>
+            <tr><td>Rolipram / apremilast</td><td class="n">0.165</td><td>Different chemotypes, both PDE4 inhibitors</td></tr>
+            <tr><td>Rolipram / roflumilast</td><td class="n">0.154</td><td>Both <em>are</em> catechol diethers, yet they score as strangers</td></tr>
+            <tr><td>Rolipram / crisaborole</td><td class="n">0.086</td><td>Unrelated: a boron heterocycle against a pyrrolidinone</td></tr>
+          </tbody>
+        </table></div>
+        <p>The fourth row is the one to remember. Rolipram and roflumilast share the pharmacophore a chemist names first, and the fingerprint still rates them at 0.154 — because ECFP4 counts <em>all</em> local environments, and the rest of the two molecules (a cyclopentyl ether and a pyrrolidinone against a difluoromethoxy and a dichloropyridine amide) have almost nothing in common. A fingerprint measures overall substructure overlap, not shared pharmacophore. This is precisely why the model puts them in two different families, and why that split is chemically defensible rather than a bug.</p>
+        <div class="in-practice"><b>Here:</b> used to check the clusters afterwards: molecules in the same cluster are more similar (mean 0.181) than molecules in different clusters (0.127). A modest gap, and it is the honest one — see the caveat under "Choosing the number of clusters".</div>
       </article>
       <article class="concept">
         <span class="tag">Dimensionality reduction</span><h3>PCA, and why reduce dimensions</h3>
         <p>With 2,048 dimensions most bits are rarely set, distances become noisy and algorithms slow down (the "curse of dimensionality"). Principal component analysis finds new axes, the principal components, ordered by how much of the variation between molecules they capture, and keeps only the first few.</p>
         <p>Before PCA each fingerprint is divided by its length (L2 normalisation), so that a large molecule with many bits does not dominate just because of its size; distances then behave more like the similarity of the bit patterns.</p>
-        <div class="in-practice"><b>Here:</b> 50 components keep 51.4% of the variation. The rest is spread over many small, mostly noisy directions.</div>
+        <h4>Why 50, and not 2 or 500</h4>
+        <p>The variance profile decides this, and it is flat — the sign of a space with no dominant axes:</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Components kept</th><th>Variance captured</th><th>Reading</th></tr></thead>
+          <tbody>
+            <tr><td class="n">1</td><td class="n">5.0%</td><td>No single "main direction" of PDE4 chemistry exists</td></tr>
+            <tr><td class="n">10</td><td class="n">22.7%</td><td>Too lossy to separate chemotypes</td></tr>
+            <tr><td class="n">50</td><td class="n">51.4%</td><td>Chosen: about half the variation, k-means still fast and stable</td></tr>
+            <tr><td class="n">100</td><td class="n">66.1%</td><td>Better fidelity, but noisier distances and a less stable clustering</td></tr>
+          </tbody>
+        </table></div>
+        <p>Reaching the 80% that a textbook might recommend would take over 200 components here, which would defeat the purpose: the point of the step is to remove the thin, noisy directions that make distances in 2,048 dimensions meaningless. 50 is a deliberate compromise, and the fact that it discards 48.6% of the variation is a genuine limitation, not a detail to hide.</p>
+        <div class="in-practice"><b>Here:</b> 50 components keep 51.4% of the variation. The rest is spread over many small, mostly noisy directions — the first component alone carries only 5.0%.</div>
       </article>
       <article class="concept">
         <span class="tag">Machine learning</span><h3>k-means clustering</h3>
@@ -269,7 +395,7 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
             <span class="formula">s = (b − a) / max(a, b)        1 = well inside its cluster, 0 = on a border, &lt; 0 = probably misplaced</span></li>
           <li><strong>Stability:</strong> run k-means with 5 different random seeds and compare the results with the adjusted Rand index (ARI): 1 means the same grouping every time, 0 means agreement no better than chance. A useful grouping should not depend on luck.</li>
         </ul>
-        <div class="in-practice"><b>Here:</b> silhouettes are low (0.07-0.15) for every k: chemical families overlap and share substructures, so there are no sharply separated groups. k = 8 was chosen because it is among the most stable settings (ARI 0.75) while still separating known chemotypes, and because 8 colours stay readable on a map.</div>
+        <div class="in-practice"><b>Here:</b> silhouettes are low (0.07-0.15) for every k: chemical families overlap and share substructures, so there are no sharply separated groups. At k = 8, <b>12.4% of molecules have a negative silhouette</b> — they sit closer to a neighbouring family than to their own, and calling them members is a convention, not a measurement. k = 8 was chosen because it is among the most stable settings (ARI 0.75) while still separating known chemotypes, and because 8 colours stay readable on a map.</div>
       </article>
       <article class="concept">
         <span class="tag">Visualisation</span><h3>t-SNE maps</h3>
@@ -309,7 +435,7 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
   </section>
 
   <section class="part" id="methods">
-    <div class="part-head"><span class="num">05</span><h2>Methods: the pipeline</h2></div>
+    <div class="part-head"><span class="num">06</span><h2>Methods: the pipeline, and every decision in it</h2></div>
     <div class="flow" aria-label="Analysis pipeline">
       <div><i>1 · SQL</i><b>Extract</b>5,211 compounds with best potency and PDE4B/D values</div>
       <div><i>2 · RDKit</i><b>Fingerprint</b>Morgan, radius 2, 2,048 bits</div>
@@ -324,20 +450,72 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
       <li><code>pde4_clusters</code>: one row per family with its statistics, medoid and named compounds.</li>
       <li><code>pde4_k_selection</code>: inertia, silhouette and stability for each k tried.</li>
     </ul>
+
+    <h3>Decision log: every fork, and the road not taken</h3>
+    <p>Six lines of code hide six choices. Each one below had a plausible alternative, and the last column is the part that matters in a review: what the alternative would have changed.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Fork</th><th>Alternatives</th><th>Chosen, and why</th><th>What the alternative would have changed</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>How to turn a molecule into numbers</strong></td>
+          <td>MACCS keys (166 predefined substructures); physicochemical descriptors (MW, logP, TPSA…); a learned graph-neural-network embedding</td>
+          <td><strong>Morgan / ECFP4, 2,048 bits.</strong> It encodes exactly what a chemist points at — local substructure — without any training, and it is the field's default for similarity, so the numbers are comparable with published work.</td>
+          <td>MACCS is too coarse: 166 fixed keys cannot distinguish two catechol diethers. Descriptors describe <em>properties</em>, so two structurally unrelated molecules with the same MW and logP would land together — the opposite of what is wanted. A learned embedding needs labels, and would make every cluster unexplainable.</td>
+        </tr>
+        <tr>
+          <td><strong>Radius, and bits or counts</strong></td>
+          <td>Radius 3 (ECFP6); count-based fingerprints instead of binary</td>
+          <td><strong>Radius 2, binary.</strong> Radius 2 is the standard compromise between local detail and collisions; binary bits keep Tanimoto meaning what everyone else means by it.</td>
+          <td>Radius 3 captures larger fragments but makes the vector sparser and collisions more frequent. Counts would weight a molecule with three amides above one with a single amide, which is a different question from the one asked.</td>
+        </tr>
+        <tr>
+          <td><strong>Cluster the bits, or reduce first</strong></td>
+          <td>Cluster directly on Tanimoto distance (Butina); use all 2,048 bits</td>
+          <td><strong>L2 normalise, then PCA to 50 components.</strong> It removes thin noisy directions, makes k-means and t-SNE fast on 5,211 molecules, and gives both the same coordinates.</td>
+          <td>Clustering on Tanimoto directly is more faithful to chemical similarity. The honest cost of the choice made: Euclidean distance on PCA-reduced normalised bits only <em>approximates</em> Tanimoto, so the geometry is an approximation of chemical similarity, not chemical similarity itself.</td>
+        </tr>
+        <tr>
+          <td><strong>Which clustering algorithm</strong></td>
+          <td>HDBSCAN (density-based, leaves outliers unassigned); Butina (similarity cutoff); Ward agglomerative</td>
+          <td><strong>k-means.</strong> It returns a fixed, readable number of groups that can each be coloured, named and queried — which is what a map needs.</td>
+          <td>HDBSCAN would label a large share of this continuum as noise, honest but unusable as a map. Butina's answer moves with the chosen cutoff. Ward was actually run as a check: it <a href="#robustness">agrees only moderately</a>, which is reported rather than hidden.</td>
+        </tr>
+        <tr>
+          <td><strong>How many clusters</strong></td>
+          <td>k = 4 (most stable); k = 12 or 16 (finer)</td>
+          <td><strong>k = 8.</strong> Among the most stable settings while still splitting chemotypes that a chemist names separately.</td>
+          <td>k = 4 is more stable but merges the roflumilast and rolipram chemotypes, erasing the central historical story. k = 16 fragments series into near-duplicate groups and makes the map unreadable.</td>
+        </tr>
+        <tr>
+          <td><strong>How to lay out the map</strong></td>
+          <td>The first two principal components; UMAP</td>
+          <td><strong>t-SNE on the 50 components, perplexity 40.</strong> It preserves the neighbourhoods that matter for reading analogue series.</td>
+          <td>Plotting PC1 against PC2 shows only <strong>7.9%</strong> of the variation — a shapeless cloud. UMAP would keep more of the global structure and is arguably the better choice, at the cost of one more dependency; it is in the next steps.</td>
+        </tr>
+        <tr>
+          <td><strong>How to name the families</strong></td>
+          <td>Keep automatic labels only; let a model write them</td>
+          <td><strong>Automatic motif enrichment, then a chemist's reading of medoid and scaffolds.</strong> Names a human can argue with.</td>
+          <td>Automatic labels alone give names like "sulfonamide 41%", true but uninformative. The names are keyed to each family's medoid ChEMBL ID, so if a rerun changes the clusters the code falls back to the automatic label instead of silently mislabelling a family.</td>
+        </tr>
+      </tbody>
+    </table></div>
+    <div class="callout key"><span class="label">How this page stays true</span><p>Every number written on this page is listed in <code>src/pde4_fact_check.py</code> with the value the page claims, recomputed from the database, and the script exits with an error if any of them drifts. It currently verifies <strong>75 claims</strong>, including which family each named drug belongs to. Writing that script is how the two mistakes corrected on 4 November 2026 were found.</p></div>
   </section>
 
   <section class="part" id="model">
-    <div class="part-head"><span class="num">06</span><h2>Choosing the number of clusters</h2></div>
+    <div class="part-head"><span class="num">07</span><h2>Choosing the number of clusters</h2></div>
     <div class="table-wrap"><table id="kTable"><thead><tr><th>k</th><th>Inertia</th><th>Silhouette</th><th>Stability (ARI)</th></tr></thead><tbody></tbody></table></div>
     <figure>
       <div class="frame"><img src="figures/pde4_k_selection.png" alt="Three line charts: inertia falls smoothly with k, silhouette rises slowly from 0.07 to 0.15, stability peaks at k = 4 and 8." loading="lazy"></div>
       <figcaption>No clear elbow and low silhouettes at every k: the chemical space is a continuum of overlapping families. Stability is highest at k = 4 (too coarse to separate known chemotypes) and k = 8, the choice used here.</figcaption>
     </figure>
-    <div class="callout caveat"><span class="label">Honest reading</span><p>k-means imposes a grouping even when the data form a continuum. The families are useful summaries, checked against chemistry, not natural categories. Two of them (2 and 3) are loose "catch-all" groups with low internal similarity (Tanimoto 0.15 and 0.13), while families 4, 6, 7 and 8 are tight (0.29-0.40).</p></div>
+    <div class="callout caveat"><span class="label">Honest reading</span><p>k-means imposes a grouping even when the data form a continuum. The families are useful summaries, checked against chemistry, not natural categories. Two of them (2 and 3) are loose "catch-all" groups with low internal similarity (mean Tanimoto 0.14 and 0.13), while families 7, 4, 8 and 6 are tight (0.41, 0.32, 0.31, 0.29). A family's internal similarity should be read before its statistics are quoted: a median taken over a loose group describes a convention, while a median over a tight group describes a chemotype.</p></div>
+    <p>Read the three panels in the order a reviewer would. The elbow fails first: inertia falls smoothly, so the data offer no preferred k. The silhouette fails second: it rises with k instead of peaking, which is what happens when groups are carved out of a continuum rather than found in it. Only stability says anything useful. It declines as k grows, from 0.80 at k = 4 to 0.49 at k = 16 — a grouping that would mostly reflect the random seed — with two local peaks, k = 4 (0.80) and k = 8 (0.75). With no statistical optimum available, the choice becomes an explicit judgement between those two stable options, decided on chemical grounds and stated as such rather than presented as the output of a criterion.</p>
   </section>
 
   <section class="part" id="map-section">
-    <div class="part-head"><span class="num">07</span><h2>The map</h2></div>
+    <div class="part-head"><span class="num">08</span><h2>The map</h2></div>
     <p>Each point is a compound. Hover (or tap) a point to see its structure. Click a family in the legend to hide or show it.</p>
     <div class="map-panel">
       <div class="map-controls">
@@ -356,13 +534,13 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
   </section>
 
   <section class="part" id="families">
-    <div class="part-head"><span class="num">08</span><h2>The eight families</h2></div>
+    <div class="part-head"><span class="num">09</span><h2>The eight families</h2></div>
     <p>Each card shows the family's medoid structure (its most central real molecule) and its key numbers. Open a family in the workbench to list and plot its compounds.</p>
     <div class="gallery" id="gallery"></div>
   </section>
 
   <section class="part" id="results">
-    <div class="part-head"><span class="num">09</span><h2>Results</h2></div>
+    <div class="part-head"><span class="num">10</span><h2>Results</h2></div>
 
     <h3>Q2 · Families differ strongly in potency, and the best are efficient, not just big</h3>
     <figure>
@@ -399,29 +577,112 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
       <li>It contains PF-06445974, described in the literature as a PDE4B-preferring compound, and the family's growth after 2015 matches the field's push for PDE4B selectivity.</li>
       <li>A sanity check: zatolmilast, known as a PDE4D-preferring inhibitor, sits at −2.4, at the opposite end.</li>
     </ul>
-    <div class="callout caveat"><span class="label">Caveat</span><p>The 217 selectivity values of family 5 come from 13 papers, so a few large series weigh heavily. The direction is clear; the exact size of the effect needs paper-level analysis.</p></div>
+    <div class="callout caveat"><span class="label">Caveat, and what was done about it</span><p>The 217 selectivity values of family 5 come from 13 papers, so a few large series weigh heavily, and the PDE4B and PDE4D numbers of one compound can come from different papers and different assays. That is the single weakest point of this case study, so the next section re-tests it four stricter ways instead of leaving the caveat as a disclaimer.</p></div>
 
     <h3>Q5 · Where the known drugs and inhaled programmes sit</h3>
     <ul>
-      <li>Roflumilast (oral, COPD), orismilast and tanimilast (inhaled, in development; ChEMBL name "tranimilast", pIC50 10.4, 688 Da) are all in family 6, the roflumilast type.</li>
+      <li>Family 6, the roflumilast type, holds three generations of the same chemotype at once: roflumilast (oral, approved for COPD), orismilast (<strong>oral</strong>, in clinical development for inflammatory skin disease) and tanimilast (inhaled, in development; stored in ChEMBL under the name "tranimilast", pIC50 10.4, 688 Da).</li>
       <li>Rolipram, cilomilast and piclamilast are in family 4; apremilast in family 1; crisaborole in family 2; zatolmilast in family 8.</li>
       <li>The 248 compounds from papers about inhaled PDE4 inhibitors fall mostly in families 2 (115), 6 (57) and 5 (44): inhaled design built on the roflumilast scaffold and on diverse amide series, consistent with the large molecules found in the <a href="case-study.html#results">Rule of 5 study</a>.</li>
     </ul>
   </section>
 
+  <section class="part" id="robustness">
+    <div class="part-head"><span class="num">11</span><h2>Robustness: attacking my own results</h2></div>
+    <p>Two of the results above are strong enough to be acted on, which is exactly why they deserve to be attacked before anybody else does it. The attacks were written as the objections a referee or an interviewer would raise, and then run as code in <code>src/pde4_fact_check.py</code>.</p>
+
+    <h3>Objection 1 · "With 5,211 compounds, of course the potency difference is significant"</h3>
+    <p>Correct, and that is why the p-value is not the result. H = 805 with p = 10⁻¹⁶⁹ says almost nothing: at this sample size a trivial difference would also clear any threshold. The quantity that carries meaning is ε² = 0.154, which says family membership accounts for about 15% of the rank variation in potency — medium to large, and worth reporting. The second objection is that one prolific paper could be producing it, so the test was repeated after removing the largest single source, 116 compounds.</p>
+
+    <h3>Objection 2 · "The selectivity is an artefact of mixing assays and of a few big series"</h3>
+    <p>This is the serious one. Three separate weaknesses are bundled in it, so each was addressed on its own:</p>
+    <ul>
+      <li><strong>Mixed assays:</strong> a compound's PDE4B value may come from one paper and its PDE4D value from another, years apart. Fixed by recomputing selectivity <em>only</em> where both isoforms were measured inside the same document — same lab, same conditions.</li>
+      <li><strong>The wrong unit of analysis:</strong> 217 values from 13 papers are not 217 independent observations. Fixed by collapsing each paper to one value and testing with the paper as the unit, which drops the sample from hundreds to 93.</li>
+      <li><strong>One dominant series:</strong> fixed by dropping the paper that contributes the most family-5 values (98 of them) and repeating the paper-level test.</li>
+    </ul>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>What was tested</th><th>How</th><th>n</th><th>Effect size</th><th>p</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td rowspan="2">Potency differs between families</td><td>published: all compounds</td><td class="n">5,211</td><td class="n">ε² = 0.154</td><td class="n">10⁻¹⁶⁹</td><td><span class="chip ok">baseline</span></td></tr>
+        <tr><td>without the largest paper (116 compounds)</td><td class="n">5,095</td><td class="n">ε² = 0.155</td><td class="n">10⁻¹⁶⁶</td><td><span class="chip ok">holds</span></td></tr>
+        <tr><td rowspan="4">Family 5 prefers PDE4B over PDE4D</td><td>published: per molecule, values across papers</td><td class="n">675</td><td class="n">r = +0.58</td><td class="n">10⁻³⁴</td><td><span class="chip ok">baseline</span></td></tr>
+        <tr><td>only where both isoforms come from the same paper</td><td class="n">882</td><td class="n">r = +0.65</td><td class="n">10⁻⁵⁸</td><td><span class="chip ok">stronger</span></td></tr>
+        <tr><td>one value per paper (12 family papers vs 81 others)</td><td class="n">93</td><td class="n">r = +0.48</td><td class="n">0.008</td><td><span class="chip ok">holds</span></td></tr>
+        <tr><td>per paper, minus the largest contributor (98 values)</td><td class="n">92</td><td class="n">r = +0.44</td><td class="n">0.020</td><td><span class="chip weak">holds, weaker</span></td></tr>
+        <tr><td rowspan="2">The families are not an artefact of k-means</td><td>agreement with Ward agglomerative clustering</td><td class="n">5,211</td><td class="n">ARI = 0.48</td><td class="n">–</td><td><span class="chip weak">partly</span></td></tr>
+        <tr><td>selectivity test re-run on Ward's own grouping</td><td class="n">675</td><td class="n">r = +0.24</td><td class="n">10⁻⁷</td><td><span class="chip weak">direction holds</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="callout key"><span class="label">What survives, and what has to be said more carefully</span>
+      <p><strong>Survives.</strong> Both headline results hold. The selectivity result gets <em>stronger</em> under the stricter within-paper definition (r +0.58 → +0.65, median +1.33 log units for family 5 against +0.31 for everything else), which is the expected direction if the signal is real and the cross-paper mixing was adding noise. It also survives the hardest version of the test — one value per paper, minus the biggest paper, 92 papers, r = +0.44, p = 0.020 — where the sample is small enough that an artefact would have collapsed.</p>
+      <p><strong>Has to be said more carefully.</strong> The <em>partition</em> is partly a choice of algorithm. Ward, given the same 50 components and the same k, reproduces only a moderate version of it (ARI 0.48); it keeps 432 of the 436 family-5 compounds together but buries them in a looser cluster of 983, which dilutes the median selectivity to +0.84 and the effect to r = +0.24. So the defensible claim is "there is a PDE4B-selective region of this chemical space, and it is recent and compact" — not "there are exactly eight families and family 5 is one of them".</p>
+    </div>
+    <div class="callout caveat"><span class="label">What was not tested</span><p>No correction for multiple testing is applied across the robustness variants, because they are not independent tests of different hypotheses but the same hypothesis under different definitions — reporting all of them, including the weakest, is the correction. The alternative clustering check covers Ward only; Butina and HDBSCAN remain in the next steps.</p></div>
+  </section>
+
   <section class="part" id="queries">
-    <div class="part-head"><span class="num">10</span><h2>Key queries</h2></div>
+    <div class="part-head"><span class="num">12</span><h2>Key queries</h2></div>
     <p>Every number above can be reproduced from the three tables. Each query opens in the workbench as a new working case, with a suitable chart.</p>
     <div id="queryList"></div>
   </section>
 
+  <section class="part" id="interview">
+    <div class="part-head"><span class="num">13</span><h2>The questions this work invites, and the answers</h2></div>
+    <p>If this analysis is presented to a scientific audience, these are the questions that come back. Each answer is grounded in a number from this page, because "I would have to check" is a fine answer for something nobody computed and a poor one for something written in the results.</p>
+    <div class="qa">
+      <details class="qa-item"><summary>Explain a molecular fingerprint to someone who is not a chemist.</summary>
+        <p>Take a photograph of every small neighbourhood in the molecule: each atom alone, then each atom with its immediate neighbours, then one shell further out. Keep a checklist of 2,048 boxes and tick the box belonging to each neighbourhood you saw. Two molecules built from similar pieces tick similar boxes, so the molecule becomes a vector a computer can compare.</p>
+        <p class="say">The honest footnote: the checklist is shorter than the number of possible neighbourhoods, so occasionally two different neighbourhoods tick the same box. Accepted, because it buys a fixed-length vector.</p></details>
+
+      <details class="qa-item"><summary>Why k-means? Why not a method that determines the number of clusters itself?</summary>
+        <p>Because the deliverable is a readable map. HDBSCAN would have been more honest about the data — it would mark a large part of this continuum as noise and refuse to assign it — but a map with a third of its compounds unlabelled cannot be handed to a project team. k-means forces every compound into a named group, and the price is paid openly: the grouping is a summary imposed on a continuum, and 12.4% of compounds sit closer to a neighbouring family than to their own.</p></details>
+
+      <details class="qa-item"><summary>Your silhouette is about 0.1. Isn't that a failed clustering?</summary>
+        <p>It would be, if the claim were that PDE4 chemistry falls into eight natural categories. That claim is not made. A silhouette near 0.1 is the correct measurement of a space where chemotypes share substructures and blend into each other, and it is reported on the page rather than omitted. The clustering is justified instead by what it recovers: known chemotypes, with the expected drugs in the expected groups, and a within-family similarity (0.181) above the between-family one (0.127).</p>
+        <p class="say">If the silhouette had been 0.6, I would have suspected the clusters were tracking something trivial, like molecular size.</p></details>
+
+      <details class="qa-item"><summary>How do you know the clusters mean anything chemically, rather than being arbitrary?</summary>
+        <p>Three independent checks, none of which the model could see. The clusters correlate with Murcko scaffolds computed separately (NMI 0.42 against 1,350 generic scaffolds). Each family is enriched in a named substructure a chemist recognises. And the known drugs land where a medicinal chemist would put them: rolipram with piclamilast and cilomilast, roflumilast with tanimilast and orismilast, zatolmilast on its own at the opposite end of the selectivity axis.</p>
+        <p class="say">The last one is a prediction the model could have failed. It was defined as the success criterion before the clustering was run.</p></details>
+
+      <details class="qa-item"><summary>You keep only 51% of the variance. Isn't that throwing away half the information?</summary>
+        <p>It is discarding half the variance, and the discarded half is mostly thin noise: the first component carries 5.0%, and reaching 80% would need over 200 components. In a 2,048-dimensional binary space that is 97.4% zeros, keeping every direction makes distances less meaningful, not more. It remains a genuine limitation, and it is listed as one.</p></details>
+
+      <details class="qa-item"><summary>I have been told never to trust a t-SNE plot. Why trust this one?</summary>
+        <p>Trust it for neighbourhoods and distrust it for geometry. Which compounds are each other's neighbours is reliable; the size of an island and the distance between two far-apart islands are not, because t-SNE optimises local structure only. Nothing on this page is measured off the map — the clusters come from the 50 principal components and the statistics come from SQL, so the map is a reading aid, not evidence. That is also why one family appears as several islands of the same colour.</p></details>
+
+      <details class="qa-item"><summary>Your p-value is 10⁻¹⁶⁹. Should I be impressed?</summary>
+        <p>No, and I would not present it on its own. With 5,211 compounds, a difference too small to matter would also reach that p-value, so the number mostly reports the sample size. The result is the effect size: ε² = 0.154, meaning family membership accounts for about 15% of the rank variation in potency. It also survives dropping the largest contributing paper (ε² = 0.155), which is the check that actually tests the claim.</p></details>
+
+      <details class="qa-item"><summary>How do you know the selectivity result is not just one prolific paper?</summary>
+        <p>Because it was tested that way. Collapsing each paper to a single value leaves 12 family papers against 81 others and still gives r = +0.48 (p = 0.008); removing the single largest contributor, 98 values, leaves r = +0.44 (p = 0.020). And restricting to compounds whose PDE4B and PDE4D numbers come from the same document makes the effect <em>stronger</em> (r = +0.65), which is what should happen if the cross-paper mixing was adding noise rather than creating the signal.</p>
+        <p class="say">What I would not defend is the precise figure of +1.41 log units. Under a different clustering it becomes +0.84, so I quote the direction and the order of magnitude, not the decimal.</p></details>
+
+      <details class="qa-item"><summary>Why is selectivity a subtraction and not a ratio?</summary>
+        <p>Because pIC50 is already a logarithm, so the subtraction <em>is</em> the ratio: pIC50(PDE4B) − pIC50(PDE4D) = log₁₀(IC50 on PDE4D / IC50 on PDE4B). A difference of +1.41 log units means roughly 26-fold more potent on PDE4B. Working in log space also keeps the distribution usable — IC50 values span six orders of magnitude, and their arithmetic mean would be governed entirely by the weakest compounds.</p></details>
+
+      <details class="qa-item"><summary>Rolipram and roflumilast are both catechol diethers. Your model separated them — isn't that wrong?</summary>
+        <p>It is chemically defensible, and it exposes what the method measures. Their Tanimoto similarity is only 0.154: they share the catechol diether a chemist names first, and almost nothing else, because ECFP4 counts every local environment and the rest of the two molecules differ completely. The fingerprint measures total substructure overlap, not shared pharmacophore. If the task were to group by pharmacophore, this is the wrong representation and a SMARTS-based or shape-based method would be the right one.</p></details>
+
+      <details class="qa-item"><summary>What is the weakest part of this analysis?</summary>
+        <p>That the number of families, and therefore the identity of each family, is a decision rather than a finding. Ward clustering on the same components agrees only moderately (ARI 0.48). Everything downstream — a family's median potency, its efficiency, its selectivity — inherits that choice. The second weakest point is that potency mixes IC50 and Ki values from 430 papers with different assay conditions, which puts a floor on how precise any per-family number can be.</p></details>
+
+      <details class="qa-item"><summary>This is public data. What would change on a company's internal compounds?</summary>
+        <p>The method transfers unchanged; three things get better and one gets harder. Better: assay conditions are consistent, so potency stops being a median across heterogeneous papers; the unit-of-analysis problem largely disappears, since compounds come from projects rather than publications; and internal series can be positioned against the public families computed here. Harder: internal sets are far more clustered around a few scaffolds, so k-means would mostly recover the project structure already known — which argues for clustering against a public reference space rather than in isolation.</p></details>
+    </div>
+  </section>
+
   <section class="part" id="conclusion">
-    <div class="part-head"><span class="num">11</span><h2>Conclusion</h2></div>
+    <div class="part-head"><span class="num">14</span><h2>Conclusion</h2></div>
     <p class="answer">Unsupervised learning on substructure fingerprints turns 5,211 PDE4 inhibitors into eight readable chemical families, and the families tell the story of the field: from substrate mimics, through the catechol diether era, to compact, efficient, PDE4B-selective carboxamides.</p>
     <div class="findings">
       <div class="finding"><h3>The model finds real chemistry</h3><p>Families match known chemotypes and contain the expected drugs (rolipram, roflumilast, apremilast), even though no labels were given to the model.</p><span class="stat">Within-family Tanimoto 0.181 vs 0.127 between; NMI with scaffolds 0.42</span></div>
       <div class="finding"><h3>Potency is a family trait</h3><p>Family explains a medium-to-large share of potency differences; the best family combines potency with the highest efficiency.</p><span class="stat">ε² = 0.15; family 5: LE 0.39, LLE 4.4 at 342 Da</span></div>
       <div class="finding"><h3>Selectivity arrived with a new scaffold</h3><p>PDE4B selectivity is concentrated in the youngest family rather than spread across old ones.</p><span class="stat">+1.41 vs +0.33 log units; 0% → 17% of new compounds</span></div>
+      <div class="finding"><h3>Both results survive being attacked</h3><p>The potency difference holds without the largest paper; the selectivity holds within single papers, at paper level, and with the biggest paper removed. The eight-family partition itself is the part that is a decision, not a finding.</p><span class="stat">selectivity r = +0.58 published → +0.65 within-paper → +0.48 per paper → +0.44 without the largest; k-means vs Ward ARI 0.48</span></div>
     </div>
     <h3>What this means for a project team</h3>
     <ul>
@@ -432,24 +693,26 @@ tr.chosen td { background: var(--accent-soft); font-weight: 600; }
   </section>
 
   <section class="part" id="limits">
-    <div class="part-head"><span class="num">12</span><h2>Limitations</h2></div>
+    <div class="part-head"><span class="num">15</span><h2>Limitations</h2></div>
     <ul>
-      <li>k-means needs k in advance and assumes compact groups; chemical space is a continuum, so families overlap (silhouette about 0.1). Other methods (Butina clustering on Tanimoto, hierarchical clustering, HDBSCAN) may split it differently.</li>
-      <li>PCA keeps 51.4% of the fingerprint variation; t-SNE distorts distances between distant islands.</li>
-      <li>Potency is the best median on any PDE4 target, mixing IC50 and Ki and different assay conditions across papers.</li>
-      <li>Compounds are grouped by papers and patents; large series can dominate a family's statistics, notably for selectivity.</li>
-      <li>Inhaled programmes were identified from paper titles only (7 papers).</li>
+      <li><strong>The number of families is a decision, not a finding.</strong> k-means needs k in advance and assumes compact groups; chemical space is a continuum, so families overlap (silhouette about 0.1, and 12.4% of compounds closer to another family than their own). Ward clustering on the same components agrees only moderately (ARI 0.48), so every per-family number inherits the choice of k = 8.</li>
+      <li>Euclidean distance on PCA-reduced normalised bits approximates Tanimoto similarity; it is not Tanimoto. PCA keeps 51.4% of the fingerprint variation, and t-SNE distorts distances between distant islands.</li>
+      <li>Potency is the best median on any PDE4 target, mixing IC50 and Ki and different assay conditions across 430 papers. This puts a floor on how precise any per-family value can be.</li>
+      <li>Compounds are grouped by papers and patents; large series can dominate a family's statistics. For the selectivity result this was tested directly and it held; for potency, efficiency and the timeline it was not tested paper by paper.</li>
+      <li>Inhaled programmes were identified from paper titles only (7 papers), so a programme described without those words in its title is missed.</li>
+      <li>The historical shares assume a compound's first ChEMBL document approximates when it was made. Patent and publication lags differ by company and era.</li>
     </ul>
     <h3>Next steps</h3>
     <ol>
-      <li>Compare k-means with Butina and HDBSCAN clustering, and report agreement.</li>
-      <li>Repeat the selectivity comparison with one value per paper.</li>
+      <li>Compare k-means with Butina clustering on true Tanimoto distance and with HDBSCAN, and report agreement as was done for Ward.</li>
+      <li>Repeat the potency, efficiency and timeline results at paper level, as the selectivity result already is.</li>
+      <li>Lay the map out with UMAP as well, to see which neighbourhoods are method-independent.</li>
       <li>Find activity cliffs: pairs of very similar compounds (Tanimoto ≥ 0.8) with very different potency.</li>
       <li>Train a simple model to predict potency from fingerprints, with scaffold-based splits to avoid leakage.</li>
     </ol>
   </section>
 
-  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0. Results come from <code>src/pde4_chemical_space.py</code> (fixed seeds) on the project database built from ChEMBL 37; molecule drawings by SmilesDrawer.</p>
+  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0. Results come from <code>src/pde4_chemical_space.py</code> (fixed seeds) on the project database built from ChEMBL 37; molecule drawings by SmilesDrawer. Every number on this page is recomputed and checked by <code>src/pde4_fact_check.py</code>, which also runs the robustness tests of section 11; its output is in <code>reports/pde4_fact_check.csv</code> and <code>reports/pde4_robustness.csv</code>. Reviewed on 4 November 2026: the count of very potent compounds was corrected from 1,190 to 1,183, and orismilast's route of administration from inhaled to oral.</p>
 </main>
 
 <div id="molCard" class="mol-card" hidden><b id="molName"></b><span id="molSub"></span><div class="d" id="molDraw"></div><div class="v" id="molVals"></div></div>
