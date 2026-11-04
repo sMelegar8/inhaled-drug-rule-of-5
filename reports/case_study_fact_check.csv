@@ -1,0 +1,129 @@
+claim,page_says,claimed,recomputed,source,pass
+n_approved_drugs,"4,225 approved drugs with calculated properties",4225.0,4225.0,db,True
+n_pde4_measurements,"11,954 IC50/Ki measurements on human PDE4",11954.0,11954.0,db,True
+n_pde4_compounds,"for 7,352 compounds",7352.0,7352.0,db,True
+n_fda_products,"51,886 FDA products",51886.0,51886.0,db,True
+match_exact,92.3% of FDA ingredient names matched exactly,92.3,92.3368,db,True
+match_salt,0.3% matched after removing salt words,0.3,0.2749,db,True
+match_none,7.4% unmatched,7.4,7.3883,db,True
+clean_start,"1,305 parent molecules at the start",1305.0,1305.0,db,True
+clean_m1,M1 removes 37,37.0,37.0,db,True
+clean_m2,M2 removes 63,63.0,63.0,db,True
+clean_m3,M3 removes 10 medical gases,10.0,10.0,db,True
+clean_m4,M4 removes 12 diagnostic agents,12.0,12.0,db,True
+clean_m5,M5 removes 9 CNS-acting inhaled drugs,9.0,9.0,db,True
+clean_m6,M6 removes 20 gut-local oral drugs,20.0,20.0,db,True
+n_inhaled,46 lung-targeted inhaled drugs,46.0,46.0,db,True
+n_oral,"1,108 systemic oral drugs",1108.0,1108.0,db,True
+n_also_oral_flagged,15 molecules flagged as also oral,15.0,15.0,db,True
+n_also_oral_kept,11 of them still in the analysis set,11.0,11.0,db,True
+n_pde4_clean,"PDE4 measurements 11,954 to 8,793 after cleaning",8793.0,8793.0,db,True
+n_molecules_clean,"molecules 1,305 to 1,154",1154.0,1154.0,db,True
+n_no_atc,seven inhaled molecules have no ATC code,7.0,7.0,db,True
+ro5_inhaled,26.1% of inhaled drugs break at least one rule,26.1,26.087,db,True
+ro5_oral,22.8% of oral drugs break at least one rule,22.8,22.8339,db,True
+ro5_p,"the number of violations does not differ, p = 0.77",0.77,0.7652,db,True
+sub_n,35 inhaled drugs left without the also-oral ones,35.0,35.0,db,True
+sub_hbd,H-bond donors r = +0.46 there,0.46,0.4627,db,True
+sub_qed,QED r = -0.42,-0.42,-0.4241,db,True
+sub_psa,PSA r = +0.32,0.32,0.3191,db,True
+sub_arom,aromatic rings r = -0.23,-0.23,-0.2301,db,True
+sub_alogp,ALogP r = -0.10,-0.1,-0.1026,db,True
+sub_alogp_p,ALogP p = 0.30 there,0.3,0.3012,db,True
+cls_b2,15 beta2-agonists,15.0,15.0,db,True
+cls_cortico,8 corticosteroids,8.0,8.0,db,True
+cls_anti,6 antimuscarinics,6.0,6.0,db,True
+cls_other,17 other inhaled drugs,17.0,17.0,db,True
+n_extreme_logp,six of them have an ALogP below -2,6.0,6.0,db,True
+n_respiratory,29 drugs whose ATC code says they treat airway disease,29.0,29.0,db,True
+resp_hbd,respiratory only: H-bond donors +0.35,0.35,0.3451,db,True
+resp_hbd_p,p = 0.001,0.001,0.0011,db,True
+resp_qed,QED -0.24,-0.24,-0.2364,db,True
+resp_qed_p,p = 0.03,0.03,0.0296,db,True
+resp_arom,aromatic rings -0.20,-0.2,-0.1991,db,True
+resp_arom_p,p = 0.06,0.06,0.0587,db,True
+resp_hba,H-bond acceptors +0.16,0.16,0.1578,db,True
+resp_hba_p,p = 0.14,0.14,0.143,db,True
+resp_psa,polar surface area +0.08,0.08,0.0751,db,True
+resp_psa_p,p = 0.49,0.49,0.4896,db,True
+resp_alogp,ALogP +0.02,0.02,0.0246,db,True
+resp_alogp_p,p = 0.82,0.82,0.821,db,True
+pca_n,"PCA on 1,143 molecules without the also-oral group",1143.0,1143.0,db,True
+pca_two,two components for 72.5% of the variance,72.5,72.4742,db,True
+pca_pc1,PC1 46.8%,46.8,46.8229,db,True
+pca_pc2,PC2 25.7%,25.7,25.6513,db,True
+pca_pc1_inhaled,inhaled drugs mean +1.26 on PC1,1.26,1.2616,db,True
+pca_pc1_oral,oral drugs -0.04,-0.04,-0.0399,db,True
+pca_pc1_r,r = +0.44 on PC1,0.44,0.4369,db,True
+pca_pc2_inhaled,inhaled -1.05 on PC2,-1.05,-1.05,db,True
+pca_pc2_oral,oral +0.03,0.03,0.0332,db,True
+pca_pc2_r,r = -0.26 on PC2,-0.26,-0.2586,db,True
+rho_inhaled,inhaled drugs Spearman rho = +0.51 for year vs logP,0.51,0.5105,report: explore_trends.py,True
+rho_oral,oral drugs rho = +0.25,0.25,0.2542,report: explore_trends.py,True
+logp_decade,+0.43 logP per decade adjusted for class,0.43,0.4347,report: explore_trends.py,True
+rtb_decade,+1.1 rotatable bonds per decade,1.1,1.0624,report: explore_trends.py,True
+perm_p_logp,permutation p = 0.002 for logP,0.002,0.0022,report: explore_trends.py,True
+albuterol_year,albuterol approved 1981,1981.0,1981.0,db,True
+albuterol_logp,albuterol logP 1.3,1.3,1.31,db,True
+vilanterol_logp,vilanterol logP 4.6,4.6,4.61,db,True
+umeclidinium_logp,umeclidinium logP 5.1,5.1,5.14,db,True
+quat_inhaled,quaternary ammonium in 10.9% of inhaled drugs,10.9,10.8696,db,True
+quat_oral,1.7% of oral drugs,1.7,1.7148,db,True
+quat_or,odds ratio 7.0,7.0,6.9897,db,True
+quat_p,Holm p = 0.017,0.017,0.0175,report: explore_chemistry.py,True
+f_oral_n,136 of 411 oral drugs approved since 2000 contain fluorine,136.0,136.0,report: explore_chemistry.py,True
+f_oral_total,of 411,411.0,411.0,report: explore_chemistry.py,True
+f_inhaled_n,1 of 15 inhaled drugs,1.0,1.0,report: explore_chemistry.py,True
+f_inhaled_total,of 15,15.0,15.0,report: explore_chemistry.py,True
+f_p,year x route interaction p = 0.005,0.005,0.0049,report: explore_chemistry.py,True
+pde4_papers,430 PDE4 papers,430.0,430.0,db,True
+pde4_inhaled_papers,seven PDE4 papers about inhaled administration,7.0,7.0,report: explore_chemistry.py,True
+pde4_mw_inhaled,median weight 571 Da in inhaled papers,571.0,571.0,report: explore_chemistry.py,True
+pde4_mw_other,393 Da in the others,393.0,393.0,report: explore_chemistry.py,True
+pde4_t5_p,p = 0.002 at paper level,0.002,0.0017,report: explore_chemistry.py,True
+tanimilast_mw,tanimilast weighs 688 Da,688.0,687.54,db,True
+tanimilast_alogp,tanimilast ALogP 6.3,6.3,6.32,db,True
+roflumilast_mw,roflumilast 403 Da,403.0,403.21,db,True
+roflumilast_alogp,roflumilast ALogP 5.0,5.0,5.03,db,True
+pde4b_p,"the selectivity trend is borderline per paper, p = 0.051",0.051,0.0511,report: explore_chemistry.py,True
+catechol_p,"the catechol diether fell from 48% to 28% of papers, p = 0.003",0.003,0.0034,report: explore_chemistry.py,True
+effects:hbd:inhaled,"H-bond donors, median inhaled = 3.5",3.5,3.5,db,True
+effects:hbd:oral,"H-bond donors, median oral = 2",2.0,2.0,db,True
+effects:hbd:r,"H-bond donors, effect size r = 0.476",0.476,0.476318,db,True
+effects:hbd:p,"H-bond donors, Holm p = 1.62e-07",1.62e-07,0.0,db,True
+effects:qed_weighted:inhaled,"QED drug-likeness, median inhaled = 0.495",0.495,0.495,db,True
+effects:qed_weighted:oral,"QED drug-likeness, median oral = 0.62",0.62,0.62,db,True
+effects:qed_weighted:r,"QED drug-likeness, effect size r = -0.327",-0.327,-0.327402,db,True
+effects:qed_weighted:p,"QED drug-likeness, Holm p = 0.00149",0.00149,0.001485,db,True
+effects:aromatic_rings:inhaled,"Aromatic rings, median inhaled = 1",1.0,1.0,db,True
+effects:aromatic_rings:oral,"Aromatic rings, median oral = 2",2.0,2.0,db,True
+effects:aromatic_rings:r,"Aromatic rings, effect size r = -0.265",-0.265,-0.264754,db,True
+effects:aromatic_rings:p,"Aromatic rings, Holm p = 0.0134",0.0134,0.013445,db,True
+effects:psa:inhaled,"Polar surface area (Å²), median inhaled = 90.8",90.8,90.82,db,True
+effects:psa:oral,"Polar surface area (Å²), median oral = 75.7",75.7,75.68,db,True
+effects:psa:r,"Polar surface area (Å²), effect size r = 0.255",0.255,0.254827,db,True
+effects:psa:p,"Polar surface area (Å²), Holm p = 0.0236",0.0236,0.023591,db,True
+effects:hba:inhaled,"H-bond acceptors, median inhaled = 6",6.0,6.0,db,True
+effects:hba:oral,"H-bond acceptors, median oral = 4",4.0,4.0,db,True
+effects:hba:r,"H-bond acceptors, effect size r = 0.23",0.23,0.230419,db,True
+effects:hba:p,"H-bond acceptors, Holm p = 0.045",0.045,0.04501,db,True
+effects:rtb:inhaled,"Rotatable bonds, median inhaled = 5",5.0,5.0,db,True
+effects:rtb:oral,"Rotatable bonds, median oral = 5",5.0,5.0,db,True
+effects:rtb:r,"Rotatable bonds, effect size r = 0.209",0.209,0.208876,db,True
+effects:rtb:p,"Rotatable bonds, Holm p = 0.0785",0.0785,0.078476,db,True
+effects:alogp:inhaled,"ALogP, median inhaled = 2.31",2.31,2.31,db,True
+effects:alogp:oral,"ALogP, median oral = 2.88",2.88,2.88,db,True
+effects:alogp:r,"ALogP, effect size r = -0.185",-0.185,-0.185352,db,True
+effects:alogp:p,"ALogP, Holm p = 0.132",0.132,0.131894,db,True
+effects:heavy_atoms:inhaled,"Heavy atoms, median inhaled = 27.5",27.5,27.5,db,True
+effects:heavy_atoms:oral,"Heavy atoms, median oral = 25",25.0,25.0,db,True
+effects:heavy_atoms:r,"Heavy atoms, effect size r = 0.097",0.097,0.096806,db,True
+effects:heavy_atoms:p,"Heavy atoms, Holm p = 0.795",0.795,0.795476,db,True
+effects:mw_freebase:inhaled,"Molecular weight (Da), median inhaled = 392",392.0,391.51,db,True
+effects:mw_freebase:oral,"Molecular weight (Da), median oral = 349",349.0,349.42,db,True
+effects:mw_freebase:r,"Molecular weight (Da), effect size r = 0.086",0.086,0.085799,db,True
+effects:mw_freebase:p,"Molecular weight (Da), Holm p = 0.795",0.795,0.795476,db,True
+effects:num_ro5_violations:inhaled,"Rule-of-five violations, median inhaled = 0",0.0,0.0,db,True
+effects:num_ro5_violations:oral,"Rule-of-five violations, median oral = 0",0.0,0.0,db,True
+effects:num_ro5_violations:r,"Rule-of-five violations, effect size r = 0.019",0.019,0.01909,db,True
+effects:num_ro5_violations:p,"Rule-of-five violations, Holm p = 0.795",0.795,0.795476,db,True

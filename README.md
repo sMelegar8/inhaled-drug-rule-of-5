@@ -67,6 +67,10 @@ polar inhaled antibiotics, sugars and chelators.
 - **Cheminformatics**: structural motifs with RDKit SMARTS patterns.
 - **A browser app with tested statistics**: the statistics in `app/stats.js` are checked
   against numpy, pandas and scipy on the real dataset in CI.
+- **Pages that are checked, not trusted**: each case study has a fact-check script
+  (`src/case_study_fact_check.py`, `src/pde4_fact_check.py`) that lists every number the
+  page states, recomputes it, and fails if any has drifted — 128 and 75 claims. It also
+  warns when a claim still checks a value that has been removed from the page.
 
 ## Interactive app
 
@@ -127,6 +131,7 @@ python src/pde4_chemical_space.py  # PDE4 families (RDKit, scikit-learn) -> tabl
 python src/pde4_fact_check.py       # re-check every number on the PDE4 page + robustness tests
 python src/build_data_dictionary.py # app/data-dictionary.json from the database
 python src/compare_inhaled_oral.py  # inhaled vs oral + sensitivity analysis -> reports/
+python src/case_study_fact_check.py # re-check every number on the Rule of 5 page
 python src/explore_trends.py        # time trends -> reports/
 python src/explore_chemistry.py     # structural trends (RDKit) -> reports/
 python tests/validate_stats.py      # app statistics vs numpy/pandas/scipy

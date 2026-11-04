@@ -129,6 +129,26 @@ MEMBERSHIP = [
 ]
 
 
+def orphan_claims() -> list[str]:
+    """Claims whose value no longer appears anywhere on the page.
+
+    Checking a page against a list has one weak point: the list going stale. A number
+    removed from the page would keep passing forever against data nobody reads. This
+    looks for each claimed value in the HTML, in the shapes the page writes numbers, and
+    warns about what it cannot find. Shared with src/case_study_fact_check.py.
+    """
+    text = (ROOT / "app" / "case-study-pde4.html").read_text(encoding="utf-8")
+    orphans = []
+    for key, _, claimed, _ in CLAIMS:
+        v = float(claimed)
+        forms = {f"{v:g}", f"{abs(v):g}", f"{v:,.0f}" if v == int(v) else f"{v:g}"}
+        for d in (1, 2, 3):
+            forms.add(f"{abs(v):.{d}f}")
+        if not any(f in text for f in forms):
+            orphans.append(key)
+    return orphans
+
+
 def fingerprints(smiles: pd.Series) -> list:
     gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
     return [gen.GetFingerprint(Chem.MolFromSmiles(s)) for s in smiles]
@@ -385,6 +405,11 @@ def main() -> None:
         print("\nMISMATCHES (the page must be corrected):")
         with pd.option_context("display.width", 200, "display.max_colwidth", 60):
             print(failed[["claim", "page_says", "claimed", "recomputed"]].to_string(index=False))
+
+    orphans = orphan_claims()
+    if orphans:
+        print(f"\nWARNING: {len(orphans)} claim(s) check a number that is no longer on the page "
+              f"(remove them or correct the value): {', '.join(orphans)}")
 
     print("\nRobustness checks:")
     rob = robustness(con, space, Z)

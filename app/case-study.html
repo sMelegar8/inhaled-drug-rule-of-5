@@ -206,6 +206,7 @@ td.weak { color: var(--muted); }
       <li><strong>Time trends:</strong> Spearman correlation with year of first approval, bootstrap 95% confidence intervals, and a model with one intercept per respiratory class tested by shuffling years within class (permutation test).</li>
       <li><strong>Structural motifs:</strong> RDKit substructure searches with Fisher exact tests, and a logistic model with a year × route interaction for fluorination.</li>
       <li><strong>Verification:</strong> the browser statistics are checked against numpy, pandas and SciPy (40 automated checks), and the cleaning stops if a reference inhaled drug (albuterol, budesonide, fluticasone, formoterol, ipratropium, salmeterol, tiotropium) disappears.</li>
+      <li><strong>The page itself is checked:</strong> every number written here is listed in <code>src/case_study_fact_check.py</code> with the value this page states, recomputed, and reported as pass or fail — 128 checks, 111 of them recomputed directly from the database and the rest read from the report tables that hold the resampling results. The script fails if a number has drifted, and warns if it is still checking a value that has been removed from the page. A page is only as true as the last time somebody checked it against the data, so that check is a command rather than a memory.</li>
     </ul>
   </section>
 
@@ -323,7 +324,7 @@ td.weak { color: var(--muted); }
     <p>The full list is on the <a href="backlog.html">backlog</a> page; the pipeline is explained step by step in <a href="how-it-works.html">How it works</a>.</p>
   </section>
 
-  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/compare_inhaled_oral.py</code> (group comparison and sensitivity analysis), <code>src/explore_trends.py</code> and <code>src/explore_chemistry.py</code>.</p>
+  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/compare_inhaled_oral.py</code> (group comparison and sensitivity analysis), <code>src/explore_trends.py</code> and <code>src/explore_chemistry.py</code>. All 128 of them are re-checked against the data by <code>src/case_study_fact_check.py</code>; its output is in <code>reports/case_study_fact_check.csv</code>. Checked on 4 November 2026: every number matched.</p>
 </main>
 
 <script>
