@@ -69,8 +69,14 @@ polar inhaled antibiotics, sugars and chelators.
   against numpy, pandas and scipy on the real dataset in CI.
 - **Pages that are checked, not trusted**: each case study has a fact-check script
   (`src/case_study_fact_check.py`, `src/pde4_fact_check.py`) that lists every number the
-  page states, recomputes it, and fails if any has drifted — 144 and 75 claims. It also
+  page states, recomputes it, and fails if any has drifted — 179 and 75 claims. It also
   warns when a claim still checks a value that has been removed from the page.
+- **Descriptors checked against the chemistry**: ChEMBL 37 returns no ionisation data, so
+  `src/compute_charge.py` derives the charge state with RDKit. Inhaled drugs turn out to be far
+  less often neutral than oral ones (23.9% vs 43.2%) and five times more often permanently
+  charged. It also showed that ALogP, a neutral-species descriptor, is meaningless for 5 of the
+  46 inhaled drugs, which forced the withdrawal of one per-class lipophilicity figure; the
+  class-adjusted trend survives the exclusion (+0.43 logP per decade, p = 0.009).
 - **An audited join**: FDA and ChEMBL share no identifier, so `src/audit_name_matching.py`
   estimates how often the name matching is *right*, not just how often it matched. All 76
   ingredient names on FDA inhalation products were reviewed against the molecule they were
@@ -137,6 +143,7 @@ python src/pde4_chemical_space.py  # PDE4 families (RDKit, scikit-learn) -> tabl
 python src/pde4_fact_check.py       # re-check every number on the PDE4 page + robustness tests
 python src/build_data_dictionary.py # app/data-dictionary.json from the database
 python src/compare_inhaled_oral.py  # inhaled vs oral + sensitivity analysis -> reports/
+python src/compute_charge.py        # ionisation state with RDKit -> molecule_charge
 python src/audit_name_matching.py   # audit the FDA -> ChEMBL join -> reports/
 python src/case_study_fact_check.py # re-check every number on the Rule of 5 page
 python src/explore_trends.py        # time trends -> reports/

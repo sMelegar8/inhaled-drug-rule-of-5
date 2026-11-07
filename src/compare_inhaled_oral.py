@@ -99,7 +99,22 @@ def scenarios(inhaled: pd.DataFrame) -> dict[str, tuple[pd.DataFrame, str]]:
         inhaled[inhaled["also_oral"] == 0], "drops the inhaled drugs that also have oral products")
     out[f"Without ALogP < {EXTREME_LOGP:g} (post-hoc)"] = (
         inhaled[~(inhaled["alogp"] < EXTREME_LOGP)], "post-hoc: drops the most polar inhaled drugs")
+    ids = permanent_cation_ids()
+    if ids is not None:
+        out["Without permanently charged"] = (
+            inhaled[~inhaled.chembl_id.isin(ids)], "drops permanent cations from BOTH routes")
     return out
+
+
+def permanent_cation_ids() -> set[str] | None:
+    """Allow the comparison to run before the optional charge step exists."""
+    with sqlite3.connect(DB) as con:
+        exists = con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='molecule_charge'").fetchone()
+        if exists is None:
+            print("Note: molecule_charge is absent; skipping Without permanently charged.")
+            return None
+        return {row[0] for row in con.execute(
+            "SELECT chembl_id FROM molecule_charge WHERE charge_class = 'permanent cation'")}
 
 
 def figure(sens: pd.DataFrame, order: list[str]) -> None:
@@ -163,9 +178,13 @@ def main() -> None:
     # The same comparison on each subset.
     rows = []
     for name, (subset, why) in scenarios(inhaled).items():
+        # This scenario removes unsuitable descriptors from both sides of the comparison.
+        reference = oral
+        if name == "Without permanently charged":
+            reference = oral[~oral.chembl_id.isin(permanent_cation_ids())]
         for prop in PROPERTIES:
             rows.append({"scenario": name, "why": why, "property": prop, "label": PROPERTIES[prop],
-                         **compare(subset, oral, prop)})
+                         **compare(subset, reference, prop)})
     sens = pd.DataFrame(rows)
     sens.to_csv(REPORTS / "inhaled_vs_oral_sensitivity.csv", index=False)
 

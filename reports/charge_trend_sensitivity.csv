@@ -1,0 +1,13 @@
+scenario,analysis,group,n,rho,p,per_decade,n_permutations,status
+All inhaled drugs,Spearman,inhaled,46,0.5104906243157552,0.0002893579132683651,,0,ok
+All inhaled drugs,Spearman,oral,1104,0.25424725570506207,9.525027047876995e-18,,0,ok
+All inhaled drugs,Spearman,β2-agonists,15,0.6642817154540195,0.0069111422882504325,,0,ok
+All inhaled drugs,Spearman,antimuscarinics,6,0.7714285714285715,0.07239650145772594,,0,ok
+All inhaled drugs,Spearman,corticosteroids,8,0.6666666666666669,0.07098765432098755,,0,ok
+All inhaled drugs,Class-adjusted slope,respiratory,29,,0.0021995600879824036,0.43465232913566676,5000,ok
+Without permanently charged,Spearman,inhaled,41,0.4772717589721874,0.0016034881597181377,,0,ok
+Without permanently charged,Spearman,oral,1080,0.2585751835530999,5.868776021162727e-18,,0,ok
+Without permanently charged,Spearman,β2-agonists,15,0.6642817154540195,0.0069111422882504325,,0,ok
+Without permanently charged,Spearman,antimuscarinics,1,,,,0,insufficient observations or variation
+Without permanently charged,Spearman,corticosteroids,8,0.6666666666666669,0.07098765432098755,,0,ok
+Without permanently charged,Class-adjusted slope,respiratory,24,,0.008798240351929614,0.42965912189075084,5000,ok

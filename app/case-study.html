@@ -216,8 +216,9 @@ td.weak { color: var(--muted); }
       <li><strong>Multivariate view:</strong> principal component analysis on eight standardised descriptors.</li>
       <li><strong>Time trends:</strong> Spearman correlation with year of first approval, bootstrap 95% confidence intervals, and a model with one intercept per respiratory class tested by shuffling years within class (permutation test).</li>
       <li><strong>Structural motifs:</strong> RDKit substructure searches with Fisher exact tests, and a logistic model with a year × route interaction for fluorination.</li>
+      <li><strong>Ionisation state:</strong> RDKit formal charge and counts of ionisable groups, resolved into a class by five ordered rules, with the deciding rule stored per molecule. Used to re-run the group comparison and the time trends without the molecules for which a neutral-species logP has no meaning.</li>
       <li><strong>Verification:</strong> the browser statistics are checked against numpy, pandas and SciPy (40 automated checks), and the cleaning stops if a reference inhaled drug (albuterol, budesonide, fluticasone, formoterol, ipratropium, salmeterol, tiotropium) disappears.</li>
-      <li><strong>The page itself is checked:</strong> every number written here is listed in <code>src/case_study_fact_check.py</code> with the value this page states, recomputed, and reported as pass or fail — 144 checks, 127 of them recomputed directly from the database and the rest read from the report tables that hold the resampling results. The script fails if a number has drifted, and warns if it is still checking a value that has been removed from the page. A page is only as true as the last time somebody checked it against the data, so that check is a command rather than a memory.</li>
+      <li><strong>The page itself is checked:</strong> every number written here is listed in <code>src/case_study_fact_check.py</code> with the value this page states, recomputed, and reported as pass or fail — 179 checks, 155 of them recomputed directly from the database and the rest read from the report tables that hold the resampling results. The script fails if a number has drifted, and warns if it is still checking a value that has been removed from the page. A page is only as true as the last time somebody checked it against the data, so that check is a command rather than a memory.</li>
     </ul>
   </section>
 
@@ -272,16 +273,34 @@ td.weak { color: var(--muted); }
     </figure>
     <ul>
       <li>Year vs logP among inhaled drugs: Spearman ρ = +0.51 (95% CI 0.28 to 0.68); oral drugs ρ = +0.25.</li>
-      <li>The trend holds inside each class: β2-agonists ρ = +0.66, antimuscarinics +0.77, corticosteroids +0.67. Adjusted for class: +0.43 logP and +1.1 rotatable bonds per decade (permutation p = 0.002 for both).</li>
+      <li>The trend holds inside two of the three respiratory classes: β2-agonists ρ = +0.66 (p = 0.007) and corticosteroids ρ = +0.67 (p = 0.07). <strong>The antimuscarinics cannot be used for this</strong>: 5 of those 6 molecules carry a permanent positive charge, so their ALogP describes a neutral species that does not exist. An earlier version of this page reported ρ = +0.77 for them; it is withdrawn, for the reason set out <a href="#charge">under Q3</a>. Adjusted for class: +0.43 logP and +1.1 rotatable bonds per decade (permutation p = 0.002 for both), and +0.43 logP per decade (p = 0.009) when every permanently charged molecule is dropped.</li>
       <li>From albuterol (1981, logP 1.3) to vilanterol and umeclidinium (2013, logP 4.6 and 5.1): the move from inhalers taken several times a day to once-daily products coincides with more lipophilic, more flexible molecules.</li>
       <li>Molecular weight grows for both routes at a similar rate, so size alone is a general trend in drug discovery, not an inhaled one.</li>
     </ul>
 
-    <h3>Q3 · Structural signatures: permanent charge, no fluorine</h3>
+    <h3 id="charge">Q3 · Structural signatures: permanent charge, no fluorine</h3>
+    <p>ChEMBL 37's API returns no ionisation descriptors — <code>cx_logd</code>, the pKa fields and <code>molecular_species</code> are empty for every molecule — so <code>src/compute_charge.py</code> derives the ionisation state with RDKit: formal charge, then counts of quaternary nitrogens, basic amines, amidines, guanidines and acidic groups, resolved into one class by five ordered rules. Every molecule stores the rule that decided it. These are <strong>structural rules, not pKa predictions</strong>: they say which ionisable groups a molecule carries, not what fraction of it is charged at a given pH.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Class at physiological pH</th><th>Inhaled (46)</th><th>Oral (1,108)</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Permanent cation</td><td class="n">10.9%</td><td class="n">2.2%</td><td>odds ratio 5.5, Fisher p = 0.005</td></tr>
+        <tr><td>Cation</td><td class="n">45.7%</td><td class="n">36.4%</td><td></td></tr>
+        <tr><td>Anion</td><td class="n">15.2%</td><td class="n">12.2%</td><td></td></tr>
+        <tr><td>Zwitterion</td><td class="n">4.3%</td><td class="n">6.0%</td><td></td></tr>
+        <tr><td>Neutral</td><td class="n">23.9%</td><td class="n">43.2%</td><td>odds ratio 0.41, Fisher p = 0.009</td></tr>
+      </tbody>
+    </table></div>
     <ul>
-      <li><strong>Permanent positive charge:</strong> quaternary ammonium groups are found in 10.9% of inhaled drugs vs 1.7% of oral drugs (odds ratio 7.0, Holm p = 0.017): ipratropium, tiotropium, aclidinium, umeclidinium, glycopyrronium. A permanent charge limits absorption into the blood.</li>
+      <li><strong>Inhaled drugs are much less often neutral:</strong> 23.9% against 43.2%, so 76.1% of them carry a charge at physiological pH against 56.8% of oral drugs. This is a sharper statement than the polar surface area result that the class analysis knocked down, because it names a mechanism instead of a correlation: a charged molecule crosses the alveolar membrane poorly, which is what an inhaled drug is supposed to do.</li>
+      <li><strong>Permanent positive charge:</strong> five times more common in inhaled drugs — ipratropium, tiotropium, aclidinium, umeclidinium, glycopyrronium. The substructure panel above reports this as 10.9% vs 1.7% with an odds ratio of 7.0, because its SMARTS matches only sp3 quaternary nitrogen. The charge calculation also catches aromatic quaternary nitrogen, which adds five permanently charged oral drugs the panel missed (pralidoxime, pyridostigmine, pyrvinium, isavuconazonium, serdexmethylphenidate) and brings the oral share to 2.2% and the odds ratio down to 5.5. The newer number is the better one.</li>
       <li><strong>Fluorine:</strong> among drugs approved since 2000, 33% of oral drugs contain fluorine (136 of 411) but only 7% of inhaled drugs (1 of 15). The opposite time trends are significant (year × route interaction, p = 0.005). Fluorine is often added to slow metabolism; for an inhaled drug, fast clearance of the systemic fraction is an advantage.</li>
     </ul>
+    <div class="callout caveat"><span class="label">What the charge calculation costs this study</span>
+      <p>ALogP is the calculated partition coefficient of the <em>neutral</em> molecule. For a permanent cation the neutral molecule does not exist at any pH, so for 5 of the 46 inhaled drugs and 24 of the 1,108 oral ones this study has been reading a descriptor with no physical meaning. Finding that out is the point of computing the charge.</p>
+      <p>It lands on one claim in particular. The antimuscarinics are 6 molecules and <strong>5 of them are quaternary</strong>. The ρ = +0.77 once reported for that class rested almost entirely on those five; it was already not significant (p = 0.07 on six points), and removing them leaves one molecule, so the figure is not so much wrong as <strong>impossible to verify</strong>. It has been withdrawn from Q2 rather than restated with a caveat.</p>
+      <p>What survives the exclusion is most of the study. The class-adjusted trend barely moves: +0.43 logP per decade on 24 molecules with permutation p = 0.009, against +0.43 on 29 with p = 0.002. The β2-agonist and corticosteroid trends are untouched, since neither class contains a quaternary drug. Every group difference holds or strengthens — H-bond donors go from r = +0.48 to +0.57, aromatic rings from −0.27 to −0.32.</p>
+      <p>One warning about reading too much into this. Removing the permanent cations also makes the polar surface area difference <em>stronger</em> (r = +0.26 to +0.33, Holm p = 0.002), which might look like a rescue of the result the class analysis killed. It is not: that result dies when the comparison is restricted to respiratory classes, and these are two different cuts of the same small group. A difference that grows under one cut and vanishes under another is not robust, and PSA stays reported as a description of what is given by inhalation today. Restricting to the 11 inhaled drugs that are fully neutral leaves too few molecules to conclude anything either way, and is in <code>reports/charge_sensitivity.csv</code> for completeness only.</p>
+    </div>
 
     <h3>Q4 · PDE4 inhibitors designed for inhalation are much larger</h3>
     <figure>
@@ -317,7 +336,7 @@ td.weak { color: var(--muted); }
     <ul>
       <li>Small inhaled group: 46 drugs, 35 without the also-oral ones and 29 when only respiratory classes are kept, so confidence intervals are wide. Results describe approved drugs, not a validated design rule.</li>
       <li>The inhaled group mixes therapeutic classes, and the sensitivity analysis shows this matters: the polarity and lipophilicity differences do not survive on respiratory drugs alone. Leaving one class out at a time also moves the effect sizes by up to 0.2, so no single number should be read as precise.</li>
-      <li>Calculated descriptors (ALogP, PSA) from ChEMBL, not measured values. The ChEMBL 37 API returns no ionisation descriptors, so charge is only captured by substructure searches.</li>
+      <li>Calculated descriptors (ALogP, PSA) from ChEMBL, not measured values. The ChEMBL 37 API returns no ionisation descriptors, so the charge classes come from RDKit substructure rules rather than from pKa values: they say which ionisable groups a molecule has, not what fraction of it is charged at a given pH, and they do not cover every acid or base — basic aromatic heterocycles and weak acids are not counted. ALogP stays a neutral-species descriptor throughout; no logD at pH 7.4 is available from this source.</li>
       <li>Routes come from US FDA products only. The year is the first approval of the molecule by any route.</li>
       <li>Some exclusion rules use ATC codes as a proxy for therapeutic intent; seven inhaled molecules have no ATC code and are kept without that filter.</li>
       <li>Salts and esters are mapped to their ChEMBL parent, which is right for a salt and debatable for a chelate: the two pentetate products become free pentetic acid, so their descriptors are those of the free acid rather than of the calcium or zinc complex actually administered. Pentetic acid is one of the six very polar molecules the sensitivity analysis showed were driving the polarity result.</li>
@@ -330,14 +349,14 @@ td.weak { color: var(--muted); }
     <ol>
       <li>Add dosing frequency from FDA labels to test whether lipophilicity predicts once-daily dosing.</li>
       <li>Build a simple, explainable inhalability score, check that reference inhaled drugs score high, and apply it to potent PDE4 inhibitors.</li>
-      <li>Compute charge and ionisable groups with RDKit, and add EU (EMA) inhaled products.</li>
+      <li>Find a source of measured or predicted logD at pH 7.4, so lipophilicity can be compared on the species that actually exists, and add EU (EMA) inhaled products.</li>
       <li>Split the 42 combination products written into a single FDA ingredient field, the largest remaining cause of unmatched names.</li>
       <li>Audit the oral side of the name matching as thoroughly as the inhaled side has been.</li>
     </ol>
     <p>The full list is on the <a href="backlog.html">backlog</a> page; the pipeline is explained step by step in <a href="how-it-works.html">How it works</a>.</p>
   </section>
 
-  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/compare_inhaled_oral.py</code> (group comparison and sensitivity analysis), <code>src/explore_trends.py</code> and <code>src/explore_chemistry.py</code>. All 144 of them are re-checked against the data by <code>src/case_study_fact_check.py</code>, and the name matching is audited by <code>src/audit_name_matching.py</code>; their output is in <code>reports/case_study_fact_check.csv</code> and <code>reports/name_match_audit.csv</code>. Checked on 4 November 2026: every number matched.</p>
+  <p class="foot">Exploratory analysis of public data. ChEMBL data © EMBL-EBI, CC BY-SA 3.0; openFDA data from the US Food and Drug Administration. Numbers on this page come from the project database built on 21 October 2026 and from the scripts <code>src/compare_inhaled_oral.py</code> (group comparison and sensitivity analysis), <code>src/explore_trends.py</code>, <code>src/explore_chemistry.py</code> and <code>src/compute_charge.py</code> (ionisation state). All 179 of them are re-checked against the data by <code>src/case_study_fact_check.py</code>, and the name matching is audited by <code>src/audit_name_matching.py</code>; their output is in <code>reports/case_study_fact_check.csv</code> and <code>reports/name_match_audit.csv</code>. Checked on 4 November 2026: every number matched.</p>
 </main>
 
 <script>

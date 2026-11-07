@@ -68,6 +68,42 @@ CLAIMS = [
     ("audit_un_salt", "26 salt forms whose parent is also unknown", 26, 0, "db"),
     ("audit_un_other", "4 biologics or descriptive names", 4, 0, "db"),
     ("audit_recoverable", "stripping pharmacopoeia suffixes would recover 1 name", 1, 0, "db"),
+    # Ionisation state (src/compute_charge.py)
+    ("charge_perm_inh", "10.9% of inhaled drugs are permanent cations", 10.9, 0.05, "db"),
+    ("charge_perm_oral", "2.2% of oral drugs are", 2.2, 0.05, "db"),
+    ("charge_perm_or", "odds ratio 5.5", 5.5, 0.05, "db"),
+    ("charge_perm_p", "Fisher p = 0.005", 0.005, 0.0005, "db"),
+    ("charge_cation_inh", "45.7% of inhaled drugs are cations", 45.7, 0.05, "db"),
+    ("charge_cation_oral", "36.4% of oral drugs are", 36.4, 0.05, "db"),
+    ("charge_anion_inh", "15.2% of inhaled drugs are anions", 15.2, 0.05, "db"),
+    ("charge_anion_oral", "12.2% of oral drugs are", 12.2, 0.05, "db"),
+    ("charge_zwit_inh", "4.3% of inhaled drugs are zwitterions", 4.3, 0.05, "db"),
+    ("charge_zwit_oral", "6.0% of oral drugs are", 6.0, 0.05, "db"),
+    ("charge_neutral_inh", "23.9% of inhaled drugs are neutral", 23.9, 0.05, "db"),
+    ("charge_neutral_oral", "43.2% of oral drugs are", 43.2, 0.05, "db"),
+    ("charge_neutral_or", "odds ratio 0.41 for being neutral", 0.41, 0.005, "db"),
+    ("charge_neutral_p", "Fisher p = 0.009", 0.009, 0.0005, "db"),
+    ("charge_charged_inh", "76.1% of inhaled drugs carry a charge", 76.1, 0.05, "db"),
+    ("charge_charged_oral", "56.8% of oral drugs do", 56.8, 0.05, "db"),
+    ("charge_n_perm_inh", "5 of the 46 inhaled drugs", 5, 0, "db"),
+    ("charge_n_perm_oral", "24 of the 1,108 oral ones", 24, 0, "db"),
+    ("charge_antimusc_total", "the antimuscarinics are 6 molecules", 6, 0, "db"),
+    ("charge_antimusc_quat", "5 of them are quaternary", 5, 0, "db"),
+    ("charge_antimusc_left", "removing them leaves one molecule", 1, 0, "db"),
+    ("charge_panel_oral", "the substructure panel reports 1.7% of oral drugs", 1.7, 0.05, "db"),
+    ("charge_extra_oral", "the charge rules add 5 oral drugs the panel missed", 5, 0, "db"),
+    ("charge_neutral_subset", "the 11 inhaled drugs that are fully neutral", 11, 0, "db"),
+    ("charge_hbd_after", "H-bond donors go from +0.48 to +0.57", 0.57, 0.005, "db"),
+    ("charge_arom_after", "aromatic rings from -0.27 to -0.32", -0.32, 0.005, "db"),
+    ("charge_psa_after", "polar surface area from +0.26 to +0.33", 0.33, 0.005, "db"),
+    ("charge_psa_after_p", "Holm p = 0.002 there", 0.002, 0.0005, "db"),
+    ("charge_slope_after", "+0.43 logP per decade on the remaining molecules", 0.43, 0.005, "report: compute_charge.py"),
+    ("charge_slope_after_n", "on 24 molecules", 24, 0, "report: compute_charge.py"),
+    ("charge_slope_after_p", "permutation p = 0.009", 0.009, 0.0005, "report: compute_charge.py"),
+    ("charge_b2_rho", "beta2-agonists rho = +0.66", 0.66, 0.005, "report: compute_charge.py"),
+    ("charge_b2_p", "p = 0.007", 0.007, 0.0005, "report: compute_charge.py"),
+    ("charge_cortico_rho", "corticosteroids rho = +0.67", 0.67, 0.005, "report: compute_charge.py"),
+    ("charge_antimusc_p", "the withdrawn antimuscarinic value had p = 0.07", 0.07, 0.005, "report: compute_charge.py"),
     # Cleaning pipeline
     ("clean_start", "1,305 parent molecules at the start", 1305, 0, "db"),
     ("clean_m1", "M1 removes 37", 37, 0, "db"),
@@ -265,6 +301,66 @@ def recompute(con: sqlite3.Connection) -> dict:
         and (audit.PHARMACOPOEIA.sub("", n).strip() in candidates
              or audit.build.strip_salts(audit.PHARMACOPOEIA.sub("", n).strip()) in candidates)
         for n in mapping[mapping.match_method == "unmatched"].ingredient_name)
+
+    # Ionisation state, recomputed from the molecule_charge table written by compute_charge.py.
+    charge = pd.read_sql_query("""
+        SELECT d.route_group, d.pref_name, c.charge_class, c.n_quaternary_n
+        FROM inhalation_dataset AS d JOIN molecule_charge AS c ON c.chembl_id = d.chembl_id""", con)
+    share = 100 * pd.crosstab(charge.charge_class, charge.route_group, normalize="columns")
+    for cls, key in [("permanent cation", "perm"), ("cation", "cation"), ("anion", "anion"),
+                     ("zwitterion", "zwit"), ("neutral", "neutral")]:
+        v[f"charge_{key}_inh"], v[f"charge_{key}_oral"] = share.loc[cls, "inhaled"], share.loc[cls, "oral"]
+    v["charge_charged_inh"] = 100 - v["charge_neutral_inh"]
+    v["charge_charged_oral"] = 100 - v["charge_neutral_oral"]
+    counts = pd.crosstab(charge.charge_class, charge.route_group)
+    v["charge_n_perm_inh"] = int(counts.loc["permanent cation", "inhaled"])
+    v["charge_n_perm_oral"] = int(counts.loc["permanent cation", "oral"])
+    v["charge_neutral_subset"] = int(counts.loc["neutral", "inhaled"])
+    for cls, key in [("permanent cation", "perm"), ("neutral", "neutral")]:
+        a = int(counts.loc[cls, "inhaled"]); b = int(counts.loc[cls, "oral"])
+        table = [[a, len(charge[charge.route_group == "inhaled"]) - a],
+                 [b, len(charge[charge.route_group == "oral"]) - b]]
+        v[f"charge_{key}_or"], v[f"charge_{key}_p"] = stats.fisher_exact(table)
+    # The substructure panel counts only sp3 quaternary nitrogen; the charge rules also
+    # catch aromatic quaternary nitrogen, so the two oral figures differ by design.
+    oral_charge = charge[charge.route_group == "oral"]
+    v["charge_panel_oral"] = 100 * float((oral_charge.n_quaternary_n > 0).mean())
+    v["charge_extra_oral"] = int(((oral_charge.charge_class == "permanent cation")
+                                  & (oral_charge.n_quaternary_n == 0)).sum())
+    inhaled_charge = charge[charge.route_group == "inhaled"].copy()
+    inhaled_charge["cls"] = pd.read_sql_query("SELECT * FROM inhalation_dataset", con).query(
+        "route_group == 'inhaled'").reset_index(drop=True).apply(respiratory_class, axis=1).to_numpy()
+    anti = inhaled_charge[inhaled_charge.cls == "antimuscarinics"]
+    v["charge_antimusc_total"] = len(anti)
+    v["charge_antimusc_quat"] = int((anti.charge_class == "permanent cation").sum())
+    v["charge_antimusc_left"] = v["charge_antimusc_total"] - v["charge_antimusc_quat"]
+
+    # The group comparison without the permanently charged molecules.
+    full = pd.read_sql_query("""
+        SELECT d.*, c.charge_class FROM inhalation_dataset AS d
+        JOIN molecule_charge AS c ON c.chembl_id = d.chembl_id""", con)
+    kept = full[full.charge_class != "permanent cation"]
+    ki, ko = kept[kept.route_group == "inhaled"], kept[kept.route_group == "oral"]
+    # Holm is applied across the same ten properties as the published comparison, so the
+    # corrected p of one property is only meaningful alongside the other nine.
+    props = ["hbd", "qed_weighted", "aromatic_rings", "psa", "hba", "rtb", "alogp",
+             "heavy_atoms", "mw_freebase", "num_ro5_violations"]
+    after = {p: compare(ki, ko, p) for p in props}
+    adjusted_after = dict(zip(props, holm(np.array([after[p]["p"] for p in props]))))
+    v["charge_hbd_after"], v["charge_arom_after"] = after["hbd"]["r"], after["aromatic_rings"]["r"]
+    v["charge_psa_after"], v["charge_psa_after_p"] = after["psa"]["r"], adjusted_after["psa"]
+
+    # Trend values kept in the report table, since they come from a 5,000-draw permutation test.
+    trend = pd.read_csv(REPORTS / "charge_trend_sensitivity.csv")
+    no_perm = trend[trend.scenario == "Without permanently charged"]
+    slope = no_perm[no_perm.analysis == "Class-adjusted slope"].iloc[0]
+    v["charge_slope_after"], v["charge_slope_after_n"], v["charge_slope_after_p"] = (
+        slope.per_decade, slope.n, slope.p)
+    spearman = no_perm.set_index("group")
+    v["charge_b2_rho"], v["charge_b2_p"] = spearman.rho["β2-agonists"], spearman.p["β2-agonists"]
+    v["charge_cortico_rho"] = spearman.rho["corticosteroids"]
+    published = trend[trend.scenario == "All inhaled drugs"].set_index("group")
+    v["charge_antimusc_p"] = published.p["antimuscarinics"]
 
     # Cleaning ledger.
     log = pd.read_sql_query("SELECT * FROM cleaning_log WHERE dataset = 'molecules' ORDER BY step", con)

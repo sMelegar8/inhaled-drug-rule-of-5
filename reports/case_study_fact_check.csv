@@ -22,6 +22,41 @@ audit_un_combo,42 combination products in one ingredient field,42.0,42.0,db,True
 audit_un_salt,26 salt forms whose parent is also unknown,26.0,26.0,db,True
 audit_un_other,4 biologics or descriptive names,4.0,4.0,db,True
 audit_recoverable,stripping pharmacopoeia suffixes would recover 1 name,1.0,1.0,db,True
+charge_perm_inh,10.9% of inhaled drugs are permanent cations,10.9,10.8696,db,True
+charge_perm_oral,2.2% of oral drugs are,2.2,2.1661,db,True
+charge_perm_or,odds ratio 5.5,5.5,5.5081,db,True
+charge_perm_p,Fisher p = 0.005,0.005,0.0047,db,True
+charge_cation_inh,45.7% of inhaled drugs are cations,45.7,45.6522,db,True
+charge_cation_oral,36.4% of oral drugs are,36.4,36.3718,db,True
+charge_anion_inh,15.2% of inhaled drugs are anions,15.2,15.2174,db,True
+charge_anion_oral,12.2% of oral drugs are,12.2,12.1841,db,True
+charge_zwit_inh,4.3% of inhaled drugs are zwitterions,4.3,4.3478,db,True
+charge_zwit_oral,6.0% of oral drugs are,6.0,6.0469,db,True
+charge_neutral_inh,23.9% of inhaled drugs are neutral,23.9,23.913,db,True
+charge_neutral_oral,43.2% of oral drugs are,43.2,43.231,db,True
+charge_neutral_or,odds ratio 0.41 for being neutral,0.41,0.4127,db,True
+charge_neutral_p,Fisher p = 0.009,0.009,0.0094,db,True
+charge_charged_inh,76.1% of inhaled drugs carry a charge,76.1,76.087,db,True
+charge_charged_oral,56.8% of oral drugs do,56.8,56.769,db,True
+charge_n_perm_inh,5 of the 46 inhaled drugs,5.0,5.0,db,True
+charge_n_perm_oral,"24 of the 1,108 oral ones",24.0,24.0,db,True
+charge_antimusc_total,the antimuscarinics are 6 molecules,6.0,6.0,db,True
+charge_antimusc_quat,5 of them are quaternary,5.0,5.0,db,True
+charge_antimusc_left,removing them leaves one molecule,1.0,1.0,db,True
+charge_panel_oral,the substructure panel reports 1.7% of oral drugs,1.7,1.7148,db,True
+charge_extra_oral,the charge rules add 5 oral drugs the panel missed,5.0,5.0,db,True
+charge_neutral_subset,the 11 inhaled drugs that are fully neutral,11.0,11.0,db,True
+charge_hbd_after,H-bond donors go from +0.48 to +0.57,0.57,0.5696,db,True
+charge_arom_after,aromatic rings from -0.27 to -0.32,-0.32,-0.3152,db,True
+charge_psa_after,polar surface area from +0.26 to +0.33,0.33,0.3346,db,True
+charge_psa_after_p,Holm p = 0.002 there,0.002,0.0022,db,True
+charge_slope_after,+0.43 logP per decade on the remaining molecules,0.43,0.4297,report: compute_charge.py,True
+charge_slope_after_n,on 24 molecules,24.0,24.0,report: compute_charge.py,True
+charge_slope_after_p,permutation p = 0.009,0.009,0.0088,report: compute_charge.py,True
+charge_b2_rho,beta2-agonists rho = +0.66,0.66,0.6643,report: compute_charge.py,True
+charge_b2_p,p = 0.007,0.007,0.0069,report: compute_charge.py,True
+charge_cortico_rho,corticosteroids rho = +0.67,0.67,0.6667,report: compute_charge.py,True
+charge_antimusc_p,the withdrawn antimuscarinic value had p = 0.07,0.07,0.0724,report: compute_charge.py,True
 clean_start,"1,305 parent molecules at the start",1305.0,1305.0,db,True
 clean_m1,M1 removes 37,37.0,37.0,db,True
 clean_m2,M2 removes 63,63.0,63.0,db,True

@@ -79,3 +79,13 @@ Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,alogp
 Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,heavy_atoms,Heavy atoms,40,0.11322202166064987,0.22305258041946674,28.0,25.0
 Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,mw_freebase,Molecular weight (Da),40,0.09537454873646212,0.30502187073843046,391.51,349.42
 Without ALogP < -2 (post-hoc),post-hoc: drops the most polar inhaled drugs,num_ro5_violations,Rule-of-five violations,40,-0.04747292418772564,0.48556742798495156,0.0,0.0
+Without permanently charged,drops permanent cations from BOTH routes,hbd,H-bond donors,41,0.5696156961569616,1.7288012936885123e-10,4.0,2.0
+Without permanently charged,drops permanent cations from BOTH routes,qed_weighted,QED drug-likeness,41,-0.33937089370893714,0.00022146675205189287,0.5,0.62
+Without permanently charged,drops permanent cations from BOTH routes,aromatic_rings,Aromatic rings,41,-0.3152281522815228,0.0004046851420113056,1.0,2.0
+Without permanently charged,drops permanent cations from BOTH routes,psa,Polar surface area (Å²),41,0.33455584555845563,0.0002722913486757521,93.06,77.095
+Without permanently charged,drops permanent cations from BOTH routes,hba,H-bond acceptors,41,0.26766267662676624,0.0033113105263519404,6.0,4.0
+Without permanently charged,drops permanent cations from BOTH routes,rtb,Rotatable bonds,41,0.20592205922059215,0.024288253743992724,5.0,5.0
+Without permanently charged,drops permanent cations from BOTH routes,alogp,ALogP,41,-0.23170731707317072,0.01169753426946925,2.22,2.875
+Without permanently charged,drops permanent cations from BOTH routes,heavy_atoms,Heavy atoms,41,0.0793357933579335,0.38781279632678023,28.0,24.5
+Without permanently charged,drops permanent cations from BOTH routes,mw_freebase,Molecular weight (Da),41,0.06664566645666459,0.46846697907977564,390.52,349.625
+Without permanently charged,drops permanent cations from BOTH routes,num_ro5_violations,Rule-of-five violations,41,0.027585275852758606,0.6829517691019517,0.0,0.0
