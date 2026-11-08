@@ -29,7 +29,7 @@ approved by the FDA.
 | The trend holds inside each respiratory class (β2-agonists, antimuscarinics, corticosteroids) | +0.43 logP per decade, class-adjusted | permutation within class, p = 0.002 |
 | Same pattern for flexibility | +1.06 rotatable bonds per decade, class-adjusted | permutation, p = 0.002 |
 | Fluorination did not reach inhaled drugs | approved from 2000: 1 of 15 inhaled vs 136 of 411 oral are fluorinated | logistic LR test (year × route), p = 0.005 |
-| Quaternary ammonium is enriched in inhaled drugs | 10.9% vs 1.7%, odds ratio 7.0 | Fisher exact, Holm over 10 motifs, p = 0.017 |
+| A permanent positive charge is enriched in inhaled drugs | 10.9% vs 2.2%, odds ratio 5.5 | Fisher exact, p = 0.005 |
 | Compounds from inhaled PDE4 programmes are much larger | median MW 571 vs 393 Da, rotatable bonds 9 vs 5 | Mann-Whitney at paper level (7 vs 423 papers), p = 0.002 |
 | PDE4 papers moved away from the catechol diether scaffold | 48% (2001-08) to 28% (2015+) of papers | Spearman at paper level (n = 430), p = 0.003 |
 
