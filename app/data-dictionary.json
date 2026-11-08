@@ -37,7 +37,7 @@
   {
    "id": "analysis",
    "title": "Analysis outputs",
-   "text": "Results of the PDE4 chemical space model: fingerprints, k-means and t-SNE (step 04)."
+   "text": "Results of the derived models: the PDE4 chemical space (fingerprints, k-means, t-SNE) and the charge state read off the structures with RDKit (step 04)."
   }
  ],
  "glossary": [
@@ -3641,6 +3641,185 @@
    ]
   },
   {
+   "name": "molecule_charge",
+   "kind": "table",
+   "rows": 1154,
+   "layer": "analysis",
+   "built_by": "src/compute_charge.py",
+   "purpose": "The charge state of every molecule of the inhaled vs oral analysis set, derived from its structure with RDKit. It fills the gap left by molecules.molecular_species, which the ChEMBL 37 API never returns.",
+   "grain": "one molecule of the analysis set",
+   "key": "chembl_id",
+   "use_for": "Excluding the molecules for which a neutral-species descriptor such as alogp has no physical meaning, and comparing how often inhaled and oral drugs carry a charge.",
+   "watch_out": "These are ordered structural rules, not measured ionisation and not predicted pKa. 'neutral' means that no rule matched, which is not proof that the molecule is uncharged at pH 7.4. rule_applied records which rule decided, so every row can be traced back to its pattern.",
+   "example": "SELECT d.route_group, c.charge_class, COUNT(*) AS molecules\nFROM molecule_charge AS c\nJOIN inhalation_dataset AS d ON d.chembl_id = c.chembl_id\nGROUP BY d.route_group, c.charge_class\nORDER BY d.route_group, molecules DESC;",
+   "columns": [
+    {
+     "name": "chembl_id",
+     "type": "TEXT",
+     "pk": true,
+     "meaning": "ChEMBL identifier of the molecule, e.g. CHEMBL714 for albuterol. Stable across ChEMBL releases.",
+     "unit": "",
+     "filled": 1154,
+     "distinct": 1154,
+     "total": 1154,
+     "examples": [
+      "CHEMBL600",
+      "CHEMBL1194325",
+      "CHEMBL714"
+     ]
+    },
+    {
+     "name": "formal_charge",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Total formal charge of the structure as ChEMBL stores it, summed by RDKit. It is not recomputed at pH 7.4: a free base is 0 here even if it is protonated in the body.",
+     "unit": "charge",
+     "filled": 1154,
+     "distinct": 3,
+     "total": 1154,
+     "min": 0,
+     "median": 0.0,
+     "max": 2
+    },
+    {
+     "name": "n_quaternary_n",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Permanently charged tetrahedral nitrogens (quaternary ammonium). They carry a positive charge at every pH, so the molecule never exists as a neutral species.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 3,
+     "total": 1154,
+     "min": 0,
+     "median": 0.0,
+     "max": 2
+    },
+    {
+     "name": "n_basic_amine",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Neutral sp3 amine sites basic enough to be protonated at pH 7.4. Amides, anilines, nitriles and sulfonamides are excluded.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 6,
+     "total": 1154,
+     "min": 0,
+     "median": 0.0,
+     "max": 5
+    },
+    {
+     "name": "n_amidine_guanidine",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Amidine and guanidine groups: strong bases, protonated at pH 7.4.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 3,
+     "total": 1154,
+     "min": 0,
+     "median": 0.0,
+     "max": 2
+    },
+    {
+     "name": "n_acid",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Acidic sites deprotonated at pH 7.4: carboxylic acids, tetrazoles, acylsulfonamides, phosphoric and sulfonic acids.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 5,
+     "total": 1154,
+     "min": 0,
+     "median": 0.0,
+     "max": 5
+    },
+    {
+     "name": "n_other_permanent",
+     "type": "INTEGER",
+     "pk": false,
+     "meaning": "Other permanently charged sites: cationic aromatic nitrogen, phosphonium, sulfonium.",
+     "unit": "count",
+     "filled": 1154,
+     "distinct": 2,
+     "total": 1154,
+     "top": [
+      [
+       0,
+       1149
+      ],
+      [
+       1,
+       5
+      ]
+     ]
+    },
+    {
+     "name": "charge_class",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Charge class at pH 7.4 from the ordered rules: permanent cation, zwitterion, cation, anion, neutral.",
+     "unit": "",
+     "filled": 1154,
+     "distinct": 5,
+     "total": 1154,
+     "top": [
+      [
+       "neutral",
+       490
+      ],
+      [
+       "cation",
+       424
+      ],
+      [
+       "anion",
+       142
+      ],
+      [
+       "zwitterion",
+       69
+      ],
+      [
+       "permanent cation",
+       29
+      ]
+     ]
+    },
+    {
+     "name": "rule_applied",
+     "type": "TEXT",
+     "pk": false,
+     "meaning": "Which rule decided the class, R1 to R5, in the order they are tried in src/compute_charge.py. R5 is the fallback: no rule matched.",
+     "unit": "",
+     "filled": 1154,
+     "distinct": 5,
+     "total": 1154,
+     "top": [
+      [
+       "R5",
+       490
+      ],
+      [
+       "R3",
+       424
+      ],
+      [
+       "R4",
+       142
+      ],
+      [
+       "R2",
+       69
+      ],
+      [
+       "R1",
+       29
+      ]
+     ]
+    }
+   ]
+  },
+  {
    "name": "pde4_k_selection",
    "kind": "table",
    "rows": 7,
@@ -3884,6 +4063,22 @@
    "to_col": "chembl_id",
    "filled": 8,
    "matched": 8
+  },
+  {
+   "from": "molecule_charge",
+   "from_col": "chembl_id",
+   "to": "molecules",
+   "to_col": "chembl_id",
+   "filled": 1154,
+   "matched": 1154
+  },
+  {
+   "from": "molecule_charge",
+   "from_col": "chembl_id",
+   "to": "inhalation_dataset",
+   "to_col": "chembl_id",
+   "filled": 1154,
+   "matched": 1154
   }
  ]
 }

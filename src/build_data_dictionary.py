@@ -30,7 +30,7 @@ LAYERS = [
     ("integration", "Integration", "Links FDA products to ChEMBL molecules (step 02)."),
     ("clean", "Clean analysis tables", "Produced by the cleaning rules; use these for analysis (step 03)."),
     ("ledger", "Cleaning ledger", "Records every cleaning rule and every excluded record (step 03)."),
-    ("analysis", "Analysis outputs", "Results of the PDE4 chemical space model: fingerprints, k-means and t-SNE (step 04)."),
+    ("analysis", "Analysis outputs", "Results of the derived models: the PDE4 chemical space (fingerprints, k-means, t-SNE) and the charge state read off the structures with RDKit (step 04)."),
 ]
 
 # ------------------------------------------------------------------ tables
@@ -185,6 +185,13 @@ TABLES.update({
         use_for="Comparing chemical families at a glance; the medoid is the structure to show for each family.",
         watch_out="Names were assigned by reading each family's motifs and medoid; medians hide the spread inside loose families (2 and 3).",
         example="SELECT cluster, cluster_label, n_molecules, ROUND(median_p, 2) AS median_p,\n       ROUND(100 * share_potent, 1) AS pct_potent\nFROM pde4_clusters\nORDER BY cluster;"),
+    "molecule_charge": dict(
+        layer="analysis", built_by="src/compute_charge.py",
+        purpose="The charge state of every molecule of the inhaled vs oral analysis set, derived from its structure with RDKit. It fills the gap left by molecules.molecular_species, which the ChEMBL 37 API never returns.",
+        grain="one molecule of the analysis set", key="chembl_id",
+        use_for="Excluding the molecules for which a neutral-species descriptor such as alogp has no physical meaning, and comparing how often inhaled and oral drugs carry a charge.",
+        watch_out="These are ordered structural rules, not measured ionisation and not predicted pKa. 'neutral' means that no rule matched, which is not proof that the molecule is uncharged at pH 7.4. rule_applied records which rule decided, so every row can be traced back to its pattern.",
+        example="SELECT d.route_group, c.charge_class, COUNT(*) AS molecules\nFROM molecule_charge AS c\nJOIN inhalation_dataset AS d ON d.chembl_id = c.chembl_id\nGROUP BY d.route_group, c.charge_class\nORDER BY d.route_group, molecules DESC;"),
     "pde4_k_selection": dict(
         layer="analysis", built_by="src/pde4_chemical_space.py",
         purpose="How k-means behaved for each number of clusters tried: the evidence for choosing k = 8.",
@@ -367,6 +374,14 @@ COLUMNS = {
     "pde4_k_selection.inertia": ("Within-cluster sum of squared distances to the centres; always falls as k grows.", ""),
     "pde4_k_selection.silhouette": ("Mean silhouette on a 3,000-compound sample: -1 to 1, higher = better separated.", ""),
     "pde4_k_selection.stability_ari": ("Mean adjusted Rand index between runs with 5 random seeds: 1 = identical groupings.", "0-1"),
+    "molecule_charge.formal_charge": ("Total formal charge of the structure as ChEMBL stores it, summed by RDKit. It is not recomputed at pH 7.4: a free base is 0 here even if it is protonated in the body.", "charge"),
+    "molecule_charge.n_quaternary_n": ("Permanently charged tetrahedral nitrogens (quaternary ammonium). They carry a positive charge at every pH, so the molecule never exists as a neutral species.", "count"),
+    "molecule_charge.n_basic_amine": ("Neutral sp3 amine sites basic enough to be protonated at pH 7.4. Amides, anilines, nitriles and sulfonamides are excluded.", "count"),
+    "molecule_charge.n_amidine_guanidine": ("Amidine and guanidine groups: strong bases, protonated at pH 7.4.", "count"),
+    "molecule_charge.n_acid": ("Acidic sites deprotonated at pH 7.4: carboxylic acids, tetrazoles, acylsulfonamides, phosphoric and sulfonic acids.", "count"),
+    "molecule_charge.n_other_permanent": ("Other permanently charged sites: cationic aromatic nitrogen, phosphonium, sulfonium.", "count"),
+    "molecule_charge.charge_class": ("Charge class at pH 7.4 from the ordered rules: permanent cation, zwitterion, cation, anion, neutral.", ""),
+    "molecule_charge.rule_applied": ("Which rule decided the class, R1 to R5, in the order they are tried in src/compute_charge.py. R5 is the fallback: no rule matched.", ""),
     "cleaning_exclusions.record_id":("ID of the excluded record: an activity_id for 'activities', a chembl_id for 'molecules'.", ""),
 }
 
@@ -394,6 +409,8 @@ JOINS = [
     ("pde4_chemical_space", "molecule_chembl_id", "molecules", "chembl_id"),
     ("pde4_chemical_space", "cluster", "pde4_clusters", "cluster"),
     ("pde4_clusters", "medoid_chembl_id", "molecules", "chembl_id"),
+    ("molecule_charge", "chembl_id", "molecules", "chembl_id"),
+    ("molecule_charge", "chembl_id", "inhalation_dataset", "chembl_id"),
 ]
 
 GLOSSARY = [
