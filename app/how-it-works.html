@@ -63,6 +63,7 @@ section.step { border-top: 1px solid var(--line); padding-top: 30px; margin-top:
 .fact b { display: block; font: 600 1.25rem var(--font-display); font-variant-numeric: tabular-nums; }
 .fact span { font-size: 13px; color: var(--fg-2); }
 
+.foot { margin-top: 48px; font-size: 13px; color: var(--muted); }
 .say { background: var(--accent-soft); border-radius: 6px; padding: 12px 16px; margin: 16px 0 6px; }
 .say .label { font: 600 11.5px var(--font-display); text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); display: block; margin-bottom: 2px; }
 .say p { margin: 0; }
@@ -121,7 +122,7 @@ pre.mermaid { background: var(--surface); text-align: center; }
     <div class="step-head"><span class="step-num">00</span><h2>The business question</h2></div>
     <p>Lipinski's Rule of 5 describes <em>oral</em> drugs, which must be absorbed in the gut. An inhaled drug has a different goal: act in the lung and pass as little as possible into the rest of the body. There is no shared public rule for inhaled drugs.</p>
     <p>The project question: <strong>are the chemical properties of approved inhaled drugs different from those of oral drugs, and how?</strong> The second step applies the findings to compounds active on PDE4, a respiratory target (for example in COPD).</p>
-    <div class="caveat"><span class="label">Limitation</span><p>This is an exploratory analysis of public data. The database links 65 approved inhaled molecules against 1,249 oral ones: a small sample, to be presented as a hypothesis and not as a discovery.</p></div>
+    <div class="caveat"><span class="label">Limitation</span><p>This is an exploratory analysis of public data. The analysis set is 46 inhaled molecules against 1,108 oral ones, cleaned down from 1,305 parent molecules with FDA products; step 06 shows every rule and what it removed. A small sample either way, to be presented as a hypothesis and not as a discovery.</p></div>
     <div class="say"><span class="label">In short</span><p>I took a rule that everyone uses and checked whether it also holds for inhaled drugs, which are at the core of many respiratory companies.</p></div>
   </section>
 
@@ -146,7 +147,7 @@ pre.mermaid { background: var(--surface); text-align: center; }
       <li><strong>Pagination</strong>: the API returns at most 1,000 rows per page; the <code>paginate()</code> function follows the <code>next</code> link until there are no more.</li>
       <li><strong>Selected fields</strong>: the <code>only=</code> parameter requests only the useful columns and reduces the volume.</li>
       <li><strong>Retry with backoff</strong>: on network errors the program retries after 5, 10 and 20 seconds instead of failing.</li>
-      <li><strong>Batches</strong>: the properties of the 7,326 PDE4 compounds are requested 100 at a time.</li>
+      <li><strong>Batches</strong>: 7,352 compounds have a PDE4 measurement, and 26 of them are approved drugs already downloaded above, so the properties of the remaining 7,326 are requested 100 at a time.</li>
       <li><strong>Manifest</strong>: for each file it records the URL, date and time, number of records and SHA-256 hash. If a file changes, the hash shows it.</li>
     </ul>
     <div class="say"><span class="label">In short</span><p>Every piece of data has a verifiable provenance: source, release, download date and file fingerprint. Anyone can rerun the analysis and check that they have the same inputs.</p></div>
@@ -325,8 +326,9 @@ erDiagram
     <details><summary>Why does your inhaled group exclude some inhaled drugs?</summary><p>Because the question is about drugs that must act in the lung. Medical gases, volatile anaesthetics and drugs inhaled to reach the brain have the opposite goal. The 20 exclusions are listed one by one, with the rule that removed them, in the <code>cleaning_exclusions</code> table.</p></details>
     <details><summary>Why didn't you clean the data while loading it?</summary><p>Because cleaning is a series of decisions that need to be justified. Keeping the original values, I can show how many rows each rule removes and why, and change a rule without downloading anything again.</p></details>
     <details><summary>How reliable is the FDA-ChEMBL link?</summary><p>92.3% of the names link exactly, 0.3% after removing the salt, and 7.4% remain excluded. Each row states its method, so the error is measurable and can be spot-checked.</p></details>
-    <details><summary>What does this analysis not show?</summary><p>It does not prove that a molecule works by inhalation. It describes the differences between drugs already approved for inhaled and oral use; with 65 inhaled molecules the results are indications to be validated.</p></details>
+    <details><summary>What does this analysis not show?</summary><p>It does not prove that a molecule works by inhalation. It describes the differences between drugs already approved for inhaled and oral use; with 46 inhaled molecules the results are indications to be validated.</p></details>
   </section>
+  <p class="foot">Numbers on this page come from the project database built on 21 October 2026 from ChEMBL 37 (May 2026) and the openFDA Drugs@FDA export (20 October 2026). Counts before cleaning and counts in the analysis set differ by design: step 06 lists every rule, and the ledger is in <code>reports/cleaning_log.csv</code>.</p>
 </div>
 
 <script type="module">

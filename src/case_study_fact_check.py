@@ -167,6 +167,9 @@ CLAIMS = [
     ("rho_oral", "oral drugs rho = +0.25", 0.25, 0.005, "report: explore_trends.py"),
     ("logp_decade", "+0.43 logP per decade adjusted for class", 0.43, 0.005, "report: explore_trends.py"),
     ("rtb_decade", "+1.1 rotatable bonds per decade", 1.1, 0.05, "report: explore_trends.py"),
+    # The figure draws these two; the caption prints them, so they are checked like any other number.
+    ("fig_slope_inhaled", "the figure's inhaled line is +0.50 logP per decade", 0.50, 0.005, "db"),
+    ("fig_slope_oral", "its oral line is +0.22", 0.22, 0.005, "db"),
     ("perm_p_logp", "permutation p = 0.002 for logP", 0.002, 0.0005, "report: explore_trends.py"),
     ("albuterol_year", "albuterol approved 1981", 1981, 0, "db"),
     ("albuterol_logp", "albuterol logP 1.3", 1.3, 0.05, "db"),
@@ -443,6 +446,15 @@ def recompute(con: sqlite3.Connection) -> dict:
     v["quat_inhaled"], v["quat_oral"] = 100 * quat.share_inhaled, 100 * quat.share_oral
     v["quat_or"] = quat.odds_ratio
     v["quat_p"] = quat.p_holm
+
+    # The caption quotes the simple per-group regressions that explore_trends.py draws on the
+    # figure, which are not the class-adjusted slope quoted in the prose: both are recomputed
+    # here so the page cannot drift from the image it shows.
+    fig = pd.read_sql_query("SELECT first_approval, alogp, route_group FROM inhalation_dataset "
+                            "WHERE first_approval IS NOT NULL AND alogp IS NOT NULL", con)
+    for group, key in (("inhaled", "fig_slope_inhaled"), ("oral", "fig_slope_oral")):
+        sub = fig[fig.route_group == group]
+        v[key] = np.polyfit(sub.first_approval, sub.alogp, 1)[0] * 10
 
     # Values kept in the report tables: resampling results and the paper-level PDE4 trends.
     trends = pd.read_csv(REPORTS / "exploration_trends.csv").set_index("property")
